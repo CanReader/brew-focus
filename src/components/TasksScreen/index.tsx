@@ -1,0 +1,421 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable';
+import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen } from 'lucide-react';
+import { useTaskStore } from '../../store/taskStore';
+import { useTimerStore } from '../../store/timerStore';
+import { useSettingsStore } from '../../store/settingsStore';
+import { useTimer } from '../../hooks/useTimer';
+import { StatsBar } from './StatsBar';
+import { TaskItem } from './TaskItem';
+import { Sidebar, SidebarView } from './Sidebar';
+import { TaskContextMenu } from './TaskContextMenu';
+import { TaskDetailPanel } from './TaskDetailPanel';
+import { Task, DueDate } from '../../types';
+
+interface ContextMenuState {
+  taskId: string;
+  x: number;
+  y: number;
+}
+
+function getViewTitle(view: SidebarView, projects: { id: string; name: string }[]): string {
+  switch (view) {
+    case 'today': return 'Today';
+    case 'tomorrow': return 'Tomorrow';
+    case 'week': return 'This Week';
+    case 'planned': return 'Planned';
+    case 'someday': return 'Someday';
+    case 'completed': return 'Completed';
+    case 'all': return 'Tasks';
+    default: return projects.find((p) => p.id === view)?.name ?? 'Tasks';
+  }
+}
+
+function filterTasks(tasks: Task[], view: SidebarView): Task[] {
+  switch (view) {
+    case 'today': return tasks.filter((t) => !t.completed && t.dueDate === 'today');
+    case 'tomorrow': return tasks.filter((t) => !t.completed && t.dueDate === 'tomorrow');
+    case 'week': return tasks.filter((t) => !t.completed);
+    case 'planned': return tasks.filter((t) => !t.completed && t.dueDate && t.dueDate !== 'someday');
+    case 'someday': return tasks.filter((t) => !t.completed && t.dueDate === 'someday');
+    case 'completed': return tasks.filter((t) => t.completed);
+    case 'all': return tasks.filter((t) => !t.completed);
+    default: return tasks.filter((t) => !t.completed && t.projectId === view);
+  }
+}
+
+function getDueDateForView(view: SidebarView): DueDate {
+  if (view === 'today') return 'today';
+  if (view === 'tomorrow') return 'tomorrow';
+  if (view === 'someday') return 'someday';
+  return null;
+}
+
+// Tiny coffee cup SVG for the add-task bar
+const QuickCup: React.FC<{ filled: boolean }> = ({ filled }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M2 5h10v.8H2V5z" fill={filled ? 'var(--accent)' : 'var(--brd2)'} opacity="0.9"/>
+    <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" fill={filled ? 'var(--accent)' : 'var(--brd2)'} opacity="0.9"/>
+    <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke={filled ? 'var(--accent)' : 'var(--brd2)'} strokeWidth="1.1" strokeLinecap="round"/>
+    <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke={filled ? 'var(--accent)' : 'var(--brd2)'} strokeWidth="1" strokeLinecap="round"/>
+  </svg>
+);
+
+export const TasksScreen: React.FC = () => {
+  const [inputValue, setInputValue] = useState('');
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>('all');
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // Add task bar state
+  const [newTaskPomodoros, setNewTaskPomodoros] = useState(1);
+  const [hoverPomodoros, setHoverPomodoros] = useState<number | null>(null);
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const [newTaskProjectId, setNewTaskProjectId] = useState<string | undefined>(undefined);
+
+  const {
+    tasks, projects, addTask, updateTask, deleteTask, toggleTask,
+    reorderTasks, setActiveTask, activeTaskId,
+  } = useTaskStore();
+
+  const { isRunning, phase, secondsLeft, start, pause, skip, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const { settings } = useSettingsStore();
+  const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
+
+  const viewTasks = filterTasks(tasks, sidebarView);
+  const completedTasks = sidebarView !== 'completed' ? tasks.filter((t) => t.completed) : [];
+
+  // Live lookup for context menu and detail panel
+  const contextMenuTask = contextMenu ? tasks.find((t) => t.id === contextMenu.taskId) ?? null : null;
+  const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleAddTask = async () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    const projectId = projects.find((p) => p.id === sidebarView)?.id ?? newTaskProjectId;
+    const dueDate = getDueDateForView(sidebarView);
+    await addTask(trimmed, 'p4', projectId, dueDate, newTaskPomodoros);
+    setInputValue('');
+    setNewTaskProjectId(undefined);
+    setNewTaskPomodoros(1);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = viewTasks.findIndex((t) => t.id === active.id);
+    const newIdx = viewTasks.findIndex((t) => t.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const reordered = arrayMove(viewTasks, oldIdx, newIdx);
+    const otherTasks = tasks.filter((t) => !viewTasks.find((vt) => vt.id === t.id));
+    reorderTasks([...reordered, ...otherTasks]);
+  };
+
+  const handleSetActive = (task: Task) => {
+    const next = activeTaskId === task.id ? null : task.id;
+    setActiveTask(next);
+    setTimerActiveTask(next);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, task: Task) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ taskId: task.id, x: e.clientX, y: e.clientY });
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTaskId((prev) => (prev === task.id ? null : task.id));
+  };
+
+  const title = getViewTitle(sidebarView, projects);
+  const phaseLabel = phase === 'work' ? 'Focus' : phase === 'shortBreak' ? 'Short Break' : 'Long Break';
+  const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
+
+  const displayPomodoros = hoverPomodoros ?? newTaskPomodoros;
+
+  return (
+    <div className="flex h-full relative" style={{ background: 'var(--bg)' }}>
+      {/* Sidebar */}
+      <div className="w-44 shrink-0 h-full">
+        <Sidebar activeView={sidebarView} onViewChange={(v) => { setSidebarView(v); setSelectedTaskId(null); }} />
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        <StatsBar tasks={tasks} />
+
+        {/* Header */}
+        <div className="px-6 pt-5 pb-3 shrink-0">
+          <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>{title}</h1>
+        </div>
+
+        {/* Add task bar */}
+        <div className="px-6 pb-3 shrink-0">
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
+            style={{ background: 'var(--card)', borderColor: 'var(--brd)' }}
+          >
+            {/* Plus button */}
+            <div
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 cursor-pointer"
+              style={{ background: 'var(--accent)' }}
+              onClick={handleAddTask}
+            >
+              <Plus size={14} color="white" />
+            </div>
+
+            {/* Input */}
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
+              placeholder={`Add a task to "${title}", press [Enter] to save`}
+              className="flex-1 text-[13px] bg-transparent focus:outline-none min-w-0"
+              style={{ color: 'var(--t)' }}
+            />
+
+            {/* Quick pomodoro cup selector: 5 cups */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setNewTaskPomodoros(i + 1)}
+                  onMouseEnter={() => setHoverPomodoros(i + 1)}
+                  onMouseLeave={() => setHoverPomodoros(null)}
+                  className="transition-transform hover:scale-110"
+                  title={`${i + 1} session${i > 0 ? 's' : ''}`}
+                >
+                  <QuickCup filled={i < displayPomodoros} />
+                </button>
+              ))}
+            </div>
+
+            {/* Project picker */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowProjectPicker(!showProjectPicker)}
+                className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
+                style={{
+                  color: newTaskProjectId ? projects.find(p => p.id === newTaskProjectId)?.color ?? 'var(--t3)' : 'var(--t3)',
+                  background: newTaskProjectId ? 'var(--card-h)' : 'transparent',
+                }}
+                title="Set project"
+              >
+                {newTaskProjectId ? (
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: projects.find(p => p.id === newTaskProjectId)?.color }} />
+                ) : (
+                  <FolderOpen size={13} />
+                )}
+              </button>
+              <AnimatePresence>
+                {showProjectPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 bottom-full mb-1 rounded-xl border overflow-hidden z-50"
+                    style={{
+                      background: 'var(--card)',
+                      borderColor: 'var(--brd2)',
+                      minWidth: '160px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                    }}
+                    onMouseLeave={() => setShowProjectPicker(false)}
+                  >
+                    <button
+                      onClick={() => { setNewTaskProjectId(undefined); setShowProjectPicker(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors"
+                      style={{ color: !newTaskProjectId ? 'var(--t)' : 'var(--t2)', background: !newTaskProjectId ? 'var(--card-h)' : 'transparent' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = !newTaskProjectId ? 'var(--card-h)' : 'transparent')}
+                    >
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--brd2)' }} />
+                      <span className="text-[12px]">No Project</span>
+                    </button>
+                    {projects.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setNewTaskProjectId(p.id); setShowProjectPicker(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors"
+                        style={{ color: newTaskProjectId === p.id ? 'var(--t)' : 'var(--t2)', background: newTaskProjectId === p.id ? 'var(--card-h)' : 'transparent' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = newTaskProjectId === p.id ? 'var(--card-h)' : 'transparent')}
+                      >
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+                        <span className="text-[12px]">{p.name}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Task list */}
+        <div className="flex-1 overflow-y-auto px-6 pb-16 min-w-0">
+          {viewTasks.length === 0 && completedTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" opacity="0.25">
+                <path d="M8 14h24v1.5H8V14z" fill="var(--t)"/>
+                <path d="M8 17h22c0 6-3 12.5-11 12.5S8 23 8 17z" fill="var(--t)"/>
+                <path d="M30 19.5h2.5a4 4 0 000-8H30" stroke="var(--t)" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M10 30c2 1 16 1 18 0" stroke="var(--t)" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              <p className="text-[13px]" style={{ color: 'var(--t3)' }}>No tasks here yet</p>
+            </div>
+          ) : (
+            <>
+              {viewTasks.length > 0 && (
+                <div className="flex items-center gap-2 mb-3 mt-1">
+                  <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>Tasks</span>
+                  <span style={{ color: 'var(--t3)' }}>·</span>
+                  <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
+                    {viewTasks.reduce((s, t) => s + t.pomodoroEstimate, 0) * 25}m estimated
+                  </span>
+                </div>
+              )}
+
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={viewTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  <AnimatePresence mode="popLayout">
+                    {viewTasks.map((task) => (
+                      <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                        <TaskItem
+                          task={task}
+                          isActive={task.id === activeTaskId}
+                          isSelected={task.id === selectedTaskId}
+                          onToggle={() => toggleTask(task.id)}
+                          onUpdate={(partial) => updateTask(task.id, partial)}
+                          onSetActive={() => handleSetActive(task)}
+                          onContextMenu={(e) => handleContextMenu(e, task)}
+                        />
+                      </div>
+                    ))}
+                  </AnimatePresence>
+                </SortableContext>
+              </DndContext>
+
+              {sidebarView !== 'completed' && completedTasks.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="flex items-center gap-2 mb-2"
+                  >
+                    {showCompleted
+                      ? <ChevronDown size={13} style={{ color: 'var(--t3)' }} />
+                      : <ChevronRight size={13} style={{ color: 'var(--t3)' }} />
+                    }
+                    <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>
+                      Completed ({completedTasks.length})
+                    </span>
+                  </button>
+                  <AnimatePresence>
+                    {showCompleted && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <AnimatePresence mode="popLayout">
+                          {completedTasks.map((task) => (
+                            <div key={task.id} className="mb-1.5">
+                              <TaskItem
+                                task={task}
+                                isActive={false}
+                                isSelected={task.id === selectedTaskId}
+                                onToggle={() => toggleTask(task.id)}
+                                onUpdate={(partial) => updateTask(task.id, partial)}
+                                onSetActive={() => {}}
+                                onContextMenu={(e) => handleContextMenu(e, task)}
+                              />
+                            </div>
+                          ))}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Mini timer bar at bottom */}
+        <div
+          className="absolute bottom-0 left-44 right-0 flex items-center justify-center gap-4 px-6 py-2.5 border-t"
+          style={{ background: 'var(--bg2)', borderColor: 'var(--brd)' }}
+        >
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: phaseColor }} />
+            <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{phaseLabel}</span>
+          </div>
+          <span className="text-[18px] font-light tabular-nums" style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}>
+            {formatTime(secondsLeft)}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={isRunning ? pause : start}
+              className="w-7 h-7 flex items-center justify-center rounded-full"
+              style={{ background: phaseColor }}
+            >
+              {isRunning
+                ? <Pause size={12} fill="white" color="white" />
+                : <Play size={12} fill="white" color="white" style={{ marginLeft: 1 }} />
+              }
+            </button>
+            <button
+              onClick={() => skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, settings.longBreakInterval)}
+              className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+              style={{ background: 'var(--card)', color: 'var(--t3)' }}
+            >
+              <SkipForward size={11} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Task detail panel */}
+      <AnimatePresence>
+        {selectedTask && (
+          <TaskDetailPanel
+            task={selectedTask}
+            projects={projects}
+            onClose={() => setSelectedTaskId(null)}
+            onUpdate={(partial) => updateTask(selectedTask.id, partial)}
+            onDelete={() => deleteTask(selectedTask.id)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Context menu */}
+      <AnimatePresence>
+        {contextMenu && contextMenuTask && (
+          <TaskContextMenu
+            task={contextMenuTask}
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            projects={projects}
+            onClose={() => setContextMenu(null)}
+            onUpdate={(partial) => updateTask(contextMenu.taskId, partial)}
+            onDelete={() => deleteTask(contextMenu.taskId)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
