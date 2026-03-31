@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Target } from 'lucide-react';
+import { GripVertical, Target, Flag, Play } from 'lucide-react';
 import { Task, Priority } from '../../types';
 
 interface TaskItemProps {
@@ -13,14 +13,15 @@ interface TaskItemProps {
   onDelete?: () => void;
   onUpdate: (partial: Partial<Task>) => void;
   onSetActive: () => void;
+  onPlay?: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }
 
-const priorityColors: Record<Priority, string> = {
+const priorityFlagColors: Record<Priority, string> = {
   p1: 'var(--accent)',
   p2: 'var(--amb)',
   p3: 'var(--blu)',
-  p4: 'var(--brd2)',
+  p4: 'var(--t3)',
 };
 
 /** Small coffee cup SVG replacing the tomato icon */
@@ -33,6 +34,20 @@ const CoffeeCupDot: React.FC<{ color?: string }> = ({ color = 'var(--t3)' }) => 
   </svg>
 );
 
+function getDueDateLabel(dueDate: Task['dueDate']): { label: string; color: string } | null {
+  if (!dueDate) return null;
+  switch (dueDate) {
+    case 'today':
+      return { label: 'Today', color: 'var(--amb)' };
+    case 'tomorrow':
+      return { label: 'Tomorrow', color: 'var(--t3)' };
+    case 'someday':
+      return { label: 'Someday', color: 'var(--t3)' };
+    default:
+      return null;
+  }
+}
+
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   isActive,
@@ -40,6 +55,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggle,
   onUpdate,
   onSetActive,
+  onPlay,
   onContextMenu,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -70,6 +86,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   const hasCustomTimer = task.customWorkDuration !== undefined || task.customShortBreakDuration !== undefined;
+  const dueDateInfo = getDueDateLabel(task.dueDate);
+
+  // Reminder overdue: reminder is set, in the past, task not completed
+  const now = Date.now();
+  const reminderOverdue =
+    !task.completed &&
+    task.reminder !== undefined &&
+    task.reminder !== null &&
+    task.reminder < now;
 
   return (
     <motion.div
@@ -101,11 +126,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <GripVertical size={13} />
       </div>
 
-      {/* Priority line */}
-      <div
-        className="w-0.5 h-4 rounded-full shrink-0"
-        style={{ background: priorityColors[task.priority] }}
-      />
+      {/* Priority flag icon */}
+      <div className="shrink-0" style={{ color: priorityFlagColors[task.priority], opacity: task.priority === 'p4' ? 0.4 : 1 }}>
+        <Flag size={12} fill={task.priority !== 'p4' ? priorityFlagColors[task.priority] : 'none'} />
+      </div>
 
       {/* Checkbox */}
       <button
@@ -153,6 +177,29 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         )}
       </div>
 
+      {/* Due date / reminder labels */}
+      {!task.completed && (dueDateInfo || reminderOverdue) && (
+        <div className="flex items-center gap-1 shrink-0">
+          {reminderOverdue && task.reminder !== undefined && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded"
+              style={{ color: '#e8453c', background: 'rgba(232,69,60,0.12)' }}
+              title={`Reminder: ${new Date(task.reminder!).toLocaleString()}`}
+            >
+              {new Date(task.reminder!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+          {dueDateInfo && !reminderOverdue && (
+            <span
+              className="text-[10px]"
+              style={{ color: dueDateInfo.color, opacity: 0.85 }}
+            >
+              {dueDateInfo.label}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Right side: coffee cups progress + custom timer badge + focus */}
       <div className="task-actions flex items-center gap-2 shrink-0">
         {/* Custom timer badge */}
@@ -180,6 +227,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             </span>
           )}
         </div>
+
+        {/* Play button: start timer on this task */}
+        {!task.completed && onPlay && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPlay(); }}
+            className="w-6 h-6 flex items-center justify-center rounded-md transition-all opacity-0 group-hover:opacity-100"
+            style={{ color: 'var(--grn)', background: 'transparent' }}
+            title="Start timer for this task"
+          >
+            <Play size={12} fill="var(--grn)" />
+          </button>
+        )}
 
         {/* Focus on this */}
         {!task.completed && (
