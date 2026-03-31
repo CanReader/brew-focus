@@ -14,6 +14,7 @@ export function useTimer() {
     addFocusSeconds,
     totalSeconds,
     activeTaskId,
+    setPhase,
   } = useTimerStore();
 
   const { settings } = useSettingsStore();
@@ -27,6 +28,16 @@ export function useTimer() {
   const effectiveWorkDuration = activeTask?.customWorkDuration ?? settings.workDuration;
   const effectiveShortBreakDuration = activeTask?.customShortBreakDuration ?? settings.shortBreakDuration;
   const effectiveLongBreakDuration = activeTask?.customLongBreakDuration ?? settings.longBreakDuration;
+
+  // BUG 1 FIX: When activeTaskId changes and the timer is not running,
+  // refresh the timer display to reflect the task's custom durations (or global defaults).
+  useEffect(() => {
+    if (!isRunning) {
+      setPhase(phase, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration);
+    }
+    // We only want to re-run when the active task changes, not on every settings change during a run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTaskId]);
 
   // Track when running starts/stops to accumulate focus time
   useEffect(() => {
