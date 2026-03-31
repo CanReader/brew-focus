@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Trash2, Minus, Plus } from 'lucide-react';
-import { Task, Priority, DueDate, Project } from '../../types';
+import { X, Trash2, Minus, Plus, Check } from 'lucide-react';
+import { Task, Priority, DueDate, Project, RepeatType } from '../../types';
+import { useTaskStore } from '../../store/taskStore';
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -16,6 +17,13 @@ const PRIORITIES: { value: Priority; label: string; color: string }[] = [
   { value: 'p3', label: 'Low', color: '#5a9cf5' },
   { value: 'p2', label: 'Med', color: '#e8a83e' },
   { value: 'p1', label: 'High', color: '#e8453c' },
+];
+
+const REPEAT_OPTIONS: { value: RepeatType; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
 ];
 
 const CoffeeCup: React.FC<{ filled: boolean; onClick: () => void; onHover: () => void; onLeave: () => void }> = ({ filled, onClick, onHover, onLeave }) => (
@@ -34,6 +42,14 @@ const CoffeeCup: React.FC<{ filled: boolean; onClick: () => void; onHover: () =>
   </button>
 );
 
+function msToDatetimeLocal(ms?: number): string {
+  if (!ms) return '';
+  const d = new Date(ms);
+  // format: YYYY-MM-DDTHH:MM
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   task,
   projects,
@@ -43,6 +59,10 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 }) => {
   const [titleValue, setTitleValue] = useState(task.title);
   const [hoverCount, setHoverCount] = useState<number | null>(null);
+  const [newSubtaskValue, setNewSubtaskValue] = useState('');
+  const [newTagValue, setNewTagValue] = useState('');
+
+  const { addSubtask, toggleSubtask, deleteSubtask, addTag, removeTag } = useTaskStore();
 
   // Sync title when task changes (different task selected)
   React.useEffect(() => {
@@ -53,6 +73,20 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     const trimmed = titleValue.trim();
     if (trimmed && trimmed !== task.title) onUpdate({ title: trimmed });
     else setTitleValue(task.title);
+  };
+
+  const handleAddSubtask = () => {
+    const trimmed = newSubtaskValue.trim();
+    if (!trimmed) return;
+    addSubtask(task.id, trimmed);
+    setNewSubtaskValue('');
+  };
+
+  const handleAddTag = () => {
+    const trimmed = newTagValue.trim().toLowerCase();
+    if (!trimmed) return;
+    addTag(task.id, trimmed);
+    setNewTagValue('');
   };
 
   const displayCount = hoverCount ?? task.pomodoroEstimate;
@@ -146,6 +180,179 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           </div>
         </div>
 
+        {/* Reminder */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Reminder</label>
+          <input
+            type="datetime-local"
+            value={msToDatetimeLocal(task.reminder)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (!val) {
+                onUpdate({ reminder: undefined });
+              } else {
+                onUpdate({ reminder: new Date(val).getTime() });
+              }
+            }}
+            className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5 transition-colors"
+            style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
+          />
+          {task.reminder && (
+            <button
+              onClick={() => onUpdate({ reminder: undefined })}
+              className="text-[10px] mt-1 underline"
+              style={{ color: 'var(--t3)' }}
+            >
+              Clear reminder
+            </button>
+          )}
+        </div>
+
+        {/* Repeat */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Repeat</label>
+          <div className="flex gap-1.5 flex-wrap">
+            {REPEAT_OPTIONS.map((r) => {
+              const isSelected = (task.repeatType ?? 'none') === r.value;
+              return (
+                <button
+                  key={r.value}
+                  onClick={() => onUpdate({ repeatType: r.value })}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+                  style={{
+                    background: isSelected ? 'var(--accent-d)' : 'var(--card)',
+                    color: isSelected ? 'var(--accent)' : 'var(--t3)',
+                    border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
+                  }}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Subtasks */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
+            Subtasks
+            {task.subtasks.length > 0 && (
+              <span className="ml-1 normal-case font-normal">
+                ({task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length})
+              </span>
+            )}
+          </label>
+          <div className="flex flex-col gap-1 mb-2">
+            {task.subtasks.map((subtask) => (
+              <div
+                key={subtask.id}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg group"
+                style={{ background: 'var(--card)' }}
+              >
+                <button
+                  onClick={() => toggleSubtask(task.id, subtask.id)}
+                  className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
+                  style={{
+                    borderColor: subtask.completed ? 'var(--grn)' : 'var(--brd2)',
+                    background: subtask.completed ? 'var(--grn)' : 'transparent',
+                  }}
+                >
+                  {subtask.completed && <Check size={9} color="white" strokeWidth={3} />}
+                </button>
+                <span
+                  className="flex-1 text-[12px] min-w-0 truncate"
+                  style={{
+                    color: subtask.completed ? 'var(--t3)' : 'var(--t)',
+                    textDecoration: subtask.completed ? 'line-through' : 'none',
+                  }}
+                >
+                  {subtask.title}
+                </span>
+                <button
+                  onClick={() => deleteSubtask(task.id, subtask.id)}
+                  className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded transition-opacity"
+                  style={{ color: 'var(--t3)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              value={newSubtaskValue}
+              onChange={(e) => setNewSubtaskValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddSubtask();
+                if (e.key === 'Escape') setNewSubtaskValue('');
+              }}
+              placeholder="Add subtask…"
+              className="flex-1 text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1 transition-colors"
+              style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
+            />
+            <button
+              onClick={handleAddSubtask}
+              className="w-6 h-6 flex items-center justify-center rounded-lg shrink-0"
+              style={{ background: 'var(--accent)', color: 'white' }}
+            >
+              <Plus size={11} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Tags</label>
+          {task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {task.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
+                  style={{ background: 'var(--accent-d)', color: 'var(--accent)' }}
+                >
+                  {tag}
+                  <button
+                    onClick={() => removeTag(task.id, tag)}
+                    className="flex items-center justify-center w-3 h-3 rounded-full transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    <X size={8} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <input
+              value={newTagValue}
+              onChange={(e) => setNewTagValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddTag();
+                if (e.key === 'Escape') setNewTagValue('');
+              }}
+              placeholder="Add tag…"
+              className="flex-1 text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1 transition-colors"
+              style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
+            />
+            <button
+              onClick={handleAddTag}
+              className="w-6 h-6 flex items-center justify-center rounded-lg shrink-0"
+              style={{ background: 'var(--accent)', color: 'white' }}
+            >
+              <Plus size={11} />
+            </button>
+          </div>
+        </div>
+
         {/* Pomodoro estimate */}
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
@@ -207,7 +414,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Work (min)</div>
               <div className="flex items-center gap-1.5 p-2 rounded-lg" style={{ background: 'var(--card)' }}>
                 <button
-                  onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? 25) - 1) })}
+                  onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? 30) - 1) })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ color: 'var(--t3)' }}
                 >
@@ -217,7 +424,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   {task.customWorkDuration ?? '–'}
                 </span>
                 <button
-                  onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? 25) + 1 })}
+                  onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? 30) + 1 })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ color: 'var(--t3)' }}
                 >
@@ -229,7 +436,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Break (min)</div>
               <div className="flex items-center gap-1.5 p-2 rounded-lg" style={{ background: 'var(--card)' }}>
                 <button
-                  onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? 5) - 1) })}
+                  onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? 10) - 1) })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ color: 'var(--t3)' }}
                 >
@@ -239,7 +446,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   {task.customShortBreakDuration ?? '–'}
                 </span>
                 <button
-                  onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? 5) + 1 })}
+                  onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? 10) + 1 })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ color: 'var(--t3)' }}
                 >
