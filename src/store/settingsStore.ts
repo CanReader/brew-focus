@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 import { AppSettings, AccentColor, ACCENT_COLORS } from '../types';
-import { LazyStore } from '@tauri-apps/plugin-store';
+import Database from '@tauri-apps/plugin-sql';
 
-const SETTINGS_KEY = 'settings';
+let _db: Database | null = null;
+
+async function getDb(): Promise<Database> {
+  if (!_db) _db = await Database.load('sqlite:brewfocus.db');
+  return _db;
+}
 
 const defaultSettings: AppSettings = {
-  workDuration: 25,
-  shortBreakDuration: 5,
+  workDuration: 30,
+  shortBreakDuration: 10,
   longBreakDuration: 15,
   autoStartBreaks: false,
   autoStartPomodoros: false,
@@ -15,8 +20,6 @@ const defaultSettings: AppSettings = {
   accentColor: 'red',
   longBreakInterval: 4,
 };
-
-const store = new LazyStore('brew-focus.json');
 
 interface SettingsStore {
   settings: AppSettings;
@@ -32,15 +35,26 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   loadSettings: async () => {
     try {
-      const saved = await store.get<AppSettings>(SETTINGS_KEY);
-      if (saved) {
-        set({ settings: { ...defaultSettings, ...saved }, isLoaded: true });
+      const db = await getDb();
+      const rows = await db.select<{ key: string; value: string }[]>('SELECT * FROM settings');
+      if (rows.length > 0) {
+        const loaded: Partial<AppSettings> = {};
+        for (const row of rows) {
+          try {
+            (loaded as Record<string, unknown>)[row.key] = JSON.parse(row.value);
+          } catch {
+            (loaded as Record<string, unknown>)[row.key] = row.value;
+          }
+        }
+        const merged = { ...defaultSettings, ...loaded };
+        set({ settings: merged, isLoaded: true });
+        applyAccentColor(merged.accentColor);
       } else {
         set({ isLoaded: true });
+        applyAccentColor(defaultSettings.accentColor);
       }
-      applyAccentColor(get().settings.accentColor);
     } catch (e) {
-      console.warn('Failed to load settings from store:', e);
+      console.warn('Failed to load settings from SQLite:', e);
       set({ isLoaded: true });
       applyAccentColor(defaultSettings.accentColor);
     }
@@ -53,8 +67,13 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       applyAccentColor(partial.accentColor);
     }
     try {
-      await store.set(SETTINGS_KEY, newSettings);
-      await store.save();
+      const db = await getDb();
+      for (const [key, value] of Object.entries(partial)) {
+        await db.execute(
+          'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+          [key, JSON.stringify(value)]
+        );
+      }
     } catch (e) {
       console.warn('Failed to save settings:', e);
     }
@@ -64,8 +83,14 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     set({ settings: defaultSettings });
     applyAccentColor(defaultSettings.accentColor);
     try {
-      await store.set(SETTINGS_KEY, defaultSettings);
-      await store.save();
+      const db = await getDb();
+      await db.execute('DELETE FROM settings');
+      for (const [key, value] of Object.entries(defaultSettings)) {
+        await db.execute(
+          'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+          [key, JSON.stringify(value)]
+        );
+      }
     } catch (e) {
       console.warn('Failed to reset settings:', e);
     }
