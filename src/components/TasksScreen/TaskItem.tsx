@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Target, Flag, Play } from 'lucide-react';
+import { GripVertical, Flag } from 'lucide-react';
 import { Task, Priority } from '../../types';
 
 interface TaskItemProps {
@@ -24,29 +24,33 @@ const priorityFlagColors: Record<Priority, string> = {
   p4: 'var(--t3)',
 };
 
-/** Small coffee cup SVG replacing the tomato icon */
-const CoffeeCupDot: React.FC<{ color?: string }> = ({ color = 'var(--t3)' }) => (
-  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" style={{ display: 'inline', verticalAlign: 'middle' }}>
-    <path d="M2 5h10v.8H2V5z" fill={color} opacity="0.9"/>
-    <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" fill={color} opacity="0.9"/>
-    <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke={color} strokeWidth="1.1" strokeLinecap="round"/>
-    <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke={color} strokeWidth="1" strokeLinecap="round"/>
-  </svg>
-);
-
-function getDueDateLabel(dueDate: Task['dueDate']): { label: string; color: string } | null {
+function formatShortDate(dueDate: Task['dueDate']): string | null {
   if (!dueDate) return null;
-  switch (dueDate) {
-    case 'today':
-      return { label: 'Today', color: 'var(--amb)' };
-    case 'tomorrow':
-      return { label: 'Tomorrow', color: 'var(--t3)' };
-    case 'someday':
-      return { label: 'Someday', color: 'var(--t3)' };
-    default:
-      return null;
+  const now = new Date();
+  if (dueDate === 'today') {
+    return now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   }
+  if (dueDate === 'tomorrow') {
+    const t = new Date(now);
+    t.setDate(t.getDate() + 1);
+    return t.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  }
+  if (dueDate === 'someday') return 'Someday';
+  return null;
 }
+
+const PlayCircleBtn: React.FC<{ active: boolean; onClick: (e: React.MouseEvent) => void }> = ({ active, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all"
+    style={{ background: active ? 'var(--accent)' : 'var(--brd2)' }}
+    title="Start timer for this task"
+  >
+    <svg width="7" height="8" viewBox="0 0 7 8" fill="none">
+      <path d="M1.5 1L6 4L1.5 7V1Z" fill="white" />
+    </svg>
+  </button>
+);
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
@@ -54,7 +58,6 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   isSelected,
   onToggle,
   onUpdate,
-  onSetActive,
   onPlay,
   onContextMenu,
 }) => {
@@ -62,14 +65,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const [editValue, setEditValue] = useState(task.title);
   const editRef = useRef<HTMLInputElement>(null);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
 
   useEffect(() => {
     if (isEditing && editRef.current) {
@@ -85,16 +81,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     setIsEditing(false);
   };
 
-  const hasCustomTimer = task.customWorkDuration !== undefined || task.customShortBreakDuration !== undefined;
-  const dueDateInfo = getDueDateLabel(task.dueDate);
-
-  // Reminder overdue: reminder is set, in the past, task not completed
-  const now = Date.now();
-  const reminderOverdue =
-    !task.completed &&
-    task.reminder !== undefined &&
-    task.reminder !== null &&
-    task.reminder < now;
+  const dueDateStr = formatShortDate(task.dueDate ?? null);
+  const flagColor = priorityFlagColors[task.priority];
+  const reminderOverdue = !task.completed && !!task.reminder && task.reminder < Date.now();
+  const dateLabel = reminderOverdue && task.reminder
+    ? new Date(task.reminder).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+    : dueDateStr;
 
   return (
     <motion.div
@@ -103,7 +95,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -16 }}
-      className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all duration-150 ${isDragging ? 'z-50' : ''}`}
+      className={`group flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-150 ${isDragging ? 'z-50' : ''}`}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -126,11 +118,6 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <GripVertical size={13} />
       </div>
 
-      {/* Priority flag icon */}
-      <div className="shrink-0" style={{ color: priorityFlagColors[task.priority], opacity: task.priority === 'p4' ? 0.4 : 1 }}>
-        <Flag size={12} fill={task.priority !== 'p4' ? priorityFlagColors[task.priority] : 'none'} />
-      </div>
-
       {/* Checkbox */}
       <button
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
@@ -142,10 +129,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       >
         {task.completed && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </button>
+
+      {/* Play button — always visible */}
+      {!task.completed && (
+        <PlayCircleBtn
+          active={isActive}
+          onClick={(e) => { e.stopPropagation(); onPlay?.(); }}
+        />
+      )}
 
       {/* Title */}
       <div className="flex-1 min-w-0">
@@ -177,83 +172,32 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         )}
       </div>
 
-      {/* Due date / reminder labels */}
-      {!task.completed && (dueDateInfo || reminderOverdue) && (
-        <div className="flex items-center gap-1 shrink-0">
-          {reminderOverdue && task.reminder !== undefined && (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded"
-              style={{ color: '#e8453c', background: 'rgba(232,69,60,0.12)' }}
-              title={`Reminder: ${new Date(task.reminder!).toLocaleString()}`}
-            >
-              {new Date(task.reminder!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-            </span>
-          )}
-          {dueDateInfo && !reminderOverdue && (
-            <span
-              className="text-[10px]"
-              style={{ color: dueDateInfo.color, opacity: 0.85 }}
-            >
-              {dueDateInfo.label}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Right side: coffee cups progress + custom timer badge + focus */}
-      <div className="task-actions flex items-center gap-2 shrink-0">
-        {/* Custom timer badge */}
-        {hasCustomTimer && (
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-md"
-            style={{ background: 'var(--accent-d)', color: 'var(--accent)' }}
-            title={`Custom: ${task.customWorkDuration ?? '?'}m work / ${task.customShortBreakDuration ?? '?'}m break`}
-          >
-            {task.customWorkDuration}m
+      {/* Right: ●completed / ●total  flag  date */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        {/* Session counter */}
+        <div className="flex items-center gap-0.5 text-[11px] tabular-nums">
+          <span style={{ color: task.pomodoroCompleted > 0 ? 'var(--accent)' : 'var(--brd2)' }}>●</span>
+          <span style={{ color: task.pomodoroCompleted > 0 ? 'var(--accent)' : 'var(--t3)' }}>
+            {task.pomodoroCompleted}
           </span>
-        )}
-
-        {/* Pomodoro coffee cups */}
-        <div className="flex items-center gap-0.5">
-          {Array.from({ length: Math.min(task.pomodoroEstimate, 8) }).map((_, i) => (
-            <CoffeeCupDot
-              key={i}
-              color={i < task.pomodoroCompleted ? 'var(--accent)' : 'var(--brd2)'}
-            />
-          ))}
-          {task.pomodoroEstimate > 8 && (
-            <span className="text-[10px] ml-0.5" style={{ color: 'var(--t3)' }}>
-              +{task.pomodoroEstimate - 8}
-            </span>
-          )}
+          <span className="mx-0.5" style={{ color: 'var(--t3)' }}>/</span>
+          <span style={{ color: 'var(--accent)' }}>●</span>
+          <span style={{ color: 'var(--t2)' }}>{task.pomodoroEstimate}</span>
         </div>
 
-        {/* Play button: start timer on this task */}
-        {!task.completed && onPlay && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPlay(); }}
-            className="w-6 h-6 flex items-center justify-center rounded-md transition-all opacity-0 group-hover:opacity-100"
-            style={{ color: 'var(--grn)', background: 'transparent' }}
-            title="Start timer for this task"
-          >
-            <Play size={12} fill="var(--grn)" />
-          </button>
-        )}
+        {/* Priority flag */}
+        <span style={{ color: flagColor, opacity: task.priority === 'p4' ? 0.3 : 1 }}>
+          <Flag size={12} fill={task.priority !== 'p4' ? flagColor : 'none'} />
+        </span>
 
-        {/* Focus on this */}
-        {!task.completed && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onSetActive(); }}
-            className="w-6 h-6 flex items-center justify-center rounded-md transition-all opacity-0 group-hover:opacity-100"
-            style={{
-              color: isActive ? 'var(--accent)' : 'var(--t3)',
-              background: isActive ? 'var(--accent-d)' : 'transparent',
-              opacity: isActive ? 1 : undefined,
-            }}
-            title={isActive ? 'Active task' : 'Focus on this'}
+        {/* Date */}
+        {dateLabel && !task.completed && (
+          <span
+            className="text-[11px]"
+            style={{ color: reminderOverdue ? '#e8453c' : 'var(--t3)' }}
           >
-            <Target size={12} />
-          </button>
+            {dateLabel}
+          </span>
         )}
       </div>
     </motion.div>

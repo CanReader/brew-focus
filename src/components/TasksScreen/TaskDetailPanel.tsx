@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { X, Trash2, Minus, Plus, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  X, Trash2, Check, Plus, Flag,
+  Clock, Calendar, FolderOpen, Bell, RefreshCw, Edit3,
+} from 'lucide-react';
 import { Task, Priority, DueDate, Project, RepeatType } from '../../types';
 import { useTaskStore } from '../../store/taskStore';
+import { useSettingsStore } from '../../store/settingsStore';
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -12,43 +16,88 @@ interface TaskDetailPanelProps {
   onDelete: () => void;
 }
 
-const PRIORITIES: { value: Priority; label: string; color: string }[] = [
-  { value: 'p4', label: 'None', color: '#5e5c58' },
-  { value: 'p3', label: 'Low', color: '#5a9cf5' },
-  { value: 'p2', label: 'Med', color: '#e8a83e' },
-  { value: 'p1', label: 'High', color: '#e8453c' },
+const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
+  { value: 'p1', label: 'High',  color: 'var(--accent)' },
+  { value: 'p2', label: 'Med',   color: 'var(--amb)' },
+  { value: 'p3', label: 'Low',   color: 'var(--blu)' },
+  { value: 'p4', label: 'None',  color: 'var(--t3)' },
 ];
 
-const REPEAT_OPTIONS: { value: RepeatType; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-];
+const priorityFlagColors: Record<Priority, string> = {
+  p1: 'var(--accent)',
+  p2: 'var(--amb)',
+  p3: 'var(--blu)',
+  p4: 'var(--t3)',
+};
 
-const CoffeeCup: React.FC<{ filled: boolean; onClick: () => void; onHover: () => void; onLeave: () => void }> = ({ filled, onClick, onHover, onLeave }) => (
-  <button
-    onClick={onClick}
-    onMouseEnter={onHover}
-    onMouseLeave={onLeave}
-    className="transition-all duration-100"
-  >
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-      <path d="M2 5h10v.8H2V5z" fill={filled ? 'var(--accent)' : 'var(--brd2)'} opacity="0.9"/>
-      <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" fill={filled ? 'var(--accent)' : 'var(--brd2)'} opacity="0.9"/>
-      <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke={filled ? 'var(--accent)' : 'var(--brd2)'} strokeWidth="1.1" strokeLinecap="round"/>
-      <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke={filled ? 'var(--accent)' : 'var(--brd2)'} strokeWidth="1" strokeLinecap="round"/>
-    </svg>
-  </button>
-);
+function formatDueDate(dueDate: DueDate | undefined): string {
+  if (!dueDate) return 'None';
+  const now = new Date();
+  if (dueDate === 'today') {
+    return now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+  if (dueDate === 'tomorrow') {
+    const t = new Date(now);
+    t.setDate(t.getDate() + 1);
+    return t.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+  return 'Someday';
+}
+
+function formatCreatedAt(ts: number): string {
+  return new Date(ts).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+}
 
 function msToDatetimeLocal(ms?: number): string {
   if (!ms) return '';
   const d = new Date(ms);
-  // format: YYYY-MM-DDTHH:MM
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+type ExpandedRow = 'pomodoro' | 'dueDate' | 'project' | 'reminder' | 'repeat' | 'priority' | null;
+
+// A single detail row with icon, label, value, and optional expansion
+const DetailRow: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  valueColor?: string;
+  active?: boolean;
+  onClick?: () => void;
+  children?: React.ReactNode;
+  expanded?: boolean;
+}> = ({ icon, label, value, valueColor, onClick, children, expanded }) => (
+  <div>
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left"
+      style={{ background: expanded ? 'var(--card)' : 'transparent' }}
+      onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.background = 'var(--card)'; }}
+      onMouseLeave={(e) => { if (!expanded) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <span style={{ color: 'var(--t3)', flexShrink: 0, width: 15 }}>{icon}</span>
+      <span className="text-[13px] w-20 shrink-0" style={{ color: 'var(--t3)' }}>{label}</span>
+      <span className="flex-1 text-[13px] text-right" style={{ color: valueColor ?? 'var(--t2)' }}>
+        {value}
+      </span>
+    </button>
+    <AnimatePresence>
+      {expanded && children && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="overflow-hidden px-4 pb-3"
+          style={{ background: 'var(--card)' }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
 
 export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   task,
@@ -58,21 +107,24 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   onDelete,
 }) => {
   const [titleValue, setTitleValue] = useState(task.title);
-  const [hoverCount, setHoverCount] = useState<number | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [newSubtaskValue, setNewSubtaskValue] = useState('');
   const [newTagValue, setNewTagValue] = useState('');
+  const [expanded, setExpanded] = useState<ExpandedRow>(null);
 
   const { addSubtask, toggleSubtask, deleteSubtask, addTag, removeTag } = useTaskStore();
+  const { settings } = useSettingsStore();
 
-  // Sync title when task changes (different task selected)
   React.useEffect(() => {
     setTitleValue(task.title);
+    setExpanded(null);
   }, [task.id]);
 
   const handleTitleBlur = () => {
     const trimmed = titleValue.trim();
     if (trimmed && trimmed !== task.title) onUpdate({ title: trimmed });
     else setTitleValue(task.title);
+    setIsEditingTitle(false);
   };
 
   const handleAddSubtask = () => {
@@ -84,12 +136,28 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
   const handleAddTag = () => {
     const trimmed = newTagValue.trim().toLowerCase();
-    if (!trimmed) return;
+    if (!trimmed || task.tags.includes(trimmed)) return;
     addTag(task.id, trimmed);
     setNewTagValue('');
   };
 
-  const displayCount = hoverCount ?? task.pomodoroEstimate;
+  const toggleRow = (row: ExpandedRow) => setExpanded((prev) => (prev === row ? null : row));
+
+  const workMins = task.customWorkDuration ?? settings.workDuration;
+  const estimatedMins = task.pomodoroEstimate * workMins;
+  const estimatedStr = estimatedMins >= 60
+    ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`
+    : `~${estimatedMins}m`;
+
+  const pomodoroValue = `●${task.pomodoroCompleted} / ●${task.pomodoroEstimate}  ${estimatedStr}`;
+  const repeatLabel = task.repeatType && task.repeatType !== 'none'
+    ? task.repeatType.charAt(0).toUpperCase() + task.repeatType.slice(1)
+    : 'None';
+  const reminderLabel = task.reminder
+    ? new Date(task.reminder).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : 'None';
+
+  const flagColor = priorityFlagColors[task.priority];
 
   return (
     <motion.div
@@ -97,239 +165,113 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 20, opacity: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="h-full flex flex-col overflow-y-auto"
+      className="h-full flex flex-col"
       style={{
         background: 'var(--bg2)',
         borderLeft: '1px solid var(--brd)',
-        width: '260px',
+        width: '280px',
         flexShrink: 0,
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--brd)' }}>
-        <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-          Task Details
-        </span>
-        <button
-          onClick={onClose}
-          className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
-          style={{ color: 'var(--t3)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.color = 'var(--t)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-        >
-          <X size={13} />
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-5 p-4 flex-1">
-        {/* Title */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--t3)' }}>Title</label>
-          <textarea
-            value={titleValue}
-            onChange={(e) => setTitleValue(e.target.value)}
-            onBlur={handleTitleBlur}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTitleBlur(); (e.target as HTMLTextAreaElement).blur(); } }}
-            rows={2}
-            className="w-full text-[13px] bg-transparent resize-none focus:outline-none border rounded-lg px-3 py-2 transition-colors"
-            style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-            onBlurCapture={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
-          />
-        </div>
-
-        {/* Priority */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Priority</label>
-          <div className="flex gap-2">
-            {PRIORITIES.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => onUpdate({ priority: p.value })}
-                className="flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: task.priority === p.value ? p.color + '25' : 'var(--card)',
-                  color: task.priority === p.value ? p.color : 'var(--t3)',
-                  border: `1.5px solid ${task.priority === p.value ? p.color : 'var(--brd)'}`,
+      <div className="flex-1 overflow-y-auto">
+        {/* Title + flag */}
+        <div className="px-4 pt-4 pb-2 flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            {isEditingTitle ? (
+              <textarea
+                autoFocus
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={handleTitleBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTitleBlur(); }
+                  if (e.key === 'Escape') { setTitleValue(task.title); setIsEditingTitle(false); }
                 }}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Due date */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Due Date</label>
-          <div className="flex gap-1.5">
-            {(['today', 'tomorrow', 'someday'] as DueDate[]).map((d) => (
-              <button
-                key={d as string}
-                onClick={() => onUpdate({ dueDate: task.dueDate === d ? null : d })}
-                className="flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all capitalize"
-                style={{
-                  background: task.dueDate === d ? 'var(--accent-d)' : 'var(--card)',
-                  color: task.dueDate === d ? 'var(--accent)' : 'var(--t3)',
-                  border: `1.5px solid ${task.dueDate === d ? 'var(--accent-g)' : 'var(--brd)'}`,
-                }}
-              >
-                {d as string}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Reminder */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Reminder</label>
-          <input
-            type="datetime-local"
-            value={msToDatetimeLocal(task.reminder)}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (!val) {
-                onUpdate({ reminder: undefined });
-              } else {
-                onUpdate({ reminder: new Date(val).getTime() });
-              }
-            }}
-            className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5 transition-colors"
-            style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
-          />
-          {task.reminder && (
-            <button
-              onClick={() => onUpdate({ reminder: undefined })}
-              className="text-[10px] mt-1 underline"
-              style={{ color: 'var(--t3)' }}
-            >
-              Clear reminder
-            </button>
-          )}
-        </div>
-
-        {/* Repeat */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Repeat</label>
-          <div className="flex gap-1.5 flex-wrap">
-            {REPEAT_OPTIONS.map((r) => {
-              const isSelected = (task.repeatType ?? 'none') === r.value;
-              return (
-                <button
-                  key={r.value}
-                  onClick={() => onUpdate({ repeatType: r.value })}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
-                  style={{
-                    background: isSelected ? 'var(--accent-d)' : 'var(--card)',
-                    color: isSelected ? 'var(--accent)' : 'var(--t3)',
-                    border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
-                  }}
-                >
-                  {r.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Subtasks */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
-            Subtasks
-            {task.subtasks.length > 0 && (
-              <span className="ml-1 normal-case font-normal">
-                ({task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length})
-              </span>
-            )}
-          </label>
-          <div className="flex flex-col gap-1 mb-2">
-            {task.subtasks.map((subtask) => (
+                rows={2}
+                className="w-full text-[15px] font-medium bg-transparent resize-none focus:outline-none leading-snug"
+                style={{ color: 'var(--t)' }}
+              />
+            ) : (
               <div
-                key={subtask.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg group"
-                style={{ background: 'var(--card)' }}
+                className="flex items-start gap-1.5 cursor-text group/title"
+                onClick={() => !task.completed && setIsEditingTitle(true)}
               >
-                <button
-                  onClick={() => toggleSubtask(task.id, subtask.id)}
-                  className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
-                  style={{
-                    borderColor: subtask.completed ? 'var(--grn)' : 'var(--brd2)',
-                    background: subtask.completed ? 'var(--grn)' : 'transparent',
-                  }}
-                >
-                  {subtask.completed && <Check size={9} color="white" strokeWidth={3} />}
-                </button>
                 <span
-                  className="flex-1 text-[12px] min-w-0 truncate"
+                  className="text-[15px] font-medium leading-snug flex-1"
                   style={{
-                    color: subtask.completed ? 'var(--t3)' : 'var(--t)',
-                    textDecoration: subtask.completed ? 'line-through' : 'none',
+                    color: task.completed ? 'var(--t3)' : 'var(--t)',
+                    textDecoration: task.completed ? 'line-through' : 'none',
                   }}
                 >
-                  {subtask.title}
+                  {task.title}
                 </span>
-                <button
-                  onClick={() => deleteSubtask(task.id, subtask.id)}
-                  className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded transition-opacity"
-                  style={{ color: 'var(--t3)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
-                >
-                  <X size={10} />
-                </button>
+                {!task.completed && (
+                  <Edit3 size={12} className="opacity-0 group-hover/title:opacity-40 mt-0.5 shrink-0 transition-opacity" style={{ color: 'var(--t3)' }} />
+                )}
               </div>
-            ))}
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <input
-              value={newSubtaskValue}
-              onChange={(e) => setNewSubtaskValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddSubtask();
-                if (e.key === 'Escape') setNewSubtaskValue('');
-              }}
-              placeholder="Add subtask…"
-              className="flex-1 text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1 transition-colors"
-              style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
-            />
-            <button
-              onClick={handleAddSubtask}
-              className="w-6 h-6 flex items-center justify-center rounded-lg shrink-0"
-              style={{ background: 'var(--accent)', color: 'white' }}
-            >
-              <Plus size={11} />
-            </button>
-          </div>
+
+          {/* Priority flag button */}
+          <button
+            onClick={() => toggleRow('priority')}
+            className="mt-0.5 shrink-0 p-1 rounded-md transition-colors"
+            style={{ color: flagColor }}
+            title="Change priority"
+          >
+            <Flag size={15} fill={task.priority !== 'p4' ? flagColor : 'none'} />
+          </button>
         </div>
 
-        {/* Tags */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Tags</label>
-          {task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {task.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
-                  style={{ background: 'var(--accent-d)', color: 'var(--accent)' }}
-                >
-                  {tag}
+        {/* Priority picker (inline expansion) */}
+        <AnimatePresence>
+          {expanded === 'priority' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden px-4 pb-2"
+            >
+              <div className="flex gap-1.5">
+                {PRIORITY_OPTIONS.map((p) => (
                   <button
-                    onClick={() => removeTag(task.id, tag)}
-                    className="flex items-center justify-center w-3 h-3 rounded-full transition-opacity hover:opacity-70"
-                    style={{ color: 'var(--accent)' }}
+                    key={p.value}
+                    onClick={() => { onUpdate({ priority: p.value }); setExpanded(null); }}
+                    className="flex-1 py-1 rounded-lg text-[11px] font-medium transition-all"
+                    style={{
+                      background: task.priority === p.value ? p.color + '25' : 'var(--card)',
+                      color: task.priority === p.value ? p.color : 'var(--t3)',
+                      border: `1.5px solid ${task.priority === p.value ? p.color : 'var(--brd)'}`,
+                    }}
                   >
-                    <X size={8} />
+                    {p.label}
                   </button>
-                </span>
-              ))}
-            </div>
+                ))}
+              </div>
+            </motion.div>
           )}
-          <div className="flex items-center gap-1.5">
+        </AnimatePresence>
+
+        {/* Tags — directly below title */}
+        <div className="px-4 pb-3 flex flex-wrap gap-1.5 items-center min-h-[28px]">
+          {task.tags.map((tag) => (
+            <span
+              key={tag}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
+              style={{ background: 'var(--card)', color: 'var(--t2)', border: '1px solid var(--brd)' }}
+            >
+              #{tag}
+              <button
+                onClick={() => removeTag(task.id, tag)}
+                className="flex items-center justify-center w-3 h-3 rounded-full opacity-60 hover:opacity-100"
+                style={{ color: 'var(--t3)' }}
+              >
+                <X size={8} />
+              </button>
+            </span>
+          ))}
+          <div className="flex items-center">
             <input
               value={newTagValue}
               onChange={(e) => setNewTagValue(e.target.value)}
@@ -337,169 +279,330 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 if (e.key === 'Enter') handleAddTag();
                 if (e.key === 'Escape') setNewTagValue('');
               }}
-              placeholder="Add tag…"
-              className="flex-1 text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1 transition-colors"
-              style={{ color: 'var(--t)', borderColor: 'var(--brd)', background: 'var(--card)' }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
+              onBlur={() => { if (newTagValue.trim()) handleAddTag(); }}
+              placeholder="+ Tags"
+              className="text-[12px] bg-transparent focus:outline-none w-16 focus:w-24 transition-all"
+              style={{ color: 'var(--t3)' }}
             />
-            <button
-              onClick={handleAddTag}
-              className="w-6 h-6 flex items-center justify-center rounded-lg shrink-0"
-              style={{ background: 'var(--accent)', color: 'white' }}
-            >
-              <Plus size={11} />
-            </button>
           </div>
         </div>
 
-        {/* Pomodoro estimate */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
-            Estimated Sessions
-          </label>
-          {/* Coffee cup row */}
-          <div className="flex items-center gap-2 mb-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <CoffeeCup
-                key={i}
-                filled={i < displayCount}
-                onClick={() => onUpdate({ pomodoroEstimate: i + 1 })}
-                onHover={() => setHoverCount(i + 1)}
-                onLeave={() => setHoverCount(null)}
-              />
-            ))}
-          </div>
-          {/* Fine-tune stepper */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
-              className="w-6 h-6 flex items-center justify-center rounded-md"
-              style={{ background: 'var(--card)', color: 'var(--t3)' }}
-            >
-              <Minus size={11} />
-            </button>
-            <span className="text-[13px] tabular-nums" style={{ color: 'var(--t)' }}>
-              {task.pomodoroEstimate} session{task.pomodoroEstimate !== 1 ? 's' : ''}
-            </span>
-            <button
-              onClick={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
-              className="w-6 h-6 flex items-center justify-center rounded-md"
-              style={{ background: 'var(--card)', color: 'var(--t3)' }}
-            >
-              <Plus size={11} />
-            </button>
-            <span className="text-[11px] ml-2" style={{ color: 'var(--t3)' }}>
-              ({task.pomodoroCompleted} done)
-            </span>
-          </div>
-        </div>
+        {/* Divider */}
+        <div style={{ height: 1, background: 'var(--brd)' }} />
 
-        {/* Custom timer */}
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
-            Custom Timer
+        {/* Detail rows */}
+        <DetailRow
+          icon={<Clock size={13} />}
+          label="Pomodoro"
+          value={pomodoroValue}
+          valueColor="var(--t2)"
+          expanded={expanded === 'pomodoro'}
+          onClick={() => toggleRow('pomodoro')}
+        >
+          <div className="pt-2 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Sessions</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  −
+                </button>
+                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
+                  {task.pomodoroEstimate}
+                </span>
+                <button
+                  onClick={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Work (min)</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? settings.workDuration) - 1) })}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  −
+                </button>
+                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
+                  {task.customWorkDuration ?? settings.workDuration}
+                </span>
+                <button
+                  onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? settings.workDuration) + 1 })}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Break (min)</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? settings.shortBreakDuration) - 1) })}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  −
+                </button>
+                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
+                  {task.customShortBreakDuration ?? settings.shortBreakDuration}
+                </span>
+                <button
+                  onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? settings.shortBreakDuration) + 1 })}
+                  className="w-5 h-5 flex items-center justify-center rounded"
+                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
             {(task.customWorkDuration || task.customShortBreakDuration) && (
               <button
                 onClick={() => onUpdate({ customWorkDuration: undefined, customShortBreakDuration: undefined })}
-                className="ml-2 normal-case text-[10px] underline"
+                className="text-[11px] text-left underline"
                 style={{ color: 'var(--t3)' }}
               >
-                reset to default
+                Reset to default
               </button>
             )}
-          </label>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Work (min)</div>
-              <div className="flex items-center gap-1.5 p-2 rounded-lg" style={{ background: 'var(--card)' }}>
+          </div>
+        </DetailRow>
+
+        <DetailRow
+          icon={<Calendar size={13} />}
+          label="Due Date"
+          value={formatDueDate(task.dueDate)}
+          valueColor={task.dueDate ? 'var(--accent)' : 'var(--t3)'}
+          expanded={expanded === 'dueDate'}
+          onClick={() => toggleRow('dueDate')}
+        >
+          <div className="pt-2 flex gap-1.5">
+            {(['today', 'tomorrow', 'someday', null] as (DueDate | null)[]).map((d) => {
+              const label = d === null ? 'None' : d.charAt(0).toUpperCase() + d.slice(1);
+              const isSelected = (task.dueDate ?? null) === d;
+              return (
                 <button
-                  onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? 30) - 1) })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ color: 'var(--t3)' }}
+                  key={String(d)}
+                  onClick={() => { onUpdate({ dueDate: d ?? undefined }); setExpanded(null); }}
+                  className="flex-1 py-1 rounded-lg text-[11px] font-medium transition-all"
+                  style={{
+                    background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
+                    color: isSelected ? 'var(--accent)' : 'var(--t3)',
+                    border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
+                  }}
                 >
-                  <Minus size={10} />
+                  {label}
                 </button>
-                <span className="flex-1 text-center text-[13px] tabular-nums" style={{ color: 'var(--t)' }}>
-                  {task.customWorkDuration ?? '–'}
-                </span>
+              );
+            })}
+          </div>
+        </DetailRow>
+
+        <DetailRow
+          icon={<FolderOpen size={13} />}
+          label="Project"
+          value={projects.find((p) => p.id === task.projectId)?.name ?? 'None'}
+          valueColor={task.projectId ? 'var(--t2)' : 'var(--t3)'}
+          expanded={expanded === 'project'}
+          onClick={() => toggleRow('project')}
+        >
+          <div className="pt-2 flex flex-col gap-1">
+            <button
+              onClick={() => { onUpdate({ projectId: undefined }); setExpanded(null); }}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
+              style={{ background: !task.projectId ? 'var(--bg2)' : 'transparent', color: !task.projectId ? 'var(--t2)' : 'var(--t3)' }}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
+              <span className="text-[12px]">None</span>
+            </button>
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => { onUpdate({ projectId: p.id }); setExpanded(null); }}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
+                style={{ background: task.projectId === p.id ? 'var(--bg2)' : 'transparent', color: task.projectId === p.id ? 'var(--t)' : 'var(--t3)' }}
+                onMouseEnter={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'var(--bg2)'; }}
+                onMouseLeave={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
+                <span className="text-[12px]">{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </DetailRow>
+
+        <DetailRow
+          icon={<Bell size={13} />}
+          label="Reminder"
+          value={reminderLabel}
+          valueColor={task.reminder ? 'var(--t2)' : 'var(--t3)'}
+          expanded={expanded === 'reminder'}
+          onClick={() => toggleRow('reminder')}
+        >
+          <div className="pt-2 flex flex-col gap-2">
+            <input
+              type="datetime-local"
+              value={msToDatetimeLocal(task.reminder)}
+              onChange={(e) => {
+                const val = e.target.value;
+                onUpdate({ reminder: val ? new Date(val).getTime() : undefined });
+              }}
+              className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5"
+              style={{ color: 'var(--t)', borderColor: 'var(--brd)' }}
+            />
+            {task.reminder && (
+              <button
+                onClick={() => { onUpdate({ reminder: undefined }); setExpanded(null); }}
+                className="text-[11px] text-left underline"
+                style={{ color: 'var(--t3)' }}
+              >
+                Clear reminder
+              </button>
+            )}
+          </div>
+        </DetailRow>
+
+        <DetailRow
+          icon={<RefreshCw size={13} />}
+          label="Repeat"
+          value={repeatLabel}
+          valueColor={task.repeatType && task.repeatType !== 'none' ? 'var(--t2)' : 'var(--t3)'}
+          expanded={expanded === 'repeat'}
+          onClick={() => toggleRow('repeat')}
+        >
+          <div className="pt-2 flex gap-1.5 flex-wrap">
+            {(['none', 'daily', 'weekly', 'monthly'] as RepeatType[]).map((r) => {
+              const isSelected = (task.repeatType ?? 'none') === r;
+              const label = r.charAt(0).toUpperCase() + r.slice(1);
+              return (
                 <button
-                  onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? 30) + 1 })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ color: 'var(--t3)' }}
+                  key={r}
+                  onClick={() => { onUpdate({ repeatType: r }); setExpanded(null); }}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+                  style={{
+                    background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
+                    color: isSelected ? 'var(--accent)' : 'var(--t3)',
+                    border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
+                  }}
                 >
-                  <Plus size={10} />
+                  {label}
                 </button>
-              </div>
+              );
+            })}
+          </div>
+        </DetailRow>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: 'var(--brd)', margin: '4px 0' }} />
+
+        {/* Subtasks */}
+        <div className="px-4 py-2">
+          {task.subtasks.map((subtask) => (
+            <div
+              key={subtask.id}
+              className="flex items-center gap-2.5 py-2 group/sub border-b"
+              style={{ borderColor: 'var(--brd)' }}
+            >
+              <button
+                onClick={() => toggleSubtask(task.id, subtask.id)}
+                className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+                style={{
+                  borderColor: subtask.completed ? 'var(--grn)' : 'var(--brd2)',
+                  background: subtask.completed ? 'var(--grn)' : 'transparent',
+                }}
+              >
+                {subtask.completed && <Check size={8} color="white" strokeWidth={3} />}
+              </button>
+              <span
+                className="flex-1 text-[13px] min-w-0"
+                style={{
+                  color: subtask.completed ? 'var(--t3)' : 'var(--t)',
+                  textDecoration: subtask.completed ? 'line-through' : 'none',
+                }}
+              >
+                {subtask.title}
+              </span>
+              <button
+                onClick={() => deleteSubtask(task.id, subtask.id)}
+                className="opacity-0 group-hover/sub:opacity-100 transition-opacity"
+                style={{ color: 'var(--t3)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+              >
+                <X size={11} />
+              </button>
             </div>
-            <div className="flex-1">
-              <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Break (min)</div>
-              <div className="flex items-center gap-1.5 p-2 rounded-lg" style={{ background: 'var(--card)' }}>
-                <button
-                  onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? 10) - 1) })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ color: 'var(--t3)' }}
-                >
-                  <Minus size={10} />
-                </button>
-                <span className="flex-1 text-center text-[13px] tabular-nums" style={{ color: 'var(--t)' }}>
-                  {task.customShortBreakDuration ?? '–'}
-                </span>
-                <button
-                  onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? 10) + 1 })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ color: 'var(--t3)' }}
-                >
-                  <Plus size={10} />
-                </button>
-              </div>
-            </div>
+          ))}
+          {/* Add subtask input */}
+          <div className="flex items-center gap-2 pt-2">
+            <div
+              className="w-4 h-4 rounded-full border-2 shrink-0"
+              style={{ borderColor: 'var(--brd2)' }}
+            />
+            <input
+              value={newSubtaskValue}
+              onChange={(e) => setNewSubtaskValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddSubtask();
+                if (e.key === 'Escape') setNewSubtaskValue('');
+              }}
+              placeholder="Add a step…"
+              className="flex-1 text-[13px] bg-transparent focus:outline-none"
+              style={{ color: 'var(--t)', caretColor: 'var(--accent)' }}
+            />
+            {newSubtaskValue.trim() && (
+              <button
+                onClick={handleAddSubtask}
+                className="w-5 h-5 flex items-center justify-center rounded shrink-0"
+                style={{ background: 'var(--accent)', color: 'white' }}
+              >
+                <Plus size={10} />
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Project */}
-        {projects.length > 0 && (
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>Project</label>
-            <div className="flex flex-col gap-1">
-              <button
-                onClick={() => onUpdate({ projectId: undefined })}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors"
-                style={{ background: !task.projectId ? 'var(--card)' : 'transparent', color: !task.projectId ? 'var(--t2)' : 'var(--t3)' }}
-              >
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--brd2)' }} />
-                <span className="text-[12px]">None</span>
-              </button>
-              {projects.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => onUpdate({ projectId: p.id })}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors"
-                  style={{ background: task.projectId === p.id ? 'var(--card)' : 'transparent', color: task.projectId === p.id ? 'var(--t)' : 'var(--t3)' }}
-                  onMouseEnter={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'var(--card)'; }}
-                  onMouseLeave={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
-                  <span className="text-[12px]">{p.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Delete */}
-      <div className="p-4 border-t shrink-0" style={{ borderColor: 'var(--brd)' }}>
-        <button
-          onClick={() => { onDelete(); onClose(); }}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[13px] font-medium transition-all"
-          style={{ color: '#e8453c', background: 'rgba(232,69,60,0.1)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(232,69,60,0.18)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(232,69,60,0.1)')}
-        >
-          <Trash2 size={13} />
-          Delete Task
-        </button>
+      {/* Footer */}
+      <div
+        className="flex items-center justify-between px-4 py-3 border-t shrink-0"
+        style={{ borderColor: 'var(--brd)' }}
+      >
+        <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
+          Created on {formatCreatedAt(task.createdAt)}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setIsEditingTitle(true)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: 'var(--t3)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.color = 'var(--t)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
+            title="Edit title"
+          >
+            <Edit3 size={13} />
+          </button>
+          <button
+            onClick={() => { onDelete(); onClose(); }}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: 'var(--t3)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(232,69,60,0.12)'; e.currentTarget.style.color = '#e8453c'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
+            title="Delete task"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
     </motion.div>
   );
