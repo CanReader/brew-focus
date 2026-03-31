@@ -26,6 +26,7 @@ interface ContextMenuState {
 }
 
 function getViewTitle(view: SidebarView, projects: { id: string; name: string }[]): string {
+  if (view.startsWith('tag:')) return `#${view.slice(4)}`;
   switch (view) {
     case 'today': return 'Today';
     case 'tomorrow': return 'Tomorrow';
@@ -38,7 +39,18 @@ function getViewTitle(view: SidebarView, projects: { id: string; name: string }[
   }
 }
 
+function formatEstimate(totalMinutes: number): string {
+  if (totalMinutes < 60) return `${totalMinutes}m`;
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
 function filterTasks(tasks: Task[], view: SidebarView): Task[] {
+  if (view.startsWith('tag:')) {
+    const tag = view.slice(4);
+    return tasks.filter((t) => !t.completed && t.tags.includes(tag));
+  }
   switch (view) {
     case 'today': return tasks.filter((t) => !t.completed && t.dueDate === 'today');
     case 'tomorrow': return tasks.filter((t) => !t.completed && t.dueDate === 'tomorrow');
@@ -129,6 +141,12 @@ export const TasksScreen: React.FC = () => {
     setTimerActiveTask(next);
   };
 
+  const handlePlayTask = (task: Task) => {
+    setActiveTask(task.id);
+    setTimerActiveTask(task.id);
+    start();
+  };
+
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
     e.preventDefault();
     e.stopPropagation();
@@ -144,6 +162,12 @@ export const TasksScreen: React.FC = () => {
   const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
 
   const displayPomodoros = hoverPomodoros ?? newTaskPomodoros;
+
+  // BUG 3 FIX: use per-task work duration for estimate calculation
+  const totalEstimateMinutes = viewTasks.reduce((s, t) => {
+    const workMin = t.customWorkDuration ?? settings.workDuration;
+    return s + t.pomodoroEstimate * workMin;
+  }, 0);
 
   return (
     <div className="flex h-full relative" style={{ background: 'var(--bg)' }}>
@@ -285,7 +309,7 @@ export const TasksScreen: React.FC = () => {
                   <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>Tasks</span>
                   <span style={{ color: 'var(--t3)' }}>·</span>
                   <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
-                    {viewTasks.reduce((s, t) => s + t.pomodoroEstimate, 0) * 25}m estimated
+                    {formatEstimate(totalEstimateMinutes)} estimated
                   </span>
                 </div>
               )}
@@ -302,6 +326,7 @@ export const TasksScreen: React.FC = () => {
                           onToggle={() => toggleTask(task.id)}
                           onUpdate={(partial) => updateTask(task.id, partial)}
                           onSetActive={() => handleSetActive(task)}
+                          onPlay={() => handlePlayTask(task)}
                           onContextMenu={(e) => handleContextMenu(e, task)}
                         />
                       </div>
