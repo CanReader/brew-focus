@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Calendar, CalendarDays, AlignLeft, CloudSun,
-  CheckCircle2, FolderOpen, Plus, X, ChevronDown
+  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { Task, PROJECT_COLORS } from '../../types';
@@ -10,7 +10,7 @@ import { useTimerStore } from '../../store/timerStore';
 
 export type SidebarView =
   | 'today' | 'tomorrow' | 'week' | 'planned' | 'someday'
-  | 'completed' | 'all' | string; // string = project id
+  | 'completed' | 'all' | string; // string = project id or tag:tagname
 
 interface SidebarProps {
   activeView: SidebarView;
@@ -34,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[5]);
   const [showProjects, setShowProjects] = useState(true);
+  const [showTags, setShowTags] = useState(true);
 
   const active = tasks.filter((t) => !t.completed);
   const completed = tasks.filter((t) => t.completed);
@@ -45,6 +46,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   const allTasks = active;
 
   const todayEstimate = todayTasks.reduce((s, t) => s + t.pomodoroEstimate * 25 * 60, 0);
+
+  // Collect all unique tags from all tasks
+  const allTags = Array.from(new Set(tasks.flatMap((t) => t.tags))).sort();
 
   const handleAddProject = async () => {
     const name = newProjectName.trim();
@@ -250,6 +254,63 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
             )}
           </AnimatePresence>
         </div>
+
+        {/* Tags section */}
+        {allTags.length > 0 && (
+          <div className="mt-2 mx-2">
+            <button
+              onClick={() => setShowTags(!showTags)}
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--t3)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--t2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+            >
+              <ChevronDown
+                size={11}
+                style={{ transform: showTags ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
+              />
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Tags</span>
+            </button>
+
+            <AnimatePresence>
+              {showTags && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  {allTags.map((tag) => {
+                    const tagView = `tag:${tag}`;
+                    const isActive = activeView === tagView;
+                    const tagCount = tasks.filter((t) => !t.completed && t.tags.includes(tag)).length;
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => onViewChange(tagView)}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-all text-left"
+                        style={{
+                          background: isActive ? 'var(--card)' : 'transparent',
+                          color: isActive ? 'var(--t)' : 'var(--t2)',
+                        }}
+                        onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--card)'; }}
+                        onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <Tag size={11} style={{ color: isActive ? 'var(--accent)' : 'var(--t3)', flexShrink: 0 }} />
+                        <span className="flex-1 text-[13px] truncate">{tag}</span>
+                        {tagCount > 0 && (
+                          <span className="text-[11px] shrink-0" style={{ color: isActive ? 'var(--accent)' : 'var(--t3)' }}>
+                            {tagCount}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Bottom: elapsed today */}
