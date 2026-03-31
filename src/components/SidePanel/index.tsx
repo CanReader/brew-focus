@@ -1,7 +1,7 @@
 import React from 'react';
 import { FocusTimeWidget } from './FocusTimeWidget';
 import { UpcomingWidget } from './UpcomingWidget';
-import { HistoryWidget } from './HistoryWidget';
+import { FocusCalendar } from './FocusCalendar';
 
 export const SidePanel: React.FC = () => {
   return (
@@ -14,7 +14,7 @@ export const SidePanel: React.FC = () => {
       </h3>
       <FocusTimeWidget />
       <UpcomingWidget />
-      <HistoryWidget />
+      <FocusCalendar />
       <div className="h-4" /> {/* Bottom padding */}
     </div>
   );
