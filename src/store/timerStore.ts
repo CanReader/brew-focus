@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { TimerPhase, TimerSession } from '../types';
-import { LazyStore } from '@tauri-apps/plugin-store';
+import Database from '@tauri-apps/plugin-sql';
 import { nanoid } from '../utils/nanoid';
 
-const SESSIONS_KEY = 'sessions';
-const TODAY_FOCUS_KEY = 'todayFocus';
+let _db: Database | null = null;
 
-const store = new LazyStore('brew-focus.json');
+async function getDb(): Promise<Database> {
+  if (!_db) _db = await Database.load('sqlite:brewfocus.db');
+  return _db;
+}
 
 function todayStr() {
   return new Date().toISOString().split('T')[0];
@@ -41,8 +43,8 @@ interface TimerStore {
 
 export const useTimerStore = create<TimerStore>((set, get) => ({
   phase: 'work',
-  secondsLeft: 25 * 60,
-  totalSeconds: 25 * 60,
+  secondsLeft: 30 * 60,
+  totalSeconds: 30 * 60,
   isRunning: false,
   sessionCount: 0,
   completedPomodoros: 0,
@@ -54,13 +56,29 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   loadState: async (workDuration) => {
     try {
-      const savedSessions = await store.get<TimerSession[]>(SESSIONS_KEY);
-      const todayFocusData = await store.get<{ date: string; seconds: number }>(TODAY_FOCUS_KEY);
+      const db = await getDb();
       const today = todayStr();
-      const todayFocusSeconds =
-        todayFocusData && todayFocusData.date === today ? todayFocusData.seconds : 0;
+
+      const sessionRows = await db.select<Record<string, unknown>[]>(
+        'SELECT * FROM sessions ORDER BY startedAt DESC LIMIT 100'
+      );
+      const sessions: TimerSession[] = sessionRows.map((r) => ({
+        id: r.id as string,
+        startedAt: r.startedAt as number,
+        duration: r.duration as number,
+        phase: r.phase as TimerPhase,
+        taskId: r.taskId as string | undefined,
+        taskTitle: r.taskTitle as string | undefined,
+      }));
+
+      const focusRows = await db.select<{ date: string; seconds: number }[]>(
+        "SELECT * FROM focus_days WHERE date=?",
+        [today]
+      );
+      const todayFocusSeconds = focusRows[0]?.seconds ?? 0;
+
       set({
-        sessions: savedSessions || [],
+        sessions,
         todayFocusSeconds,
         lastResetDate: today,
         secondsLeft: workDuration * 60,
@@ -177,10 +195,13 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const sessions = [session, ...get().sessions].slice(0, 100);
     set({ sessions });
     try {
-      await store.set(SESSIONS_KEY, sessions);
-      await store.save();
+      const db = await getDb();
+      await db.execute(
+        'INSERT INTO sessions (id, startedAt, duration, phase, taskId, taskTitle) VALUES (?, ?, ?, ?, ?, ?)',
+        [session.id, session.startedAt, session.duration, session.phase, session.taskId ?? null, session.taskTitle ?? null]
+      );
     } catch (e) {
-      console.warn('Failed to save sessions:', e);
+      console.warn('Failed to save session:', e);
     }
   },
 
@@ -188,8 +209,12 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const newTotal = get().todayFocusSeconds + seconds;
     set({ todayFocusSeconds: newTotal });
     try {
-      await store.set(TODAY_FOCUS_KEY, { date: todayStr(), seconds: newTotal });
-      await store.save();
+      const db = await getDb();
+      const today = todayStr();
+      await db.execute(
+        'INSERT OR REPLACE INTO focus_days (date, seconds) VALUES (?, ?)',
+        [today, newTotal]
+      );
     } catch (e) {
       console.warn('Failed to save focus time:', e);
     }
