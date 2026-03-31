@@ -5,6 +5,7 @@ import { FocusScreen } from './components/FocusScreen';
 import { TasksScreen } from './components/TasksScreen';
 import { TimerModal } from './components/TimerModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ReportsModal } from './components/ReportsModal';
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
@@ -15,6 +16,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('focus');
   const [timerModalOpen, setTimerModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
 
   const { loadSettings, settings } = useSettingsStore();
@@ -96,6 +98,7 @@ function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onSettingsClick={() => setSettingsOpen(true)}
+        onReportsClick={() => setReportsOpen(true)}
       />
 
       {/* Main content area */}
@@ -130,6 +133,7 @@ function App() {
       {/* Modals */}
       <TimerModal open={timerModalOpen} onClose={() => setTimerModalOpen(false)} />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ReportsModal open={reportsOpen} onClose={() => setReportsOpen(false)} />
     </div>
   );
 }

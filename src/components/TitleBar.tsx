@@ -1,17 +1,19 @@
 import React from 'react';
-import { Settings, Minus, Square, X } from 'lucide-react';
+import { Settings, Minus, Square, X, BarChart2 } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
 interface TitleBarProps {
   activeTab: 'focus' | 'tasks';
   onTabChange: (tab: 'focus' | 'tasks') => void;
   onSettingsClick: () => void;
+  onReportsClick: () => void;
 }
 
 export const TitleBar: React.FC<TitleBarProps> = ({
   activeTab,
   onTabChange,
   onSettingsClick,
+  onReportsClick,
 }) => {
   const handleMinimize = async () => {
     const win = getCurrentWindow();
@@ -46,10 +48,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           style={{ background: 'var(--accent)' }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 4h10v1H3V4zM3 6h8c0 2.5-1 5-4 5S3 8.5 3 6z" fill="white" opacity="0.9"/>
-            <path d="M11 7h1.5a1.5 1.5 0 000-3H11" stroke="white" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-            <path d="M5 11.5c1 .5 5 .5 6 0" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
-            <path d="M5.5 3.5c0-1 1-1.5 1-2.5M7.5 3.5c0-1 1-1.5 1-2.5" stroke="white" strokeWidth="1" strokeLinecap="round" opacity="0.7"/>
+            <path d="M3 4h10v1H3V4zM3 6h8c0 2.5-1 5-4 5S3 8.5 3 6z" fill="white" opacity="0.9" />
+            <path d="M11 7h1.5a1.5 1.5 0 000-3H11" stroke="white" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+            <path d="M5 11.5c1 .5 5 .5 6 0" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M5.5 3.5c0-1 1-1.5 1-2.5M7.5 3.5c0-1 1-1.5 1-2.5" stroke="white" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
           </svg>
         </div>
         <span className="font-fraunces text-[17px] font-semibold" style={{ color: 'var(--t)' }}>
@@ -93,14 +95,38 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       {/* Right: Settings + window controls */}
       <div className="flex items-center gap-1" data-no-drag>
         <button
-          onClick={onSettingsClick}
-          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:scale-105"
+          onClick={onReportsClick}
+          className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg transition-all duration-150 hover:scale-105 font-medium text-[12px]"
           style={{ color: 'var(--t3)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--card-h)';
+            e.currentTarget.style.color = 'var(--t)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--t3)';
+          }}
+        >
+          <BarChart2 size={14} />
+
+        </button>
+
+        <button
+          onClick={onSettingsClick}
+          className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg transition-all duration-150 hover:scale-105 font-medium text-[12px]"
+          style={{ color: 'var(--t3)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--card-h)';
+            e.currentTarget.style.color = 'var(--t)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--t3)';
+          }}
           title="Settings"
         >
-          <Settings size={15} />
+          <Settings size={14} />
+
         </button>
 
         <div className="w-px h-4 mx-1" style={{ background: 'var(--brd)' }} />

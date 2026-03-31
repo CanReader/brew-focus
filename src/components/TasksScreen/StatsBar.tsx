@@ -16,9 +16,13 @@ function formatStatTime(seconds: number): { main: string; sub: string } {
 export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
   const { todayFocusSeconds } = useTimerStore();
 
+
   const activeTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
-  const totalEstimatedSecs = activeTasks.reduce((s, t) => s + t.pomodoroEstimate * 25 * 60, 0);
+const totalEstimatedSecs = tasks.reduce((total, task) => {
+  const workMinutes = task.customWorkDuration ?? 25;
+  return total + task.pomodoroEstimate * workMinutes * 60;
+}, 0);
   const estimatedTime = formatStatTime(totalEstimatedSecs);
   const elapsedTime = formatStatTime(todayFocusSeconds);
 
