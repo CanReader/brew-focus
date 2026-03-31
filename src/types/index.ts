@@ -1,6 +1,13 @@
 // Task types
 export type Priority = 'p1' | 'p2' | 'p3' | 'p4';
 export type DueDate = 'today' | 'tomorrow' | 'someday' | null;
+export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 
 export interface Task {
   id: string;
@@ -10,10 +17,13 @@ export interface Task {
   pomodoroEstimate: number;
   pomodoroCompleted: number;
   tags: string[];
+  subtasks: SubTask[];
   createdAt: number;
   completedAt?: number;
   dueDate?: DueDate;
   projectId?: string;
+  reminder?: number; // timestamp ms
+  repeatType?: RepeatType; // default 'none'
   // Per-task timer overrides (undefined = use global settings)
   customWorkDuration?: number;       // minutes
   customShortBreakDuration?: number; // minutes
