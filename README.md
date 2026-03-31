@@ -1,46 +1,57 @@
-# Brew Focus
+# ☕ Brew Focus
 
-A coffee-themed Pomodoro timer for the desktop. Built with Tauri 2 and React.
+> A coffee-themed Pomodoro timer that lives on your desktop.
 
-![Brew Focus](https://raw.githubusercontent.com/CanReader/brew-focus/main/src-tauri/icons/128x128.png)
+Brew Focus pairs a distraction-free timer with lightweight task management — all local, no account required. As you work, an animated coffee cup fills up. When it's full, it's time for a break.
 
 ---
 
 ## Features
 
-- **Pomodoro timer** — configurable work, short break, and long break durations
-- **Animated coffee cup** — fills as your focus session progresses
-- **Task management** — create, prioritize, and reorder tasks with drag-and-drop
-- **Project organization** — group tasks by color-coded projects
-- **Session history** — tracks completed sessions and daily focus time
-- **Focus goals** — set a daily target and monitor your progress
-- **System tray** — minimize to tray, timer keeps running in the background
-- **Fullscreen mode** — distraction-free overlay during work sessions
-- **Settings** — accent color themes, auto-start, custom durations
-- **Fully local** — no account, no cloud, all data stays on your machine
+**Timer**
+- Work / short break / long break phases with configurable durations
+- Auto-start next phase option
+- Fullscreen focus overlay
+- Background timer — keeps ticking even when the window is hidden
+
+**Tasks**
+- Create tasks and assign pomodoro estimates
+- Drag-and-drop reordering
+- Group tasks into color-coded projects
+- Filter by Today, Tomorrow, or project
+
+**Stats & tracking**
+- Per-session history log
+- Daily focus time with a customizable goal
+- Pomodoro count per task
+
+**App**
+- System tray — minimize without closing, timer continues
+- 6 accent color themes
+- Fully offline — all data stored locally in a single JSON file
 
 ---
 
-## Stack
+## Installation
 
-| Layer | Technology |
-|-------|-----------|
-| Desktop shell | Tauri 2 (Rust) |
-| Frontend | React 18 + TypeScript |
-| State | Zustand |
-| Styling | Tailwind CSS + CSS custom properties |
-| Animation | Framer Motion |
-| Drag & drop | dnd-kit |
-| Persistence | Tauri plugin-store (local JSON) |
+Download the latest release for your platform from the [Releases](https://github.com/CanReader/brew-focus/releases) page.
+
+| Platform | Installer |
+|----------|-----------|
+| macOS | `.dmg` |
+| Windows | `.msi` or `.exe` |
+| Linux | `.AppImage` or `.deb` |
 
 ---
 
-## Prerequisites
+## Building from source
+
+**Prerequisites**
 
 - [Node.js](https://nodejs.org) 18+
-- [Rust](https://rustup.rs) (stable toolchain)
-- **Linux only:** WebKit2GTK and GTK development libraries
+- [Rust](https://rustup.rs) stable toolchain
 
+Linux also requires WebKit2GTK:
 ```bash
 # Ubuntu / Debian
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
@@ -49,59 +60,42 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
 sudo pacman -S webkit2gtk-4.1 gtk3 libayatana-appindicator librsvg
 ```
 
----
-
-## Development
-
+**Run in development**
 ```bash
-# Install dependencies
 npm install
-
-# Run the full desktop app with hot reload (recommended)
 npm run tauri:dev
-
-# Run the frontend dev server only (no desktop window)
-npm run dev
 ```
 
----
-
-## Build
-
+**Build a release bundle**
 ```bash
-# Produces a platform-native installer in src-tauri/target/release/bundle/
 npm run tauri build
+# Output: src-tauri/target/release/bundle/
 ```
 
 ---
 
-## Data storage
+## Tech stack
 
-All app data is persisted to a single JSON file:
+| | |
+|---|---|
+| Desktop | [Tauri 2](https://tauri.app) (Rust) |
+| UI | React 18 + TypeScript |
+| State | Zustand |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion |
+| Persistence | Tauri plugin-store |
 
-| Platform | Path |
-|----------|------|
-| Linux | `~/.local/share/com.brewfocus.app/brew-focus.json` |
+---
+
+## Data
+
+Everything is saved locally to one JSON file. No telemetry, no network requests.
+
+| Platform | Location |
+|----------|----------|
 | macOS | `~/Library/Application Support/com.brewfocus.app/brew-focus.json` |
 | Windows | `%APPDATA%\com.brewfocus.app\brew-focus.json` |
-
----
-
-## Project structure
-
-```
-src/                    React frontend
-├── components/         UI components (FocusScreen, TasksScreen, modals)
-├── store/              Zustand stores (task, timer, settings)
-├── hooks/useTimer.ts   Timer tick and phase-transition logic
-└── types/index.ts      Shared TypeScript types
-
-src-tauri/src/          Rust backend
-├── timer.rs            Background timer with Arc/Mutex state
-├── commands.rs         Tauri IPC commands
-├── tray.rs             System tray icon and menu
-└── events.rs           Event constants and payload types
-```
+| Linux | `~/.local/share/com.brewfocus.app/brew-focus.json` |
 
 ---
 
