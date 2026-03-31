@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Calendar, CalendarDays, AlignLeft, CloudSun,
-  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag
+  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { Task, PROJECT_COLORS } from '../../types';
@@ -10,7 +10,7 @@ import { useTimerStore } from '../../store/timerStore';
 
 export type SidebarView =
   | 'today' | 'tomorrow' | 'week' | 'planned' | 'someday'
-  | 'completed' | 'all' | string; // string = project id or tag:tagname
+  | 'completed' | 'all' | 'focus-week' | string; // string = project id or tag:tagname
 
 interface SidebarProps {
   activeView: SidebarView;
@@ -66,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     { id: 'someday', label: 'Someday', icon: <CloudSun size={14} />, count: somedayTasks.length, time: 0 },
     { id: 'completed', label: 'Completed', icon: <CheckCircle2 size={14} />, count: completed.length, time: 0 },
     { id: 'all', label: 'Tasks', icon: <FolderOpen size={14} />, count: allTasks.length, time: 0 },
+    { id: 'focus-week', label: 'Focus Week', icon: <BarChart2 size={14} />, count: 0, time: 0 },
   ];
 
   return (

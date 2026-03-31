@@ -17,6 +17,7 @@ import { TaskItem } from './TaskItem';
 import { Sidebar, SidebarView } from './Sidebar';
 import { TaskContextMenu } from './TaskContextMenu';
 import { TaskDetailPanel } from './TaskDetailPanel';
+import { WeeklyCalendar } from './WeeklyCalendar';
 import { Task, DueDate } from '../../types';
 
 interface ContextMenuState {
@@ -179,6 +180,10 @@ export const TasksScreen: React.FC = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         <StatsBar tasks={tasks} />
+
+        {sidebarView === 'focus-week' ? (
+          <WeeklyCalendar />
+        ) : (<>
 
         {/* Header */}
         <div className="px-6 pt-5 pb-3 shrink-0">
@@ -380,6 +385,8 @@ export const TasksScreen: React.FC = () => {
             </>
           )}
         </div>
+
+        </>)}
 
         {/* Mini timer bar at bottom */}
         <div
