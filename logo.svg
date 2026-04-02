@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="coffeeGrad" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#C4956A"/>
+      <stop offset="100%" stop-color="#6F4E37"/>
+    </radialGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3E2723"/>
+      <stop offset="100%" stop-color="#1B0F0A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="244" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#6F4E37" stroke-width="3" opacity="0.4"/>
+
+  <!-- Coffee mug body -->
+  <path d="M148 230 L148 370 Q148 395 173 395 L327 395 Q352 395 352 370 L352 230 Z" fill="#F5E6D3"/>
+
+  <!-- Coffee liquid surface -->
+  <ellipse cx="250" cy="238" rx="102" ry="26" fill="url(#coffeeGrad)"/>
+  <ellipse cx="250" cy="238" rx="102" ry="26" fill="none" stroke="#F5E6D3" stroke-width="3"/>
+
+  <!-- Mug handle -->
+  <path d="M352 275 C385 275, 405 300, 405 325 C405 350, 385 375, 352 375" fill="none" stroke="#F5E6D3" stroke-width="22" stroke-linecap="round"/>
+
+  <!-- Steam wisps -->
+  <path d="M205 205 C205 185, 218 178, 218 158 C218 138, 205 131, 205 111" fill="none" stroke="#F5E6D3" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M250 198 C250 178, 263 171, 263 151 C263 131, 250 124, 250 104" fill="none" stroke="#F5E6D3" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+  <path d="M295 205 C295 185, 308 178, 308 158 C308 138, 295 131, 295 111" fill="none" stroke="#F5E6D3" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Focus crosshair on coffee surface -->
+  <ellipse cx="250" cy="238" rx="42" ry="14" fill="none" stroke="#2C1A12" stroke-width="2.5" opacity="0.55"/>
+  <ellipse cx="250" cy="238" rx="6" ry="2.5" fill="#2C1A12" opacity="0.55"/>
+  <line x1="250" y1="216" x2="250" y2="260" stroke="#2C1A12" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="200" y1="238" x2="300" y2="238" stroke="#2C1A12" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
+</svg>
