@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, SkipForward, RotateCcw, Maximize2 } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCcw, Maximize2, PictureInPicture2 } from 'lucide-react';
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -9,6 +9,7 @@ interface TimerControlsProps {
   onSkip: () => void;
   onReset: () => void;
   onFullscreen: () => void;
+  onWidget: () => void;
 }
 
 export const TimerControls: React.FC<TimerControlsProps> = ({
@@ -18,6 +19,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
   onSkip,
   onReset,
   onFullscreen,
+  onWidget,
 }) => {
   return (
     <div className="flex items-center gap-4">
@@ -86,7 +88,10 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
         <SkipForward size={16} />
       </motion.button>
 
-      {/* Fullscreen Timer Mode */}
+      {/* Divider */}
+      <div className="w-px h-6 mx-1" style={{ background: 'var(--brd)' }} />
+
+      {/* Fullscreen */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
@@ -101,9 +106,29 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
           e.currentTarget.style.background = 'var(--card)';
           e.currentTarget.style.color = 'var(--t3)';
         }}
-        title="Timer Mode"
+        title="Fullscreen"
       >
         <Maximize2 size={14} />
+      </motion.button>
+
+      {/* Widget / PiP */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onWidget}
+        className="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+        style={{ color: 'var(--t3)', background: 'var(--card)' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--card-h)';
+          e.currentTarget.style.color = 'var(--t2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--card)';
+          e.currentTarget.style.color = 'var(--t3)';
+        }}
+        title="Widget mode"
+      >
+        <PictureInPicture2 size={14} />
       </motion.button>
     </div>
   );
