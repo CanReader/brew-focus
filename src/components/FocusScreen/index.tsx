@@ -1,21 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRight } from 'lucide-react';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTimer } from '../../hooks/useTimer';
+import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { TaskSelector } from './TaskSelector';
 import { SidePanel } from '../SidePanel';
-import { useState } from 'react';
 
-interface FocusScreenProps {
-  onOpenTimerModal: () => void;
-}
+interface FocusScreenProps {}
 
-export const FocusScreen: React.FC<FocusScreenProps> = ({ onOpenTimerModal }) => {
+export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [panelOpen, setPanelOpen] = useState(true);
   const {
     isRunning,
@@ -35,11 +33,19 @@ export const FocusScreen: React.FC<FocusScreenProps> = ({ onOpenTimerModal }) =>
     effectiveShortBreakDuration,
     effectiveLongBreakDuration,
   } = useTimer();
+  const { enterFullscreen, enterWidget } = useWindowModeContext();
 
   const timeString = formatTime(secondsLeft);
+  const prevPhaseRef = useRef(phase);
 
-  // Auto-start next session when phase changes
+  // Auto-start next session when phase actually changes (not on mount)
   useEffect(() => {
+    // Skip on initial mount — only react to genuine phase transitions
+    if (prevPhaseRef.current === phase) {
+      return;
+    }
+    prevPhaseRef.current = phase;
+
     const expectedTotal =
       phase === 'work'
         ? effectiveWorkDuration * 60
@@ -124,7 +130,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = ({ onOpenTimerModal }) =>
             onPause={pause}
             onSkip={handleSkip}
             onReset={handleReset}
-            onFullscreen={onOpenTimerModal}
+            onFullscreen={enterFullscreen}
+            onWidget={enterWidget}
           />
         </div>
       </div>

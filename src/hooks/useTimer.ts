@@ -3,6 +3,12 @@ import { useTimerStore } from '../store/timerStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
 
+// Module-level tracking to detect genuine activeTaskId changes vs component re-mounts.
+// Multiple components use useTimer (FocusScreen, TasksScreen, TimerView), and each mount
+// triggers useEffect. Without this, switching tabs or window modes resets the timer.
+let _lastSyncedActiveTaskId: string | null | undefined = undefined;
+let _initialTimerSyncDone = false;
+
 export function useTimer() {
   const {
     isRunning,
@@ -18,7 +24,7 @@ export function useTimer() {
   } = useTimerStore();
 
   const { settings } = useSettingsStore();
-  const { tasks, incrementPomodoroCompleted } = useTaskStore();
+  const { tasks, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
   const sessionStartRef = useRef<number>(Date.now());
   const accumulatedRef = useRef<number>(0);
   const prevRunningRef = useRef<boolean>(false);
@@ -29,15 +35,27 @@ export function useTimer() {
   const effectiveShortBreakDuration = activeTask?.customShortBreakDuration ?? settings.shortBreakDuration;
   const effectiveLongBreakDuration = activeTask?.customLongBreakDuration ?? settings.longBreakDuration;
 
-  // BUG 1 FIX: When activeTaskId changes and the timer is not running,
-  // refresh the timer display to reflect the task's custom durations (or global defaults).
+  // Update timer display when:
+  // 1. Tasks finish loading for the first time (app init with a pre-selected task)
+  // 2. The user genuinely changes the active task
+  // Does NOT fire on component re-mounts (tab switches, fullscreen/widget transitions).
   useEffect(() => {
-    if (!isRunning) {
+    if (!tasksLoaded) return;
+
+    const isInitialSync = !_initialTimerSyncDone;
+    const taskActuallyChanged = _lastSyncedActiveTaskId !== undefined && _lastSyncedActiveTaskId !== activeTaskId;
+
+    if (isInitialSync) {
+      _initialTimerSyncDone = true;
+    }
+
+    _lastSyncedActiveTaskId = activeTaskId;
+
+    if ((isInitialSync || taskActuallyChanged) && !isRunning) {
       setPhase(phase, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration);
     }
-    // We only want to re-run when the active task changes, not on every settings change during a run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTaskId]);
+  }, [activeTaskId, tasksLoaded]);
 
   // Track when running starts/stops to accumulate focus time
   useEffect(() => {

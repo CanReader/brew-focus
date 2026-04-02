@@ -5,6 +5,7 @@ import {
   CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { Task, PROJECT_COLORS } from '../../types';
 import { useTimerStore } from '../../store/timerStore';
 
@@ -29,6 +30,7 @@ function formatTime(seconds: number) {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
   const { tasks, projects, addProject, deleteProject } = useTaskStore();
+  const { settings } = useSettingsStore();
   const { todayFocusSeconds } = useTimerStore();
   const [addingProject, setAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -45,7 +47,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   const plannedTasks = active.filter((t) => t.dueDate && t.dueDate !== 'someday');
   const allTasks = active;
 
-  const todayEstimate = todayTasks.reduce((s, t) => s + t.pomodoroEstimate * 25 * 60, 0);
+  const todayEstimate = todayTasks.reduce((s, t) => {
+    const workMin = t.customWorkDuration ?? settings.workDuration;
+    return s + t.pomodoroEstimate * workMin * 60;
+  }, 0);
 
   // Collect all unique tags from all tasks
   const allTags = Array.from(new Set(tasks.flatMap((t) => t.tags))).sort();

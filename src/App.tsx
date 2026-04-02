@@ -3,25 +3,25 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { TitleBar } from './components/TitleBar';
 import { FocusScreen } from './components/FocusScreen';
 import { TasksScreen } from './components/TasksScreen';
-import { TimerModal } from './components/TimerModal';
+import { ReportsScreen } from './components/ReportsScreen';
+import { TimerView } from './components/FocusScreen/TimerView';
 import { SettingsModal } from './components/SettingsModal';
-import { ReportsModal } from './components/ReportsModal';
+import { WindowModeProvider, useWindowModeContext } from './contexts/WindowModeContext';
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
 
-type Tab = 'focus' | 'tasks';
+type Tab = 'focus' | 'tasks' | 'reports';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('focus');
-  const [timerModalOpen, setTimerModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
 
-  const { loadSettings, settings } = useSettingsStore();
+  const { loadSettings } = useSettingsStore();
   const { loadTasks } = useTaskStore();
   const { loadState } = useTimerStore();
+  const { isFullscreen, isWidget } = useWindowModeContext();
 
   // Initialize all stores on mount
   useEffect(() => {
@@ -30,7 +30,9 @@ function App() {
         loadSettings(),
         loadTasks(),
       ]);
-      await loadState(settings.workDuration);
+      // Read current settings from the store directly to avoid stale closure
+      const currentSettings = useSettingsStore.getState().settings;
+      await loadState(currentSettings.workDuration);
       setAppReady(true);
     };
     init();
@@ -47,23 +49,11 @@ function App() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center"
-            style={{ background: 'var(--accent)' }}
-          >
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M7 7h14v1.5H7V7z" fill="white" opacity="0.9" />
-              <path d="M7 10h12c0 4-2 8.5-6 8.5S7 14 7 10z" fill="white" opacity="0.9" />
-              <path
-                d="M19 11h2a2.5 2.5 0 000-5h-2"
-                stroke="white"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                fill="none"
-              />
-              <path d="M9 19.5c1.5.8 8 .8 10 0" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Brew Focus"
+            className="w-12 h-12 rounded-2xl"
+          />
           <div className="text-center">
             <div className="font-fraunces text-xl font-semibold" style={{ color: 'var(--t)' }}>
               Brew Focus
@@ -88,6 +78,17 @@ function App() {
     );
   }
 
+  // Fullscreen mode - show only timer
+  if (isFullscreen) {
+    return <TimerView variant="fullscreen" />;
+  }
+
+  // Widget mode - show compact timer
+  if (isWidget) {
+    return <TimerView variant="widget" />;
+  }
+
+  // Normal mode
   return (
     <div
       className="w-full h-full flex flex-col overflow-hidden"
@@ -98,13 +99,12 @@ function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onSettingsClick={() => setSettingsOpen(true)}
-        onReportsClick={() => setReportsOpen(true)}
       />
 
       {/* Main content area */}
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
-          {activeTab === 'focus' ? (
+          {activeTab === 'focus' && (
             <motion.div
               key="focus"
               initial={{ opacity: 0, x: -20 }}
@@ -113,9 +113,10 @@ function App() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute inset-0"
             >
-              <FocusScreen onOpenTimerModal={() => setTimerModalOpen(true)} />
+              <FocusScreen />
             </motion.div>
-          ) : (
+          )}
+          {activeTab === 'tasks' && (
             <motion.div
               key="tasks"
               initial={{ opacity: 0, x: 20 }}
@@ -127,14 +128,32 @@ function App() {
               <TasksScreen />
             </motion.div>
           )}
+          {activeTab === 'reports' && (
+            <motion.div
+              key="reports"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute inset-0"
+            >
+              <ReportsScreen />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
       {/* Modals */}
-      <TimerModal open={timerModalOpen} onClose={() => setTimerModalOpen(false)} />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <ReportsModal open={reportsOpen} onClose={() => setReportsOpen(false)} />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <WindowModeProvider>
+      <AppContent />
+    </WindowModeProvider>
   );
 }
 

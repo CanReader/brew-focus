@@ -6,7 +6,6 @@ const PX_PER_HOUR = 40;           // pixels per hour
 const TOTAL_H = PX_PER_HOUR * 24; // 960px for full day
 const LABEL_W = 30;
 const RANGE_START = 0;
-const RANGE_END = 24 * 60;
 const PX_PER_MIN = PX_PER_HOUR / 60;
 
 function dateKey(d: Date): string {

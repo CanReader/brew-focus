@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Trash2, ChevronRight, Minus, Plus } from 'lucide-react';
 import { Task, Project, Priority, DueDate } from '../../types';
+import { useSettingsStore } from '../../store/settingsStore';
 
 interface TaskContextMenuProps {
   task: Task;
@@ -29,6 +30,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   onDelete,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const { settings } = useSettingsStore();
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
@@ -119,7 +121,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
             <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Work</div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => onUpdate({ customWorkDuration: Math.max(1, (workDur ?? 25) - 1) })}
+                onClick={() => onUpdate({ customWorkDuration: Math.max(1, (workDur ?? settings.workDuration) - 1) })}
                 className="w-5 h-5 flex items-center justify-center rounded"
                 style={{ background: 'var(--brd)', color: 'var(--t3)' }}
               ><Minus size={9} /></button>
@@ -127,7 +129,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
                 {workDur ?? '—'}
               </span>
               <button
-                onClick={() => onUpdate({ customWorkDuration: (workDur ?? 25) + 1 })}
+                onClick={() => onUpdate({ customWorkDuration: (workDur ?? settings.workDuration) + 1 })}
                 className="w-5 h-5 flex items-center justify-center rounded"
                 style={{ background: 'var(--brd)', color: 'var(--t3)' }}
               ><Plus size={9} /></button>
@@ -137,7 +139,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
             <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Break</div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (shortDur ?? 5) - 1) })}
+                onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (shortDur ?? settings.shortBreakDuration) - 1) })}
                 className="w-5 h-5 flex items-center justify-center rounded"
                 style={{ background: 'var(--brd)', color: 'var(--t3)' }}
               ><Minus size={9} /></button>
@@ -145,7 +147,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
                 {shortDur ?? '—'}
               </span>
               <button
-                onClick={() => onUpdate({ customShortBreakDuration: (shortDur ?? 5) + 1 })}
+                onClick={() => onUpdate({ customShortBreakDuration: (shortDur ?? settings.shortBreakDuration) + 1 })}
                 className="w-5 h-5 flex items-center justify-center rounded"
                 style={{ background: 'var(--brd)', color: 'var(--t3)' }}
               ><Plus size={9} /></button>
