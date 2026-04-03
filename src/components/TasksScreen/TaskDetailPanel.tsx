@@ -90,6 +90,35 @@ const DetailRow: React.FC<{
   </div>
 );
 
+const PomodoroRow: React.FC<{
+  label: string;
+  value: number;
+  min: number;
+  suffix?: string;
+  onDec: () => void;
+  onInc: () => void;
+}> = ({ label, value, min, suffix, onDec, onInc }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={onDec}
+        disabled={value <= min}
+        className="w-5 h-5 flex items-center justify-center rounded transition-opacity"
+        style={{ background: 'var(--bg2)', color: 'var(--t3)', opacity: value <= min ? 0.3 : 1 }}
+      >−</button>
+      <span className="text-[12px] tabular-nums text-center" style={{ color: 'var(--t)', minWidth: suffix ? 48 : 20 }}>
+        {value}{suffix ? ` ${suffix}` : ''}
+      </span>
+      <button
+        onClick={onInc}
+        className="w-5 h-5 flex items-center justify-center rounded"
+        style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+      >+</button>
+    </div>
+  </div>
+);
+
 export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   task,
   projects,
@@ -332,63 +361,73 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           onClick={() => toggleRow('pomodoro')}
         >
           <div className="pt-2 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Sessions</span>
-              <div className="flex items-center gap-2">
+            <PomodoroRow
+              label="Sessions"
+              value={task.pomodoroEstimate}
+              min={1}
+              onDec={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
+              onInc={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
+            />
+            <PomodoroRow
+              label="Work (min)"
+              value={task.customWorkDuration ?? settings.workDuration}
+              min={1}
+              onDec={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? settings.workDuration) - 1) })}
+              onInc={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? settings.workDuration) + 1 })}
+            />
+            <PomodoroRow
+              label="Short break (min)"
+              value={task.customShortBreakDuration ?? settings.shortBreakDuration}
+              min={1}
+              onDec={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? settings.shortBreakDuration) - 1) })}
+              onInc={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? settings.shortBreakDuration) + 1 })}
+            />
+
+            {/* Long break section */}
+            <div className="border-t pt-2 mt-0.5 flex flex-col gap-2" style={{ borderColor: 'var(--brd)' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Skip long breaks</span>
                 <button
-                  onClick={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >−</button>
-                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
-                  {task.pomodoroEstimate}
-                </span>
-                <button
-                  onClick={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >+</button>
+                  onClick={() => onUpdate({ skipLongBreak: !task.skipLongBreak })}
+                  className="w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0"
+                  style={{ background: task.skipLongBreak ? 'var(--accent)' : 'var(--brd2)' }}
+                >
+                  <span
+                    className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200"
+                    style={{ transform: task.skipLongBreak ? 'translateX(17px)' : 'translateX(1px)' }}
+                  />
+                </button>
               </div>
+              {!task.skipLongBreak && (
+                <>
+                  <PomodoroRow
+                    label="Long break (min)"
+                    value={task.customLongBreakDuration ?? settings.longBreakDuration}
+                    min={1}
+                    onDec={() => onUpdate({ customLongBreakDuration: Math.max(1, (task.customLongBreakDuration ?? settings.longBreakDuration) - 1) })}
+                    onInc={() => onUpdate({ customLongBreakDuration: (task.customLongBreakDuration ?? settings.longBreakDuration) + 1 })}
+                  />
+                  <PomodoroRow
+                    label="Long break after"
+                    value={task.customLongBreakInterval ?? settings.longBreakInterval}
+                    min={2}
+                    suffix="sessions"
+                    onDec={() => onUpdate({ customLongBreakInterval: Math.max(2, (task.customLongBreakInterval ?? settings.longBreakInterval) - 1) })}
+                    onInc={() => onUpdate({ customLongBreakInterval: (task.customLongBreakInterval ?? settings.longBreakInterval) + 1 })}
+                  />
+                </>
+              )}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Work (min)</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? settings.workDuration) - 1) })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >−</button>
-                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
-                  {task.customWorkDuration ?? settings.workDuration}
-                </span>
-                <button
-                  onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? settings.workDuration) + 1 })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >+</button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Break (min)</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? settings.shortBreakDuration) - 1) })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >−</button>
-                <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
-                  {task.customShortBreakDuration ?? settings.shortBreakDuration}
-                </span>
-                <button
-                  onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? settings.shortBreakDuration) + 1 })}
-                  className="w-5 h-5 flex items-center justify-center rounded"
-                  style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >+</button>
-              </div>
-            </div>
-            {(task.customWorkDuration || task.customShortBreakDuration) && (
+
+            {(task.customWorkDuration || task.customShortBreakDuration || task.customLongBreakDuration || task.customLongBreakInterval || task.skipLongBreak) && (
               <button
-                onClick={() => onUpdate({ customWorkDuration: undefined, customShortBreakDuration: undefined })}
+                onClick={() => onUpdate({
+                  customWorkDuration: undefined,
+                  customShortBreakDuration: undefined,
+                  customLongBreakDuration: undefined,
+                  customLongBreakInterval: undefined,
+                  skipLongBreak: false,
+                })}
                 className="text-[11px] text-left underline"
                 style={{ color: 'var(--t3)' }}
               >

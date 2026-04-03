@@ -31,6 +31,8 @@ function rowToTask(row: Record<string, unknown>): Task {
     customWorkDuration: row.customWorkDuration as number | undefined,
     customShortBreakDuration: row.customShortBreakDuration as number | undefined,
     customLongBreakDuration: row.customLongBreakDuration as number | undefined,
+    skipLongBreak: Boolean(row.skipLongBreak),
+    customLongBreakInterval: row.customLongBreakInterval as number | undefined,
   };
 }
 
@@ -155,7 +157,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await db.execute(
         `UPDATE tasks SET title=?, completed=?, priority=?, pomodoroEstimate=?, pomodoroCompleted=?,
           tags=?, subtasks=?, notes=?, completedAt=?, dueDate=?, projectId=?, reminder=?, repeatType=?,
-          customWorkDuration=?, customShortBreakDuration=?, customLongBreakDuration=?
+          customWorkDuration=?, customShortBreakDuration=?, customLongBreakDuration=?,
+          skipLongBreak=?, customLongBreakInterval=?
          WHERE id=?`,
         [
           task.title, task.completed ? 1 : 0, task.priority, task.pomodoroEstimate, task.pomodoroCompleted,
@@ -163,6 +166,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           task.completedAt ?? null, task.dueDate ?? null, task.projectId ?? null,
           task.reminder ?? null, task.repeatType ?? 'none',
           task.customWorkDuration ?? null, task.customShortBreakDuration ?? null, task.customLongBreakDuration ?? null,
+          task.skipLongBreak ? 1 : 0, task.customLongBreakInterval ?? null,
           id,
         ]
       );
