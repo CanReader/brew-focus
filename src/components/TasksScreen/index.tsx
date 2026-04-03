@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -18,6 +18,7 @@ import { Sidebar, SidebarView } from './Sidebar';
 import { TaskContextMenu } from './TaskContextMenu';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { WeeklyCalendar } from './WeeklyCalendar';
+import { CommandPalette } from './CommandPalette';
 import { Task, DueDate, Project, resolveDueDateToTs } from '../../types';
 
 interface ContextMenuState {
@@ -262,6 +263,8 @@ export const TasksScreen: React.FC = () => {
   const [hoverPomodoros, setHoverPomodoros] = useState<number | null>(null);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [newTaskProjectId, setNewTaskProjectId] = useState<string | undefined>(undefined);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const addTaskInputRef = useRef<HTMLInputElement>(null);
 
   const {
     tasks, projects, addTask, updateTask, deleteTask, toggleTask,
@@ -283,6 +286,25 @@ export const TasksScreen: React.FC = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen((p) => !p);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleCreateTask = () => {
+    setPaletteOpen(false);
+    // Switch to 'all' view so the add-task bar is visible, then focus input after render
+    setSidebarView('all');
+    setSelectedTaskId(null);
+    setTimeout(() => { addTaskInputRef.current?.focus(); }, 50);
+  };
 
   const handleAddTask = async () => {
     const trimmed = inputValue.trim();
@@ -460,6 +482,7 @@ export const TasksScreen: React.FC = () => {
 
             {/* Input */}
             <input
+              ref={addTaskInputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -755,6 +778,29 @@ export const TasksScreen: React.FC = () => {
             onClose={() => setContextMenu(null)}
             onUpdate={(partial) => updateTask(contextMenu.taskId, partial)}
             onDelete={() => deleteTask(contextMenu.taskId)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Command palette */}
+      <AnimatePresence>
+        {paletteOpen && (
+          <CommandPalette
+            open={paletteOpen}
+            onClose={() => setPaletteOpen(false)}
+            onNavigate={(view) => {
+              setSidebarView(view as SidebarView);
+              setPaletteOpen(false);
+              setSelectedTaskId(null);
+            }}
+            onCreateTask={handleCreateTask}
+            tasks={tasks}
+            projects={projects}
+            activeTaskId={activeTaskId}
+            onSetPriority={(taskId, priority) => {
+              updateTask(taskId, { priority });
+              setPaletteOpen(false);
+            }}
           />
         )}
       </AnimatePresence>
