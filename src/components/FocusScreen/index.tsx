@@ -99,55 +99,35 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     <div className="flex w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center relative min-w-0 gap-5 overflow-hidden">
-        {/* Gradient mesh background */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Primary accent blob — large radial gradient, fades to transparent */}
-          <div
-            className="mesh-blob absolute"
-            style={{
-              width: 700,
-              height: 700,
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -55%)',
-              background: `radial-gradient(circle at center, ${phaseGlowRgba}0.18) 0%, ${phaseGlowRgba}0.07) 35%, transparent 70%)`,
-              transition: 'background 1.5s ease',
-            }}
-          />
-          {/* Secondary blue blob — bottom right */}
-          <div
-            className="mesh-blob mesh-blob-2 absolute"
-            style={{
-              width: 500,
-              height: 500,
-              bottom: '-10%',
-              right: '-5%',
-              background: 'radial-gradient(circle at center, rgba(91,141,238,0.12) 0%, rgba(91,141,238,0.04) 40%, transparent 70%)',
-            }}
-          />
-          {/* Purple blob — left */}
-          <div
-            className="mesh-blob absolute"
-            style={{
-              width: 400,
-              height: 400,
-              top: '55%',
-              left: '-5%',
-              background: 'radial-gradient(circle at center, rgba(167,139,250,0.10) 0%, rgba(167,139,250,0.03) 40%, transparent 70%)',
-              animationDelay: '2s',
-            }}
-          />
-          {/* Subtle dot grid */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)',
-              backgroundSize: '28px 28px',
-              maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
-              WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
-            }}
-          />
-        </div>
+        {/* Gradient mesh background — single div, % positions, scales with any window size */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            background: [
+              // Phase-reactive center glow — sits behind the cup
+              `radial-gradient(ellipse 70% 60% at 50% 38%, ${phaseGlowRgba}0.22) 0%, ${phaseGlowRgba}0.06) 55%, transparent 75%)`,
+              // Blue accent — bottom-right corner
+              `radial-gradient(ellipse 55% 50% at 88% 85%, rgba(91,141,238,0.14) 0%, transparent 70%)`,
+              // Purple accent — top-left
+              `radial-gradient(ellipse 45% 40% at 10% 15%, rgba(167,139,250,0.10) 0%, transparent 70%)`,
+              // Warm amber hint — bottom-left
+              `radial-gradient(ellipse 35% 30% at 8% 90%, rgba(245,166,35,0.06) 0%, transparent 65%)`,
+            ].join(','),
+            transition: 'background 1.6s ease',
+          }}
+        />
+        {/* Subtle dot grid — fades toward edges */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+            maskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, black 30%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, black 30%, transparent 100%)',
+          }}
+        />
 
         {/* Panel toggle */}
         <button
