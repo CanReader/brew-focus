@@ -106,14 +106,14 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           style={{
             background: [
-              // Phase-reactive center glow — sits behind the cup
-              `radial-gradient(ellipse 70% 60% at 50% 38%, ${phaseGlowRgba}0.22) 0%, ${phaseGlowRgba}0.06) 55%, transparent 75%)`,
-              // Blue accent — bottom-right corner
-              `radial-gradient(ellipse 55% 50% at 88% 85%, rgba(91,141,238,0.14) 0%, transparent 70%)`,
+              // Phase-reactive center glow — circle keyword keeps it round at any aspect ratio
+              `radial-gradient(circle at 50% 36%, ${phaseGlowRgba}0.24) 0%, ${phaseGlowRgba}0.08) 30%, transparent 55%)`,
+              // Blue accent — bottom-right
+              `radial-gradient(circle at 90% 90%, rgba(91,141,238,0.16) 0%, transparent 45%)`,
               // Purple accent — top-left
-              `radial-gradient(ellipse 45% 40% at 10% 15%, rgba(167,139,250,0.10) 0%, transparent 70%)`,
-              // Warm amber hint — bottom-left
-              `radial-gradient(ellipse 35% 30% at 8% 90%, rgba(245,166,35,0.06) 0%, transparent 65%)`,
+              `radial-gradient(circle at 8% 12%, rgba(167,139,250,0.12) 0%, transparent 40%)`,
+              // Warm amber — bottom-left
+              `radial-gradient(circle at 6% 92%, rgba(245,166,35,0.08) 0%, transparent 35%)`,
             ].join(','),
             transition: 'background 1.6s ease',
           }}
