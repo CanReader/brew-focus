@@ -101,39 +101,39 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
       <div className="flex-1 flex flex-col items-center justify-center relative min-w-0 gap-5 overflow-hidden">
         {/* Gradient mesh background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Primary accent blob */}
+          {/* Primary accent blob — large radial gradient, fades to transparent */}
+          <div
+            className="mesh-blob absolute"
+            style={{
+              width: 700,
+              height: 700,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -55%)',
+              background: `radial-gradient(circle at center, ${phaseGlowRgba}0.18) 0%, ${phaseGlowRgba}0.07) 35%, transparent 70%)`,
+              transition: 'background 1.5s ease',
+            }}
+          />
+          {/* Secondary blue blob — bottom right */}
+          <div
+            className="mesh-blob mesh-blob-2 absolute"
+            style={{
+              width: 500,
+              height: 500,
+              bottom: '-10%',
+              right: '-5%',
+              background: 'radial-gradient(circle at center, rgba(91,141,238,0.12) 0%, rgba(91,141,238,0.04) 40%, transparent 70%)',
+            }}
+          />
+          {/* Purple blob — left */}
           <div
             className="mesh-blob absolute"
             style={{
               width: 400,
               height: 400,
-              top: '20%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: `${phaseGlowRgba}0.06)`,
-              transition: 'background 1.5s ease',
-            }}
-          />
-          {/* Secondary blue blob */}
-          <div
-            className="mesh-blob mesh-blob-2 absolute"
-            style={{
-              width: 300,
-              height: 300,
-              bottom: '15%',
-              right: '10%',
-              background: 'rgba(91,141,238,0.04)',
-            }}
-          />
-          {/* Purple blob */}
-          <div
-            className="mesh-blob absolute"
-            style={{
-              width: 250,
-              height: 250,
-              top: '60%',
-              left: '5%',
-              background: 'rgba(167,139,250,0.03)',
+              top: '55%',
+              left: '-5%',
+              background: 'radial-gradient(circle at center, rgba(167,139,250,0.10) 0%, rgba(167,139,250,0.03) 40%, transparent 70%)',
               animationDelay: '2s',
             }}
           />

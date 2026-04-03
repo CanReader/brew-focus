@@ -173,8 +173,9 @@ body,
 .mesh-blob {
   animation: blob-float 8s ease-in-out infinite;
   border-radius: 50%;
-  filter: blur(60px);
   pointer-events: none;
+  /* No filter:blur — the radial-gradient fades to transparent naturally,
+     avoiding the hard circle silhouette blur clipping creates. */
 }
 
 .mesh-blob-2 {
