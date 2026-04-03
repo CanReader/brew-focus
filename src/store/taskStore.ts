@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { Task, Priority, DueDate, Project, ProjectStatus, RepeatType, SubTask } from '../types';
+import { Task, Priority, DueDate, Project, ProjectStatus, RepeatType, SubTask, Milestone } from '../types';
+import { calculateNextDueDate } from '../utils/repeatUtils';
 import Database from '@tauri-apps/plugin-sql';
 import { nanoid } from '../utils/nanoid';
 
@@ -42,6 +43,7 @@ function rowToProject(row: Record<string, unknown>): Project {
     status: ((row.status as string) || 'active') as ProjectStatus,
     targetDate: row.targetDate as number | undefined,
     createdAt: row.createdAt as number,
+    milestones: JSON.parse((row.milestones as string) || '[]'),
   };
 }
 
@@ -69,6 +71,10 @@ interface TaskStore {
   // Tags
   addTag: (taskId: string, tag: string) => Promise<void>;
   removeTag: (taskId: string, tag: string) => Promise<void>;
+  // Milestones
+  addMilestone: (projectId: string, title: string, targetDate?: number) => Promise<void>;
+  toggleMilestone: (projectId: string, milestoneId: string) => Promise<void>;
+  deleteMilestone: (projectId: string, milestoneId: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -196,6 +202,40 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         'UPDATE tasks SET completed=?, completedAt=? WHERE id=?',
         [completed ? 1 : 0, completedAt ?? null, id]
       );
+
+      if (completed && task.repeatType && task.repeatType !== 'none') {
+        const newId = nanoid();
+        const newCreatedAt = Date.now();
+        const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
+        const maxOrder = get().tasks.reduce(
+          (m, t) => Math.max(m, (t as unknown as { sortOrder?: number }).sortOrder ?? 0),
+          0
+        );
+        const newTask: Task = {
+          ...task,
+          id: newId,
+          createdAt: newCreatedAt,
+          completed: false,
+          completedAt: undefined,
+          pomodoroCompleted: 0,
+          dueDate: newDueDate,
+        };
+        await db.execute(
+          `INSERT INTO tasks (id, title, completed, priority, pomodoroEstimate, pomodoroCompleted,
+            tags, subtasks, notes, createdAt, completedAt, dueDate, projectId, reminder, repeatType,
+            customWorkDuration, customShortBreakDuration, customLongBreakDuration, sortOrder)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            newId, newTask.title, 0, newTask.priority, newTask.pomodoroEstimate, 0,
+            JSON.stringify(newTask.tags), JSON.stringify(newTask.subtasks), newTask.notes ?? '',
+            newCreatedAt, null, newDueDate ?? null, newTask.projectId ?? null,
+            newTask.reminder ?? null, newTask.repeatType ?? 'none',
+            newTask.customWorkDuration ?? null, newTask.customShortBreakDuration ?? null,
+            newTask.customLongBreakDuration ?? null, maxOrder + 1,
+          ]
+        );
+        set({ tasks: [newTask, ...get().tasks] });
+      }
     } catch (e) {
       console.warn('Failed to toggle task:', e);
     }
@@ -247,13 +287,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       description: '',
       status: 'active',
       createdAt: Date.now(),
+      milestones: [],
     };
     set({ projects: [...get().projects, project] });
     try {
       const db = await getDb();
       await db.execute(
-        'INSERT INTO projects (id, name, color, createdAt, description, status, targetDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [project.id, project.name, project.color, project.createdAt, '', 'active', null]
+        'INSERT INTO projects (id, name, color, createdAt, description, status, targetDate, milestones) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [project.id, project.name, project.color, project.createdAt, '', 'active', null, '[]']
       );
     } catch (e) {
       console.warn('Failed to add project:', e);
@@ -268,8 +309,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const proj = projects.find((p) => p.id === id);
       if (!proj) return;
       await db.execute(
-        'UPDATE projects SET name=?, color=?, description=?, status=?, targetDate=? WHERE id=?',
-        [proj.name, proj.color, proj.description ?? '', proj.status ?? 'active', proj.targetDate ?? null, id]
+        'UPDATE projects SET name=?, color=?, description=?, status=?, targetDate=?, milestones=? WHERE id=?',
+        [proj.name, proj.color, proj.description ?? '', proj.status ?? 'active', proj.targetDate ?? null, JSON.stringify(proj.milestones ?? []), id]
       );
     } catch (e) {
       console.warn('Failed to update project:', e);
@@ -363,5 +404,34 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     } catch (e) {
       console.warn('Failed to remove tag:', e);
     }
+  },
+
+  addMilestone: async (projectId, title, targetDate?) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const milestone: Milestone = {
+      id: nanoid(),
+      title: title.trim(),
+      completed: false,
+      targetDate,
+    };
+    const milestones = [...project.milestones, milestone];
+    await get().updateProject(projectId, { milestones });
+  },
+
+  toggleMilestone: async (projectId, milestoneId) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const milestones = project.milestones.map((m) =>
+      m.id === milestoneId ? { ...m, completed: !m.completed } : m
+    );
+    await get().updateProject(projectId, { milestones });
+  },
+
+  deleteMilestone: async (projectId, milestoneId) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const milestones = project.milestones.filter((m) => m.id !== milestoneId);
+    await get().updateProject(projectId, { milestones });
   },
 }));

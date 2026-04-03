@@ -37,7 +37,7 @@ interface TimerStore {
   skip: (workDuration: number, shortBreakDuration: number, longBreakDuration: number, longBreakInterval: number) => void;
   advancePhase: (workDuration: number, shortBreakDuration: number, longBreakDuration: number, longBreakInterval: number) => void;
   setActiveTask: (id: string | null) => void;
-  recordSession: (phase: TimerPhase, duration: number, taskId?: string, taskTitle?: string) => Promise<void>;
+  recordSession: (phase: TimerPhase, duration: number, taskId?: string, taskTitle?: string, notes?: string) => Promise<void>;
   addFocusSeconds: (seconds: number) => Promise<void>;
 }
 
@@ -69,6 +69,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         phase: r.phase as TimerPhase,
         taskId: r.taskId as string | undefined,
         taskTitle: r.taskTitle as string | undefined,
+        notes: r.notes as string | undefined,
       }));
 
       const focusRows = await db.select<{ date: string; seconds: number }[]>(
@@ -183,7 +184,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   setActiveTask: (id) => set({ activeTaskId: id }),
 
-  recordSession: async (phase, duration, taskId, taskTitle) => {
+  recordSession: async (phase, duration, taskId, taskTitle, notes?) => {
     const session: TimerSession = {
       id: nanoid(),
       startedAt: Date.now() - duration * 1000,
@@ -191,14 +192,15 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       phase,
       taskId,
       taskTitle,
+      notes,
     };
     const sessions = [session, ...get().sessions].slice(0, 100);
     set({ sessions });
     try {
       const db = await getDb();
       await db.execute(
-        'INSERT INTO sessions (id, startedAt, duration, phase, taskId, taskTitle) VALUES (?, ?, ?, ?, ?, ?)',
-        [session.id, session.startedAt, session.duration, session.phase, session.taskId ?? null, session.taskTitle ?? null]
+        'INSERT INTO sessions (id, startedAt, duration, phase, taskId, taskTitle, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [session.id, session.startedAt, session.duration, session.phase, session.taskId ?? null, session.taskTitle ?? null, notes ?? null]
       );
     } catch (e) {
       console.warn('Failed to save session:', e);

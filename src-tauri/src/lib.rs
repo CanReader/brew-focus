@@ -29,6 +29,12 @@ pub fn run() {
                             sql: include_str!("../migrations/002_task_improvements.sql"),
                             kind: tauri_plugin_sql::MigrationKind::Up,
                         },
+                        tauri_plugin_sql::Migration {
+                            version: 3,
+                            description: "milestones and session notes",
+                            sql: include_str!("../migrations/003_milestones_session_notes.sql"),
+                            kind: tauri_plugin_sql::MigrationKind::Up,
+                        },
                     ],
                 )
                 .build(),
