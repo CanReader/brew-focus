@@ -11,6 +11,13 @@ export interface SubTask {
   completed: boolean;
 }
 
+export interface Milestone {
+  id: string;
+  title: string;
+  completed: boolean;
+  targetDate?: number; // ms timestamp
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -41,6 +48,7 @@ export interface Project {
   status: ProjectStatus;
   targetDate?: number; // timestamp ms
   createdAt: number;
+  milestones: Milestone[];
 }
 
 // ── Due date helpers ──────────────────────────────────────────────────────────
@@ -97,6 +105,7 @@ export interface TimerSession {
   phase: TimerPhase;
   taskId?: string;
   taskTitle?: string;
+  notes?: string;
 }
 
 // Settings types

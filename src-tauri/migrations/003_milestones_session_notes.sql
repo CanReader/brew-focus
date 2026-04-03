@@ -1,0 +1,2 @@
+ALTER TABLE projects ADD COLUMN milestones TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE sessions ADD COLUMN notes TEXT;
