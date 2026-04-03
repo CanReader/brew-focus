@@ -10,6 +10,7 @@ import { WindowModeProvider, useWindowModeContext } from './contexts/WindowModeC
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
+import { useClickSound } from './hooks/useClickSound';
 
 type Tab = 'focus' | 'tasks' | 'reports';
 
@@ -18,10 +19,12 @@ function AppContent() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
 
-  const { loadSettings } = useSettingsStore();
+  const { loadSettings, settings } = useSettingsStore();
   const { loadTasks } = useTaskStore();
-  const { loadState } = useTimerStore();
+  const { loadState, setActiveTask } = useTimerStore();
   const { isFullscreen, isWidget } = useWindowModeContext();
+
+  useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
 
   // Initialize all stores on mount
   useEffect(() => {
@@ -30,9 +33,16 @@ function AppContent() {
         loadSettings(),
         loadTasks(),
       ]);
-      // Read current settings from the store directly to avoid stale closure
+      // Sync timerStore's activeTaskId from taskStore so useTimer can compute
+      // the correct effective durations on startup (timerStore never persists it).
       const currentSettings = useSettingsStore.getState().settings;
-      await loadState(currentSettings.workDuration);
+      const { tasks: loadedTasks, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
+      setActiveTask(loadedActiveTaskId);
+
+      // Pass the effective work duration for the selected task, not the global default
+      const activeTask = loadedTasks.find((t) => t.id === loadedActiveTaskId);
+      const effectiveWorkDuration = activeTask?.customWorkDuration ?? currentSettings.workDuration;
+      await loadState(effectiveWorkDuration);
       setAppReady(true);
     };
     init();
@@ -125,7 +135,7 @@ function AppContent() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute inset-0"
             >
-              <TasksScreen />
+              <TasksScreen onSwitchToFocus={() => setActiveTab('focus')} />
             </motion.div>
           )}
           {activeTab === 'reports' && (

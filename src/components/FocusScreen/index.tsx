@@ -10,11 +10,14 @@ import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { TaskSelector } from './TaskSelector';
 import { SidePanel } from '../SidePanel';
+import { playTimerStart, playTimerPause } from '../../utils/sounds';
+import { SessionAnimation, SessionAnimationType } from '../SessionAnimation';
 
 interface FocusScreenProps {}
 
 export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [panelOpen, setPanelOpen] = useState(true);
+  const [sessionAnim, setSessionAnim] = useState<SessionAnimationType>(null);
   const {
     isRunning,
     phase,
@@ -32,19 +35,28 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     effectiveWorkDuration,
     effectiveShortBreakDuration,
     effectiveLongBreakDuration,
+    effectiveLongBreakInterval,
   } = useTimer();
   const { enterFullscreen, enterWidget } = useWindowModeContext();
 
   const timeString = formatTime(secondsLeft);
   const prevPhaseRef = useRef(phase);
 
-  // Auto-start next session when phase actually changes (not on mount)
+  // Auto-start next session + trigger animation when phase actually changes (not on mount)
   useEffect(() => {
     // Skip on initial mount — only react to genuine phase transitions
     if (prevPhaseRef.current === phase) {
       return;
     }
+    const completedPhase = prevPhaseRef.current;
     prevPhaseRef.current = phase;
+
+    // Show animation for whichever phase just finished
+    if (completedPhase === 'work') {
+      setSessionAnim('session-complete');
+    } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
+      setSessionAnim('break-complete');
+    }
 
     const expectedTotal =
       phase === 'work'
@@ -62,8 +74,18 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     }
   }, [phase]);
 
+  const handlePlay = () => {
+    if (settings.soundNotifications) playTimerStart(settings.soundVolume ?? 70);
+    start();
+  };
+
+  const handlePause = () => {
+    if (settings.soundNotifications) playTimerPause(settings.soundVolume ?? 70);
+    pause();
+  };
+
   const handleSkip = () => {
-    skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, settings.longBreakInterval);
+    skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval);
   };
 
   const handleReset = () => {
@@ -126,8 +148,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
 
           <TimerControls
             isRunning={isRunning}
-            onPlay={start}
-            onPause={pause}
+            onPlay={handlePlay}
+            onPause={handlePause}
             onSkip={handleSkip}
             onReset={handleReset}
             onFullscreen={enterFullscreen}
@@ -154,6 +176,12 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Session end animations */}
+      <SessionAnimation
+        type={sessionAnim}
+        onDone={() => setSessionAnim(null)}
+      />
     </div>
   );
 };

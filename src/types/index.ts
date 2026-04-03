@@ -38,6 +38,8 @@ export interface Task {
   customWorkDuration?: number;       // minutes
   customShortBreakDuration?: number; // minutes
   customLongBreakDuration?: number;  // minutes
+  skipLongBreak?: boolean;           // never take a long break for this task
+  customLongBreakInterval?: number;  // sessions before long break (overrides global)
 }
 
 export interface Project {
@@ -119,6 +121,8 @@ export interface AppSettings {
   autoStartPomodoros: boolean;
   dailyFocusGoal: number; // hours
   soundNotifications: boolean;
+  clickSounds: boolean;
+  soundVolume: number; // 0–100
   accentColor: AccentColor;
   longBreakInterval: number; // after how many pomodoros
 }

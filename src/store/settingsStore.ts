@@ -17,6 +17,8 @@ const defaultSettings: AppSettings = {
   autoStartPomodoros: false,
   dailyFocusGoal: 6,
   soundNotifications: true,
+  clickSounds: true,
+  soundVolume: 70,
   accentColor: 'red',
   longBreakInterval: 4,
 };

@@ -156,13 +156,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                   />
                 </Section>
 
-                {/* Notifications */}
-                <Section title="Notifications">
+                {/* Sounds */}
+                <Section title="Sounds">
                   <ToggleField
-                    label="Sound Notifications"
-                    description="Play sound when session ends"
+                    label="Session Sounds"
+                    description="Play sound when work session or break ends"
                     value={settings.soundNotifications}
                     onChange={(v) => updateSettings({ soundNotifications: v })}
+                  />
+                  <ToggleField
+                    label="Click Sounds"
+                    description="Subtle click on button interactions"
+                    value={settings.clickSounds}
+                    onChange={(v) => updateSettings({ clickSounds: v })}
+                  />
+                  <SliderField
+                    label="Volume"
+                    value={settings.soundVolume ?? 70}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onChange={(v) => updateSettings({ soundVolume: v })}
                   />
                 </Section>
 
@@ -319,5 +333,40 @@ const ToggleField: React.FC<ToggleFieldProps> = ({
       />
       <span className="toggle-slider" />
     </label>
+  </div>
+);
+
+interface SliderFieldProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}
+
+const SliderField: React.FC<SliderFieldProps> = ({ label, value, min, max, step, onChange }) => (
+  <div
+    className="flex items-center justify-between px-4 py-3 border-b last:border-0 gap-4"
+    style={{ borderColor: 'var(--brd)' }}
+  >
+    <span className="text-[13px] shrink-0" style={{ color: 'var(--t)' }}>
+      {label}
+    </span>
+    <div className="flex items-center gap-3 flex-1 justify-end">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="flex-1 max-w-[120px] accent-[var(--accent)]"
+        style={{ cursor: 'pointer' }}
+      />
+      <span className="text-[12px] tabular-nums w-8 text-right" style={{ color: 'var(--t3)' }}>
+        {value}%
+      </span>
+    </div>
   </div>
 );

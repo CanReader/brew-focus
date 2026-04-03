@@ -2,6 +2,23 @@ import { useEffect, useRef } from 'react';
 import { useTimerStore } from '../store/timerStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
+import { playSessionComplete, playBreakComplete } from '../utils/sounds';
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from '@tauri-apps/plugin-notification';
+
+async function notify(title: string, body: string) {
+  let granted = await isPermissionGranted();
+  if (!granted) {
+    const perm = await requestPermission();
+    granted = perm === 'granted';
+  }
+  if (granted) {
+    sendNotification({ title, body });
+  }
+}
 
 // Module-level tracking to detect genuine activeTaskId changes vs component re-mounts.
 // Multiple components use useTimer (FocusScreen, TasksScreen, TimerView), and each mount
@@ -34,6 +51,10 @@ export function useTimer() {
   const effectiveWorkDuration = activeTask?.customWorkDuration ?? settings.workDuration;
   const effectiveShortBreakDuration = activeTask?.customShortBreakDuration ?? settings.shortBreakDuration;
   const effectiveLongBreakDuration = activeTask?.customLongBreakDuration ?? settings.longBreakDuration;
+  // Use Infinity when skipLongBreak is set so sessionCount % interval never reaches 0
+  const effectiveLongBreakInterval = activeTask?.skipLongBreak
+    ? Infinity
+    : (activeTask?.customLongBreakInterval ?? settings.longBreakInterval);
 
   // Update timer display when:
   // 1. Tasks finish loading for the first time (app init with a pre-selected task)
@@ -85,6 +106,20 @@ export function useTimer() {
           if (activeTaskId) {
             incrementPomodoroCompleted(activeTaskId);
           }
+          if (settings.soundNotifications) {
+            playSessionComplete(settings.soundVolume ?? 70);
+            const taskTitle = currentActiveTask?.title;
+            notify(
+              'Focus session complete!',
+              taskTitle ? `Great work on "${taskTitle}". Time for a break.` : 'Great work! Time for a break.'
+            );
+          }
+        } else {
+          if (settings.soundNotifications) {
+            playBreakComplete(settings.soundVolume ?? 70);
+            const label = completedPhase === 'longBreak' ? 'Long break' : 'Break';
+            notify('Break over', `${label} finished. Time to focus!`);
+          }
         }
 
         // Use the task-effective durations for the next phase
@@ -92,7 +127,8 @@ export function useTimer() {
         const taskShort = currentActiveTask?.customShortBreakDuration ?? settings.shortBreakDuration;
         const taskLong = currentActiveTask?.customLongBreakDuration ?? settings.longBreakDuration;
 
-        advancePhase(taskWork, taskShort, taskLong, settings.longBreakInterval);
+        const taskSkipLong = currentActiveTask?.skipLongBreak ? Infinity : (currentActiveTask?.customLongBreakInterval ?? settings.longBreakInterval);
+        advancePhase(taskWork, taskShort, taskLong, taskSkipLong);
       } else {
         tick();
       }
@@ -128,5 +164,6 @@ export function useTimer() {
     effectiveWorkDuration,
     effectiveShortBreakDuration,
     effectiveLongBreakDuration,
+    effectiveLongBreakInterval,
   };
 }
