@@ -348,7 +348,7 @@ const ProjectDetailCard: React.FC<{
   );
 };
 
-export const TasksScreen: React.FC = () => {
+export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitchToFocus }) => {
   const [inputValue, setInputValue] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>('all');
@@ -370,7 +370,7 @@ export const TasksScreen: React.FC = () => {
     reorderTasks, setActiveTask, activeTaskId, updateProject,
   } = useTaskStore();
 
-  const { isRunning, phase, secondsLeft, start, pause, skip, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const { isRunning, phase, secondsLeft, start, pause, skip, reset, setActiveTask: setTimerActiveTask } = useTimerStore();
   const { settings } = useSettingsStore();
   const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
 
@@ -436,7 +436,10 @@ export const TasksScreen: React.FC = () => {
   const handlePlayTask = (task: Task) => {
     setActiveTask(task.id);
     setTimerActiveTask(task.id);
+    const workDuration = task.customWorkDuration ?? settings.workDuration;
+    reset(workDuration);
     start();
+    onSwitchToFocus();
   };
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {

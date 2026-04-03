@@ -22,7 +22,7 @@ const priorityDot: Record<Priority, string> = {
 
 export const UpcomingWidget: React.FC = () => {
   const { tasks, setActiveTask } = useTaskStore();
-  const { activeTaskId } = useTimerStore();
+  const { activeTaskId, setActiveTask: setTimerActiveTask } = useTimerStore();
 
   const upcoming = tasks.filter((t) => !t.completed).slice(0, 5);
 
@@ -59,7 +59,11 @@ export const UpcomingWidget: React.FC = () => {
             return (
               <button
                 key={task.id}
-                onClick={() => setActiveTask(isActive ? null : task.id)}
+                onClick={() => {
+                  const newId = isActive ? null : task.id;
+                  setActiveTask(newId);
+                  setTimerActiveTask(newId);
+                }}
                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all duration-150"
                 style={{
                   background: isActive ? 'var(--accent-d)' : 'transparent',
