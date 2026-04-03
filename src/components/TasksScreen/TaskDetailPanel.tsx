@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Trash2, Check, Plus, Flag,
-  Clock, Calendar, FolderOpen, Bell, RefreshCw, Edit3,
+  Clock, Calendar, FolderOpen, Bell, RefreshCw, Edit3, FileText,
 } from 'lucide-react';
-import { Task, Priority, DueDate, Project, RepeatType } from '../../types';
+import { Task, Priority, DueDate, Project, RepeatType, formatDueDateDisplay, isDueDateOverdue } from '../../types';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -30,22 +30,8 @@ const priorityFlagColors: Record<Priority, string> = {
   p4: 'var(--t3)',
 };
 
-function formatDueDate(dueDate: DueDate | undefined): string {
-  if (!dueDate) return 'None';
-  const now = new Date();
-  if (dueDate === 'today') {
-    return now.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-  }
-  if (dueDate === 'tomorrow') {
-    const t = new Date(now);
-    t.setDate(t.getDate() + 1);
-    return t.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-  }
-  return 'Someday';
-}
-
 function formatCreatedAt(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  return new Date(ts).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function msToDatetimeLocal(ms?: number): string {
@@ -55,15 +41,20 @@ function msToDatetimeLocal(ms?: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** Get YYYY-MM-DD for today + N days */
+function isoDatePlusDays(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 type ExpandedRow = 'pomodoro' | 'dueDate' | 'project' | 'reminder' | 'repeat' | 'priority' | null;
 
-// A single detail row with icon, label, value, and optional expansion
 const DetailRow: React.FC<{
   icon: React.ReactNode;
   label: string;
   value: string;
   valueColor?: string;
-  active?: boolean;
   onClick?: () => void;
   children?: React.ReactNode;
   expanded?: boolean;
@@ -78,7 +69,7 @@ const DetailRow: React.FC<{
     >
       <span style={{ color: 'var(--t3)', flexShrink: 0, width: 15 }}>{icon}</span>
       <span className="text-[13px] w-20 shrink-0" style={{ color: 'var(--t3)' }}>{label}</span>
-      <span className="flex-1 text-[13px] text-right" style={{ color: valueColor ?? 'var(--t2)' }}>
+      <span className="flex-1 text-[13px] text-right truncate" style={{ color: valueColor ?? 'var(--t2)' }}>
         {value}
       </span>
     </button>
@@ -108,23 +99,38 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 }) => {
   const [titleValue, setTitleValue] = useState(task.title);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [notesValue, setNotesValue] = useState(task.notes || '');
   const [newSubtaskValue, setNewSubtaskValue] = useState('');
   const [newTagValue, setNewTagValue] = useState('');
   const [expanded, setExpanded] = useState<ExpandedRow>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
 
   const { addSubtask, toggleSubtask, deleteSubtask, addTag, removeTag } = useTaskStore();
   const { settings } = useSettingsStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTitleValue(task.title);
+    setNotesValue(task.notes || '');
     setExpanded(null);
   }, [task.id]);
+
+  // Auto-resize notes textarea
+  useEffect(() => {
+    if (notesRef.current) {
+      notesRef.current.style.height = 'auto';
+      notesRef.current.style.height = `${notesRef.current.scrollHeight}px`;
+    }
+  }, [notesValue]);
 
   const handleTitleBlur = () => {
     const trimmed = titleValue.trim();
     if (trimmed && trimmed !== task.title) onUpdate({ title: trimmed });
     else setTitleValue(task.title);
     setIsEditingTitle(false);
+  };
+
+  const handleNotesBlur = () => {
+    if (notesValue !== task.notes) onUpdate({ notes: notesValue });
   };
 
   const handleAddSubtask = () => {
@@ -149,7 +155,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     ? `${Math.floor(estimatedMins / 60)}h ${estimatedMins % 60 > 0 ? `${estimatedMins % 60}m` : ''}`
     : `~${estimatedMins}m`;
 
-  const pomodoroValue = `●${task.pomodoroCompleted} / ●${task.pomodoroEstimate}  ${estimatedStr}`;
+  const pomodoroValue = `${task.pomodoroCompleted}/${task.pomodoroEstimate}  ${estimatedStr}`;
   const repeatLabel = task.repeatType && task.repeatType !== 'none'
     ? task.repeatType.charAt(0).toUpperCase() + task.repeatType.slice(1)
     : 'None';
@@ -158,6 +164,17 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     : 'None';
 
   const flagColor = priorityFlagColors[task.priority];
+  const overdue = !task.completed && isDueDateOverdue(task.dueDate);
+  const dueDateDisplay = formatDueDateDisplay(task.dueDate);
+
+  // Date shortcuts
+  const DATE_SHORTCUTS: { label: string; value: DueDate }[] = [
+    { label: 'Today', value: 'today' },
+    { label: 'Tomorrow', value: 'tomorrow' },
+    { label: 'Next Week', value: isoDatePlusDays(7) },
+    { label: 'Someday', value: 'someday' },
+    { label: 'None', value: null },
+  ];
 
   return (
     <motion.div
@@ -199,7 +216,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 <span
                   className="text-[15px] font-medium leading-snug flex-1"
                   style={{
-                    color: task.completed ? 'var(--t3)' : 'var(--t)',
+                    color: task.completed ? 'var(--t3)' : overdue ? '#e87060' : 'var(--t)',
                     textDecoration: task.completed ? 'line-through' : 'none',
                   }}
                 >
@@ -212,7 +229,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             )}
           </div>
 
-          {/* Priority flag button */}
+          {/* Priority flag */}
           <button
             onClick={() => toggleRow('priority')}
             className="mt-0.5 shrink-0 p-1 rounded-md transition-colors"
@@ -223,7 +240,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           </button>
         </div>
 
-        {/* Priority picker (inline expansion) */}
+        {/* Priority picker */}
         <AnimatePresence>
           {expanded === 'priority' && (
             <motion.div
@@ -253,8 +270,8 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Tags — directly below title */}
-        <div className="px-4 pb-3 flex flex-wrap gap-1.5 items-center min-h-[28px]">
+        {/* Tags */}
+        <div className="px-4 pb-2 flex flex-wrap gap-1.5 items-center min-h-[28px]">
           {task.tags.map((tag) => (
             <span
               key={tag}
@@ -271,20 +288,36 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               </button>
             </span>
           ))}
-          <div className="flex items-center">
-            <input
-              value={newTagValue}
-              onChange={(e) => setNewTagValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddTag();
-                if (e.key === 'Escape') setNewTagValue('');
-              }}
-              onBlur={() => { if (newTagValue.trim()) handleAddTag(); }}
-              placeholder="+ Tags"
-              className="text-[12px] bg-transparent focus:outline-none w-16 focus:w-24 transition-all"
-              style={{ color: 'var(--t3)' }}
-            />
+          <input
+            value={newTagValue}
+            onChange={(e) => setNewTagValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddTag();
+              if (e.key === 'Escape') setNewTagValue('');
+            }}
+            onBlur={() => { if (newTagValue.trim()) handleAddTag(); }}
+            placeholder="+ tag"
+            className="text-[12px] bg-transparent focus:outline-none w-14 focus:w-20 transition-all"
+            style={{ color: 'var(--t3)' }}
+          />
+        </div>
+
+        {/* Notes */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <FileText size={11} style={{ color: 'var(--t3)' }} />
+            <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--t3)' }}>Notes</span>
           </div>
+          <textarea
+            ref={notesRef}
+            value={notesValue}
+            onChange={(e) => setNotesValue(e.target.value)}
+            onBlur={handleNotesBlur}
+            placeholder="Add notes…"
+            rows={2}
+            className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
+            style={{ color: 'var(--t2)', minHeight: 40 }}
+          />
         </div>
 
         {/* Divider */}
@@ -295,7 +328,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           icon={<Clock size={13} />}
           label="Pomodoro"
           value={pomodoroValue}
-          valueColor="var(--t2)"
           expanded={expanded === 'pomodoro'}
           onClick={() => toggleRow('pomodoro')}
         >
@@ -307,9 +339,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  −
-                </button>
+                >−</button>
                 <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
                   {task.pomodoroEstimate}
                 </span>
@@ -317,9 +347,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -329,9 +357,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? settings.workDuration) - 1) })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  −
-                </button>
+                >−</button>
                 <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
                   {task.customWorkDuration ?? settings.workDuration}
                 </span>
@@ -339,9 +365,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? settings.workDuration) + 1 })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -351,9 +375,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? settings.shortBreakDuration) - 1) })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  −
-                </button>
+                >−</button>
                 <span className="text-[13px] tabular-nums w-6 text-center" style={{ color: 'var(--t)' }}>
                   {task.customShortBreakDuration ?? settings.shortBreakDuration}
                 </span>
@@ -361,9 +383,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onClick={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? settings.shortBreakDuration) + 1 })}
                   className="w-5 h-5 flex items-center justify-center rounded"
                   style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
             </div>
             {(task.customWorkDuration || task.customShortBreakDuration) && (
@@ -372,7 +392,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 className="text-[11px] text-left underline"
                 style={{ color: 'var(--t3)' }}
               >
-                Reset to default
+                Reset to defaults
               </button>
             )}
           </div>
@@ -381,30 +401,52 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         <DetailRow
           icon={<Calendar size={13} />}
           label="Due Date"
-          value={formatDueDate(task.dueDate)}
-          valueColor={task.dueDate ? 'var(--accent)' : 'var(--t3)'}
+          value={dueDateDisplay}
+          valueColor={task.dueDate ? (overdue ? '#e8453c' : 'var(--accent)') : 'var(--t3)'}
           expanded={expanded === 'dueDate'}
           onClick={() => toggleRow('dueDate')}
         >
-          <div className="pt-2 flex gap-1.5">
-            {(['today', 'tomorrow', 'someday', null] as (DueDate | null)[]).map((d) => {
-              const label = d === null ? 'None' : d.charAt(0).toUpperCase() + d.slice(1);
-              const isSelected = (task.dueDate ?? null) === d;
-              return (
-                <button
-                  key={String(d)}
-                  onClick={() => { onUpdate({ dueDate: d ?? undefined }); setExpanded(null); }}
-                  className="flex-1 py-1 rounded-lg text-[11px] font-medium transition-all"
-                  style={{
-                    background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
-                    color: isSelected ? 'var(--accent)' : 'var(--t3)',
-                    border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="pt-2 flex flex-col gap-2">
+            {/* Quick shortcuts */}
+            <div className="flex flex-wrap gap-1.5">
+              {DATE_SHORTCUTS.map((s) => {
+                const isSelected = (task.dueDate ?? null) === s.value ||
+                  (s.value !== null && s.value !== 'today' && s.value !== 'tomorrow' && s.value !== 'someday' &&
+                   task.dueDate === s.value);
+                return (
+                  <button
+                    key={String(s.value)}
+                    onClick={() => { onUpdate({ dueDate: s.value ?? undefined }); setExpanded(null); }}
+                    className="px-2 py-1 rounded-lg text-[11px] font-medium transition-all"
+                    style={{
+                      background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
+                      color: isSelected ? 'var(--accent)' : 'var(--t3)',
+                      border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+            {/* Custom date picker */}
+            <div>
+              <span className="text-[11px] block mb-1" style={{ color: 'var(--t3)' }}>Custom date</span>
+              <input
+                type="date"
+                value={
+                  task.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate)
+                    ? task.dueDate
+                    : ''
+                }
+                onChange={(e) => {
+                  const val = e.target.value; // YYYY-MM-DD
+                  onUpdate({ dueDate: val || undefined });
+                }}
+                className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5"
+                style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
+              />
+            </div>
           </div>
         </DetailRow>
 
@@ -458,7 +500,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 onUpdate({ reminder: val ? new Date(val).getTime() : undefined });
               }}
               className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5"
-              style={{ color: 'var(--t)', borderColor: 'var(--brd)' }}
+              style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
             />
             {task.reminder && (
               <button
@@ -483,7 +525,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           <div className="pt-2 flex gap-1.5 flex-wrap">
             {(['none', 'daily', 'weekly', 'monthly'] as RepeatType[]).map((r) => {
               const isSelected = (task.repeatType ?? 'none') === r;
-              const label = r.charAt(0).toUpperCase() + r.slice(1);
               return (
                 <button
                   key={r}
@@ -495,7 +536,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                     border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
                   }}
                 >
-                  {label}
+                  {r.charAt(0).toUpperCase() + r.slice(1)}
                 </button>
               );
             })}
@@ -543,12 +584,8 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               </button>
             </div>
           ))}
-          {/* Add subtask input */}
           <div className="flex items-center gap-2 pt-2">
-            <div
-              className="w-4 h-4 rounded-full border-2 shrink-0"
-              style={{ borderColor: 'var(--brd2)' }}
-            />
+            <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'var(--brd2)' }} />
             <input
               value={newSubtaskValue}
               onChange={(e) => setNewSubtaskValue(e.target.value)}
@@ -579,7 +616,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         style={{ borderColor: 'var(--brd)' }}
       >
         <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
-          Created on {formatCreatedAt(task.createdAt)}
+          {formatCreatedAt(task.createdAt)}
         </span>
         <div className="flex items-center gap-1">
           <button

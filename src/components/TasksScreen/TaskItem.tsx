@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Flag } from 'lucide-react';
-import { Task, Priority } from '../../types';
+import { GripVertical, Flag, FileText } from 'lucide-react';
+import { Task, Priority, isDueDateOverdue, formatDueDateDisplay } from '../../types';
 
 interface TaskItemProps {
   task: Task;
@@ -23,21 +23,6 @@ const priorityFlagColors: Record<Priority, string> = {
   p3: 'var(--blu)',
   p4: 'var(--t3)',
 };
-
-function formatShortDate(dueDate: Task['dueDate']): string | null {
-  if (!dueDate) return null;
-  const now = new Date();
-  if (dueDate === 'today') {
-    return now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-  }
-  if (dueDate === 'tomorrow') {
-    const t = new Date(now);
-    t.setDate(t.getDate() + 1);
-    return t.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-  }
-  if (dueDate === 'someday') return 'Someday';
-  return null;
-}
 
 const PlayCircleBtn: React.FC<{ active: boolean; onClick: (e: React.MouseEvent) => void }> = ({ active, onClick }) => (
   <button
@@ -81,12 +66,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     setIsEditing(false);
   };
 
-  const dueDateStr = formatShortDate(task.dueDate ?? null);
+  const overdue = !task.completed && isDueDateOverdue(task.dueDate);
+  const dateLabel = formatDueDateDisplay(task.dueDate);
+  const showDate = !!task.dueDate && !task.completed;
   const flagColor = priorityFlagColors[task.priority];
+
+  // Overdue reminder date overrides due date display
   const reminderOverdue = !task.completed && !!task.reminder && task.reminder < Date.now();
-  const dateLabel = reminderOverdue && task.reminder
+  const displayDate = reminderOverdue && task.reminder
     ? new Date(task.reminder).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
-    : dueDateStr;
+    : (showDate ? dateLabel : null);
 
   return (
     <motion.div
@@ -100,13 +89,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        background: isActive ? 'var(--accent-d)' : 'var(--card)',
-        borderColor: isActive ? 'var(--accent-g)' : isSelected ? 'var(--brd2)' : 'transparent',
+        background: isSelected ? 'var(--accent-d)' : overdue ? 'rgba(232,69,60,0.06)' : 'var(--card)',
+        borderColor: isSelected ? 'var(--accent-g)' : overdue ? 'rgba(232,69,60,0.25)' : 'transparent',
       }}
       onContextMenu={onContextMenu}
       onDoubleClick={() => !task.completed && setIsEditing(true)}
-      onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'var(--card-h)'; }}
-      onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.background = 'var(--card)'; }}
+      onMouseEnter={(e) => {
+        if (!isSelected && !overdue) (e.currentTarget as HTMLDivElement).style.background = 'var(--card-h)';
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = overdue ? 'rgba(232,69,60,0.06)' : 'var(--card)';
+      }}
     >
       {/* Drag handle */}
       <div
@@ -123,7 +116,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
         className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-150"
         style={{
-          borderColor: task.completed ? 'var(--grn)' : 'var(--brd2)',
+          borderColor: task.completed ? 'var(--grn)' : overdue ? 'rgba(232,69,60,0.6)' : 'var(--brd2)',
           background: task.completed ? 'var(--grn)' : 'transparent',
         }}
       >
@@ -134,7 +127,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         )}
       </button>
 
-      {/* Play button — always visible */}
+      {/* Play button — always visible when not completed */}
       {!task.completed && (
         <PlayCircleBtn
           active={isActive}
@@ -162,7 +155,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <span
             className="text-[13px] truncate block"
             style={{
-              color: task.completed ? 'var(--t3)' : 'var(--t)',
+              color: task.completed ? 'var(--t3)' : overdue ? '#e87060' : 'var(--t)',
               textDecoration: task.completed ? 'line-through' : 'none',
             }}
             title={task.title}
@@ -172,8 +165,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         )}
       </div>
 
-      {/* Right: ●completed / ●total  flag  date */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      {/* Right: notes indicator  ●completed / ●total  flag  date */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Notes indicator */}
+        {task.notes && (
+          <span title="Has notes" style={{ color: 'var(--t3)' }}>
+            <FileText size={10} />
+          </span>
+        )}
+
         {/* Session counter */}
         <div className="flex items-center gap-0.5 text-[11px] tabular-nums">
           <span style={{ color: task.pomodoroCompleted > 0 ? 'var(--accent)' : 'var(--brd2)' }}>●</span>
@@ -181,7 +181,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             {task.pomodoroCompleted}
           </span>
           <span className="mx-0.5" style={{ color: 'var(--t3)' }}>/</span>
-          <span style={{ color: 'var(--accent)' }}>●</span>
+          <span style={{ color: 'var(--t3)' }}>●</span>
           <span style={{ color: 'var(--t2)' }}>{task.pomodoroEstimate}</span>
         </div>
 
@@ -191,12 +191,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </span>
 
         {/* Date */}
-        {dateLabel && !task.completed && (
+        {displayDate && (
           <span
             className="text-[11px]"
-            style={{ color: reminderOverdue ? '#e8453c' : 'var(--t3)' }}
+            style={{ color: overdue || reminderOverdue ? '#e8453c' : 'var(--t3)' }}
           >
-            {dateLabel}
+            {displayDate}
           </span>
         )}
       </div>

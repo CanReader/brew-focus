@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { Task, PROJECT_COLORS } from '../../types';
+import { Task, PROJECT_COLORS, resolveDueDateToTs } from '../../types';
 import { useTimerStore } from '../../store/timerStore';
 
 export type SidebarView =
@@ -63,10 +63,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     setAddingProject(false);
   };
 
+  // "This Week" count: tasks due this week or overdue
+  const thisWeekCount = (() => {
+    const now = new Date();
+    const dow = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return active.filter((t) => {
+      if (!t.dueDate || t.dueDate === 'someday') return false;
+      const ts = resolveDueDateToTs(t.dueDate);
+      return ts !== null && ts <= sunday.getTime();
+    }).length;
+  })();
+
   const navItems = [
     { id: 'today', label: 'Today', icon: <Sun size={14} />, count: todayTasks.length, time: todayEstimate },
     { id: 'tomorrow', label: 'Tomorrow', icon: <Calendar size={14} />, count: tomorrowTasks.length, time: 0 },
-    { id: 'week', label: 'This Week', icon: <CalendarDays size={14} />, count: 0, time: 0 },
+    { id: 'week', label: 'This Week', icon: <CalendarDays size={14} />, count: thisWeekCount, time: 0 },
     { id: 'planned', label: 'Planned', icon: <AlignLeft size={14} />, count: plannedTasks.length, time: 0 },
     { id: 'someday', label: 'Someday', icon: <CloudSun size={14} />, count: somedayTasks.length, time: 0 },
     { id: 'completed', label: 'Completed', icon: <CheckCircle2 size={14} />, count: completed.length, time: 0 },
@@ -150,40 +167,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                 className="overflow-hidden"
               >
                 {projects.map((proj) => {
-                  const projTasks = active.filter((t) => t.projectId === proj.id);
+                  const projAllTasks = tasks.filter((t) => t.projectId === proj.id);
+                  const projActiveTasks = projAllTasks.filter((t) => !t.completed);
+                  const projCompletedTasks = projAllTasks.filter((t) => t.completed);
+                  const progress = projAllTasks.length > 0 ? projCompletedTasks.length / projAllTasks.length : 0;
                   const isActive = activeView === proj.id;
                   return (
                     <button
                       key={proj.id}
                       onClick={() => onViewChange(proj.id)}
-                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-all text-left group"
+                      className="w-full flex flex-col px-2 py-1.5 rounded-lg transition-all text-left group"
                       style={{
                         background: isActive ? 'var(--card)' : 'transparent',
                         color: isActive ? 'var(--t)' : 'var(--t2)',
+                        opacity: proj.status === 'on_hold' ? 0.7 : 1,
                       }}
                       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--card)'; }}
                       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <div
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: proj.color }}
-                      />
-                      <span className="flex-1 text-[13px] truncate">{proj.name}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteProject(proj.id); }}
-                          className="w-4 h-4 flex items-center justify-center rounded"
-                          style={{ color: 'var(--t3)' }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
-                        >
-                          <X size={10} />
-                        </button>
+                      <div className="flex items-center gap-2.5 w-full">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: proj.color }} />
+                        <span className="flex-1 text-[13px] truncate">{proj.name}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteProject(proj.id); }}
+                            className="w-4 h-4 flex items-center justify-center rounded"
+                            style={{ color: 'var(--t3)' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                        {projActiveTasks.length > 0 && (
+                          <span className="text-[11px] shrink-0" style={{ color: 'var(--t3)' }}>
+                            {projActiveTasks.length}
+                          </span>
+                        )}
                       </div>
-                      {projTasks.length > 0 && (
-                        <span className="text-[11px] shrink-0" style={{ color: 'var(--t3)' }}>
-                          {projTasks.length}
-                        </span>
+                      {/* Progress bar */}
+                      {projAllTasks.length > 0 && (
+                        <div className="w-full mt-1 h-0.5 rounded-full overflow-hidden" style={{ background: 'var(--brd2)' }}>
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{ width: `${progress * 100}%`, background: proj.status === 'completed' ? 'var(--t3)' : proj.color }}
+                          />
+                        </div>
                       )}
                     </button>
                   );

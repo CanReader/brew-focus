@@ -1,7 +1,9 @@
 // Task types
 export type Priority = 'p1' | 'p2' | 'p3' | 'p4';
-export type DueDate = 'today' | 'tomorrow' | 'someday' | null;
+// DueDate can be 'today' | 'tomorrow' | 'someday' | 'YYYY-MM-DD' | null
+export type DueDate = 'today' | 'tomorrow' | 'someday' | string | null;
 export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly';
+export type ProjectStatus = 'active' | 'on_hold' | 'completed';
 
 export interface SubTask {
   id: string;
@@ -18,6 +20,7 @@ export interface Task {
   pomodoroCompleted: number;
   tags: string[];
   subtasks: SubTask[];
+  notes: string;
   createdAt: number;
   completedAt?: number;
   dueDate?: DueDate;
@@ -34,7 +37,54 @@ export interface Project {
   id: string;
   name: string;
   color: string; // hex
+  description: string;
+  status: ProjectStatus;
+  targetDate?: number; // timestamp ms
   createdAt: number;
+}
+
+// ── Due date helpers ──────────────────────────────────────────────────────────
+
+/** Returns midnight timestamp for a DueDate, or null if not date-specific. */
+export function resolveDueDateToTs(dueDate: DueDate | undefined): number | null {
+  if (!dueDate || dueDate === 'someday') return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (dueDate === 'today') return today.getTime();
+  if (dueDate === 'tomorrow') {
+    const t = new Date(today);
+    t.setDate(t.getDate() + 1);
+    return t.getTime();
+  }
+  // ISO date string YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    const [y, mo, d] = dueDate.split('-').map(Number);
+    return new Date(y, mo - 1, d).getTime();
+  }
+  return null;
+}
+
+/** True if the task has a specific past due date (today is NOT overdue). */
+export function isDueDateOverdue(dueDate: DueDate | undefined): boolean {
+  if (!dueDate || dueDate === 'someday') return false;
+  const ts = resolveDueDateToTs(dueDate);
+  if (ts === null) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return ts < today.getTime();
+}
+
+/** Format a DueDate for display (e.g. "Today", "Apr 5", "Someday"). */
+export function formatDueDateDisplay(dueDate: DueDate | undefined): string {
+  if (!dueDate) return 'None';
+  if (dueDate === 'today') return 'Today';
+  if (dueDate === 'tomorrow') return 'Tomorrow';
+  if (dueDate === 'someday') return 'Someday';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    const [y, mo, d] = dueDate.split('-').map(Number);
+    return new Date(y, mo - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  return dueDate;
 }
 
 // Timer types

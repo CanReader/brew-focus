@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Task, Priority, DueDate, Project, RepeatType, SubTask } from '../types';
+import { Task, Priority, DueDate, Project, ProjectStatus, RepeatType, SubTask } from '../types';
 import Database from '@tauri-apps/plugin-sql';
 import { nanoid } from '../utils/nanoid';
 
@@ -20,6 +20,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     pomodoroCompleted: row.pomodoroCompleted as number,
     tags: JSON.parse((row.tags as string) || '[]'),
     subtasks: JSON.parse((row.subtasks as string) || '[]'),
+    notes: (row.notes as string) || '',
     createdAt: row.createdAt as number,
     completedAt: row.completedAt as number | undefined,
     dueDate: row.dueDate as DueDate | undefined,
@@ -37,6 +38,9 @@ function rowToProject(row: Record<string, unknown>): Project {
     id: row.id as string,
     name: row.name as string,
     color: row.color as string,
+    description: (row.description as string) || '',
+    status: ((row.status as string) || 'active') as ProjectStatus,
+    targetDate: row.targetDate as number | undefined,
     createdAt: row.createdAt as number,
   };
 }
@@ -110,6 +114,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       pomodoroCompleted: 0,
       tags: [],
       subtasks: [],
+      notes: '',
       createdAt,
       dueDate,
       projectId,
@@ -119,12 +124,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const db = await getDb();
       await db.execute(
         `INSERT INTO tasks (id, title, completed, priority, pomodoroEstimate, pomodoroCompleted,
-          tags, subtasks, createdAt, completedAt, dueDate, projectId, reminder, repeatType,
+          tags, subtasks, notes, createdAt, completedAt, dueDate, projectId, reminder, repeatType,
           customWorkDuration, customShortBreakDuration, customLongBreakDuration, sortOrder)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id, newTask.title, 0, priority, pomodoroEstimate, 0,
-          '[]', '[]', createdAt, null, dueDate ?? null, projectId ?? null, null, 'none',
+          '[]', '[]', '', createdAt, null, dueDate ?? null, projectId ?? null, null, 'none',
           null, null, null, maxOrder + 1,
         ]
       );
@@ -143,12 +148,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       if (!task) return;
       await db.execute(
         `UPDATE tasks SET title=?, completed=?, priority=?, pomodoroEstimate=?, pomodoroCompleted=?,
-          tags=?, subtasks=?, completedAt=?, dueDate=?, projectId=?, reminder=?, repeatType=?,
+          tags=?, subtasks=?, notes=?, completedAt=?, dueDate=?, projectId=?, reminder=?, repeatType=?,
           customWorkDuration=?, customShortBreakDuration=?, customLongBreakDuration=?
          WHERE id=?`,
         [
           task.title, task.completed ? 1 : 0, task.priority, task.pomodoroEstimate, task.pomodoroCompleted,
-          JSON.stringify(task.tags), JSON.stringify(task.subtasks),
+          JSON.stringify(task.tags), JSON.stringify(task.subtasks), task.notes ?? '',
           task.completedAt ?? null, task.dueDate ?? null, task.projectId ?? null,
           task.reminder ?? null, task.repeatType ?? 'none',
           task.customWorkDuration ?? null, task.customShortBreakDuration ?? null, task.customLongBreakDuration ?? null,
@@ -235,13 +240,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   addProject: async (name, color) => {
-    const project: Project = { id: nanoid(), name, color, createdAt: Date.now() };
+    const project: Project = {
+      id: nanoid(),
+      name,
+      color,
+      description: '',
+      status: 'active',
+      createdAt: Date.now(),
+    };
     set({ projects: [...get().projects, project] });
     try {
       const db = await getDb();
       await db.execute(
-        'INSERT INTO projects (id, name, color, createdAt) VALUES (?, ?, ?, ?)',
-        [project.id, project.name, project.color, project.createdAt]
+        'INSERT INTO projects (id, name, color, createdAt, description, status, targetDate) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [project.id, project.name, project.color, project.createdAt, '', 'active', null]
       );
     } catch (e) {
       console.warn('Failed to add project:', e);
@@ -256,8 +268,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const proj = projects.find((p) => p.id === id);
       if (!proj) return;
       await db.execute(
-        'UPDATE projects SET name=?, color=? WHERE id=?',
-        [proj.name, proj.color, id]
+        'UPDATE projects SET name=?, color=?, description=?, status=?, targetDate=? WHERE id=?',
+        [proj.name, proj.color, proj.description ?? '', proj.status ?? 'active', proj.targetDate ?? null, id]
       );
     } catch (e) {
       console.warn('Failed to update project:', e);

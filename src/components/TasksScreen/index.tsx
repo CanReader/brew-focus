@@ -7,7 +7,7 @@ import {
 import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
-import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -18,7 +18,7 @@ import { Sidebar, SidebarView } from './Sidebar';
 import { TaskContextMenu } from './TaskContextMenu';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { WeeklyCalendar } from './WeeklyCalendar';
-import { Task, DueDate } from '../../types';
+import { Task, DueDate, Project, resolveDueDateToTs } from '../../types';
 
 interface ContextMenuState {
   taskId: string;
@@ -47,6 +47,9 @@ function formatEstimate(totalMinutes: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+type SortBy = 'manual' | 'priority' | 'dueDate' | 'created' | 'sessions';
+const PRIORITY_ORDER: Record<string, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
+
 function filterTasks(tasks: Task[], view: SidebarView): Task[] {
   if (view.startsWith('tag:')) {
     const tag = view.slice(4);
@@ -55,13 +58,54 @@ function filterTasks(tasks: Task[], view: SidebarView): Task[] {
   switch (view) {
     case 'today': return tasks.filter((t) => !t.completed && t.dueDate === 'today');
     case 'tomorrow': return tasks.filter((t) => !t.completed && t.dueDate === 'tomorrow');
-    case 'week': return tasks.filter((t) => !t.completed);
+    case 'week': {
+      const now = new Date();
+      const dow = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+      monday.setHours(0, 0, 0, 0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+      return tasks.filter((t) => {
+        if (t.completed || !t.dueDate || t.dueDate === 'someday') return false;
+        const ts = resolveDueDateToTs(t.dueDate);
+        return ts !== null && ts <= sunday.getTime();
+      });
+    }
     case 'planned': return tasks.filter((t) => !t.completed && t.dueDate && t.dueDate !== 'someday');
     case 'someday': return tasks.filter((t) => !t.completed && t.dueDate === 'someday');
     case 'completed': return tasks.filter((t) => t.completed);
     case 'all': return tasks.filter((t) => !t.completed);
     default: return tasks.filter((t) => !t.completed && t.projectId === view);
   }
+}
+
+function sortTasks(tasks: Task[], sortBy: SortBy): Task[] {
+  if (sortBy === 'manual') return tasks;
+  return [...tasks].sort((a, b) => {
+    switch (sortBy) {
+      case 'priority': return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+      case 'dueDate': {
+        const aTs = resolveDueDateToTs(a.dueDate) ?? Infinity;
+        const bTs = resolveDueDateToTs(b.dueDate) ?? Infinity;
+        return aTs - bTs;
+      }
+      case 'created': return b.createdAt - a.createdAt;
+      case 'sessions': return b.pomodoroCompleted - a.pomodoroCompleted;
+      default: return 0;
+    }
+  });
+}
+
+function searchTasks(tasks: Task[], query: string): Task[] {
+  if (!query.trim()) return tasks;
+  const q = query.toLowerCase();
+  return tasks.filter((t) =>
+    t.title.toLowerCase().includes(q) ||
+    t.notes.toLowerCase().includes(q) ||
+    t.tags.some((tag) => tag.toLowerCase().includes(q))
+  );
 }
 
 function getDueDateForView(view: SidebarView): DueDate {
@@ -81,12 +125,128 @@ const QuickCup: React.FC<{ filled: boolean }> = ({ filled }) => (
   </svg>
 );
 
+const STATUS_OPTIONS: { value: import('../../types').ProjectStatus; label: string; color: string }[] = [
+  { value: 'active', label: 'Active', color: 'var(--grn)' },
+  { value: 'on_hold', label: 'On Hold', color: 'var(--amb)' },
+  { value: 'completed', label: 'Done', color: 'var(--t3)' },
+];
+
+const ProjectDetailCard: React.FC<{
+  project: Project;
+  tasks: Task[];
+  onUpdate: (partial: Partial<Project>) => void;
+}> = ({ project, tasks, onUpdate }) => {
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState(project.description || '');
+
+  React.useEffect(() => {
+    setDescValue(project.description || '');
+  }, [project.id]);
+
+  const projectTasks = tasks.filter((t) => t.projectId === project.id);
+  const completed = projectTasks.filter((t) => t.completed).length;
+  const total = projectTasks.length;
+  const progress = total > 0 ? completed / total : 0;
+
+  const msToDateInput = (ms?: number) => {
+    if (!ms) return '';
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const targetOverdue = project.targetDate && project.targetDate < Date.now();
+
+  return (
+    <div className="rounded-xl p-3 mb-3" style={{ background: 'var(--card)', border: '1px solid var(--brd)' }}>
+      {/* Status + target date row */}
+      <div className="flex items-center gap-2 mb-2">
+        {STATUS_OPTIONS.map((s) => (
+          <button
+            key={s.value}
+            onClick={() => onUpdate({ status: s.value })}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all"
+            style={{
+              background: project.status === s.value ? s.color + '20' : 'transparent',
+              color: project.status === s.value ? s.color : 'var(--t3)',
+              border: `1px solid ${project.status === s.value ? s.color + '50' : 'var(--brd)'}`,
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: s.color }} />
+            {s.label}
+          </button>
+        ))}
+        <div className="flex-1" />
+        {/* Target date */}
+        <div className="flex items-center gap-1">
+          <Target size={10} style={{ color: targetOverdue ? '#e8453c' : 'var(--t3)' }} />
+          <input
+            type="date"
+            value={msToDateInput(project.targetDate)}
+            onChange={(e) => {
+              const val = e.target.value;
+              onUpdate({ targetDate: val ? new Date(val).getTime() : undefined });
+            }}
+            className="text-[11px] bg-transparent focus:outline-none"
+            style={{ color: targetOverdue ? '#e8453c' : 'var(--t3)', colorScheme: 'dark', width: 90 }}
+          />
+        </div>
+      </div>
+
+      {/* Progress */}
+      {total > 0 && (
+        <div className="mb-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
+              {completed}/{total} tasks
+            </span>
+            <span className="text-[11px] tabular-nums" style={{ color: project.color }}>
+              {Math.round(progress * 100)}%
+            </span>
+          </div>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--brd2)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${progress * 100}%`, background: project.color }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Description */}
+      {editingDesc ? (
+        <textarea
+          autoFocus
+          value={descValue}
+          onChange={(e) => setDescValue(e.target.value)}
+          onBlur={() => { onUpdate({ description: descValue }); setEditingDesc(false); }}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setDescValue(project.description || ''); setEditingDesc(false); } }}
+          rows={2}
+          placeholder="Project description…"
+          className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
+          style={{ color: 'var(--t2)' }}
+        />
+      ) : (
+        <p
+          className="text-[12px] cursor-text"
+          style={{ color: project.description ? 'var(--t2)' : 'var(--t3)' }}
+          onClick={() => setEditingDesc(true)}
+        >
+          {project.description || 'Add description…'}
+        </p>
+      )}
+    </div>
+  );
+};
+
 export const TasksScreen: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>('all');
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('manual');
+  const [showSortMenu, setShowSortMenu] = useState(false);
   // Add task bar state
   const [newTaskPomodoros, setNewTaskPomodoros] = useState(1);
   const [hoverPomodoros, setHoverPomodoros] = useState<number | null>(null);
@@ -95,14 +255,14 @@ export const TasksScreen: React.FC = () => {
 
   const {
     tasks, projects, addTask, updateTask, deleteTask, toggleTask,
-    reorderTasks, setActiveTask, activeTaskId,
+    reorderTasks, setActiveTask, activeTaskId, updateProject,
   } = useTaskStore();
 
   const { isRunning, phase, secondsLeft, start, pause, skip, setActiveTask: setTimerActiveTask } = useTimerStore();
   const { settings } = useSettingsStore();
   const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
 
-  const viewTasks = filterTasks(tasks, sidebarView);
+  const viewTasks = sortTasks(searchTasks(filterTasks(tasks, sidebarView), searchQuery), sortBy);
   const completedTasks = sidebarView !== 'completed' ? tasks.filter((t) => t.completed) : [];
 
   // Live lookup for context menu and detail panel
@@ -186,8 +346,91 @@ export const TasksScreen: React.FC = () => {
         ) : (<>
 
         {/* Header */}
-        <div className="px-6 pt-5 pb-3 shrink-0">
-          <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>{title}</h1>
+        <div className="px-6 pt-4 pb-2 shrink-0">
+          <div className="flex items-end justify-between mb-3">
+            <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>{title}</h1>
+            {/* Sort button */}
+            <div className="relative pb-1">
+              <button
+                onClick={() => setShowSortMenu((s) => !s)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-colors"
+                style={{
+                  background: sortBy !== 'manual' ? 'var(--accent-d)' : 'var(--card)',
+                  color: sortBy !== 'manual' ? 'var(--accent)' : 'var(--t3)',
+                  border: `1px solid ${sortBy !== 'manual' ? 'var(--accent-g)' : 'var(--brd)'}`,
+                }}
+              >
+                <SortAsc size={12} />
+                {sortBy !== 'manual' && <span className="capitalize">{sortBy === 'dueDate' ? 'Due' : sortBy}</span>}
+              </button>
+              <AnimatePresence>
+                {showSortMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute right-0 top-full mt-1 rounded-xl border overflow-hidden z-50"
+                    style={{ background: 'var(--card)', borderColor: 'var(--brd2)', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                    onMouseLeave={() => setShowSortMenu(false)}
+                  >
+                    {([
+                      ['manual', 'Manual'],
+                      ['priority', 'Priority'],
+                      ['dueDate', 'Due Date'],
+                      ['created', 'Created'],
+                      ['sessions', 'Sessions'],
+                    ] as [SortBy, string][]).map(([val, label]) => (
+                      <button
+                        key={val}
+                        onClick={() => { setSortBy(val); setShowSortMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left transition-colors"
+                        style={{
+                          color: sortBy === val ? 'var(--accent)' : 'var(--t2)',
+                          background: sortBy === val ? 'var(--accent-d)' : 'transparent',
+                        }}
+                        onMouseEnter={(e) => { if (sortBy !== val) e.currentTarget.style.background = 'var(--card-h)'; }}
+                        onMouseLeave={(e) => { if (sortBy !== val) e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        {sortBy === val && <div className="w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />}
+                        {label}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Project detail card */}
+          {!sidebarView.startsWith('tag:') && projects.find((p) => p.id === sidebarView) && (
+            <ProjectDetailCard
+              project={projects.find((p) => p.id === sidebarView)!}
+              tasks={tasks}
+              onUpdate={(partial) => updateProject(sidebarView, partial)}
+            />
+          )}
+
+          {/* Search bar */}
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border mb-1"
+            style={{ background: 'var(--card)', borderColor: searchQuery ? 'var(--brd2)' : 'transparent' }}
+          >
+            <Search size={13} style={{ color: 'var(--t3)', flexShrink: 0 }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks…"
+              className="flex-1 text-[12px] bg-transparent focus:outline-none"
+              style={{ color: 'var(--t)' }}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} style={{ color: 'var(--t3)' }}>
+                <X size={11} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Add task bar */}
