@@ -41,7 +41,6 @@ function msToDatetimeLocal(ms?: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** Get YYYY-MM-DD for today + N days */
 function isoDatePlusDays(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() + n);
@@ -62,14 +61,17 @@ const DetailRow: React.FC<{
   <div>
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left"
-      style={{ background: expanded ? 'var(--card)' : 'transparent' }}
-      onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.background = 'var(--card)'; }}
+      className="w-full flex items-center gap-3 px-4 py-2.5 transition-all text-left"
+      style={{
+        background: expanded ? 'rgba(255,255,255,0.03)' : 'transparent',
+        borderLeft: expanded ? '2px solid var(--accent)' : '2px solid transparent',
+      }}
+      onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
       onMouseLeave={(e) => { if (!expanded) e.currentTarget.style.background = 'transparent'; }}
     >
       <span style={{ color: 'var(--t3)', flexShrink: 0, width: 15 }}>{icon}</span>
-      <span className="text-[13px] w-20 shrink-0" style={{ color: 'var(--t3)' }}>{label}</span>
-      <span className="flex-1 text-[13px] text-right truncate" style={{ color: valueColor ?? 'var(--t2)' }}>
+      <span className="text-[12px] w-20 shrink-0 font-medium" style={{ color: 'var(--t3)' }}>{label}</span>
+      <span className="flex-1 text-[12px] text-right truncate" style={{ color: valueColor ?? 'var(--t2)' }}>
         {value}
       </span>
     </button>
@@ -81,7 +83,7 @@ const DetailRow: React.FC<{
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.15 }}
           className="overflow-hidden px-4 pb-3"
-          style={{ background: 'var(--card)' }}
+          style={{ background: 'rgba(255,255,255,0.02)' }}
         >
           {children}
         </motion.div>
@@ -104,16 +106,21 @@ const PomodoroRow: React.FC<{
       <button
         onClick={onDec}
         disabled={value <= min}
-        className="w-5 h-5 flex items-center justify-center rounded transition-opacity"
-        style={{ background: 'var(--bg2)', color: 'var(--t3)', opacity: value <= min ? 0.3 : 1 }}
+        className="w-6 h-6 flex items-center justify-center rounded-lg transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          color: 'var(--t3)',
+          opacity: value <= min ? 0.3 : 1,
+          border: '1px solid var(--brd)',
+        }}
       >−</button>
       <span className="text-[12px] tabular-nums text-center" style={{ color: 'var(--t)', minWidth: suffix ? 48 : 20 }}>
         {value}{suffix ? ` ${suffix}` : ''}
       </span>
       <button
         onClick={onInc}
-        className="w-5 h-5 flex items-center justify-center rounded"
-        style={{ background: 'var(--bg2)', color: 'var(--t3)' }}
+        className="w-6 h-6 flex items-center justify-center rounded-lg"
+        style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--t3)', border: '1px solid var(--brd)' }}
       >+</button>
     </div>
   </div>
@@ -143,7 +150,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     setExpanded(null);
   }, [task.id]);
 
-  // Auto-resize notes textarea
   useEffect(() => {
     if (notesRef.current) {
       notesRef.current.style.height = 'auto';
@@ -196,7 +202,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   const overdue = !task.completed && isDueDateOverdue(task.dueDate);
   const dueDateDisplay = formatDueDateDisplay(task.dueDate);
 
-  // Date shortcuts
   const DATE_SHORTCUTS: { label: string; value: DueDate }[] = [
     { label: 'Today', value: 'today' },
     { label: 'Tomorrow', value: 'tomorrow' },
@@ -219,9 +224,20 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         flexShrink: 0,
       }}
     >
-      <div className="flex-1 overflow-y-auto">
-        {/* Title + flag */}
-        <div className="px-4 pt-4 pb-2 flex items-start gap-2">
+      {/* Header gradient area */}
+      <div
+        className="px-4 pt-4 pb-3 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,77,77,0.06) 0%, rgba(255,77,77,0.02) 100%)',
+          borderBottom: '1px solid var(--brd)',
+        }}
+      >
+        {/* Top accent line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, var(--accent), transparent)' }}
+        />
+        <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
             {isEditingTitle ? (
               <textarea
@@ -243,9 +259,9 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 onClick={() => !task.completed && setIsEditingTitle(true)}
               >
                 <span
-                  className="text-[15px] font-medium leading-snug flex-1"
+                  className="text-[15px] font-semibold leading-snug flex-1"
                   style={{
-                    color: task.completed ? 'var(--t3)' : overdue ? '#e87060' : 'var(--t)',
+                    color: task.completed ? 'var(--t3)' : overdue ? '#ff6b5a' : 'var(--t)',
                     textDecoration: task.completed ? 'line-through' : 'none',
                   }}
                 >
@@ -261,14 +277,19 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           {/* Priority flag */}
           <button
             onClick={() => toggleRow('priority')}
-            className="mt-0.5 shrink-0 p-1 rounded-md transition-colors"
-            style={{ color: flagColor }}
+            className="mt-0.5 shrink-0 p-1.5 rounded-lg transition-all"
+            style={{
+              color: flagColor,
+              background: expanded === 'priority' ? `${flagColor}18` : 'transparent',
+            }}
             title="Change priority"
           >
-            <Flag size={15} fill={task.priority !== 'p4' ? flagColor : 'none'} />
+            <Flag size={14} fill={task.priority !== 'p4' ? flagColor : 'none'} />
           </button>
         </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto">
         {/* Priority picker */}
         <AnimatePresence>
           {expanded === 'priority' && (
@@ -277,18 +298,20 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="overflow-hidden px-4 pb-2"
+              className="overflow-hidden px-4 py-3"
+              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--brd)' }}
             >
               <div className="flex gap-1.5">
                 {PRIORITY_OPTIONS.map((p) => (
                   <button
                     key={p.value}
                     onClick={() => { onUpdate({ priority: p.value }); setExpanded(null); }}
-                    className="flex-1 py-1 rounded-lg text-[11px] font-medium transition-all"
+                    className="flex-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
                     style={{
-                      background: task.priority === p.value ? p.color + '25' : 'var(--card)',
+                      background: task.priority === p.value ? `${p.color}20` : 'rgba(255,255,255,0.04)',
                       color: task.priority === p.value ? p.color : 'var(--t3)',
                       border: `1.5px solid ${task.priority === p.value ? p.color : 'var(--brd)'}`,
+                      boxShadow: task.priority === p.value ? `0 0 10px ${p.color}30` : 'none',
                     }}
                   >
                     {p.label}
@@ -300,17 +323,21 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </AnimatePresence>
 
         {/* Tags */}
-        <div className="px-4 pb-2 flex flex-wrap gap-1.5 items-center min-h-[28px]">
+        <div className="px-4 py-2.5 flex flex-wrap gap-1.5 items-center min-h-[40px]" style={{ borderBottom: '1px solid var(--brd)' }}>
           {task.tags.map((tag) => (
             <span
               key={tag}
               className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
-              style={{ background: 'var(--card)', color: 'var(--t2)', border: '1px solid var(--brd)' }}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                color: 'var(--t2)',
+                border: '1px solid var(--brd)',
+              }}
             >
               #{tag}
               <button
                 onClick={() => removeTag(task.id, tag)}
-                className="flex items-center justify-center w-3 h-3 rounded-full opacity-60 hover:opacity-100"
+                className="flex items-center justify-center w-3 h-3 rounded-full opacity-60 hover:opacity-100 transition-opacity"
                 style={{ color: 'var(--t3)' }}
               >
                 <X size={8} />
@@ -332,29 +359,34 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </div>
 
         {/* Notes */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-1.5 mb-1">
+        <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--brd)' }}>
+          <div className="flex items-center gap-1.5 mb-1.5">
             <FileText size={11} style={{ color: 'var(--t3)' }} />
-            <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--t3)' }}>Notes</span>
+            <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>Notes</span>
           </div>
-          <textarea
-            ref={notesRef}
-            value={notesValue}
-            onChange={(e) => setNotesValue(e.target.value)}
-            onBlur={handleNotesBlur}
-            placeholder="Add notes…"
-            rows={2}
-            className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
-            style={{ color: 'var(--t2)', minHeight: 40 }}
-          />
+          <div
+            className="rounded-xl p-2.5 focus-glow"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
+          >
+            <textarea
+              ref={notesRef}
+              value={notesValue}
+              onChange={(e) => setNotesValue(e.target.value)}
+              onBlur={handleNotesBlur}
+              placeholder="Add notes…"
+              rows={2}
+              className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
+              style={{ color: 'var(--t2)', minHeight: 40, caretColor: 'var(--accent)' }}
+            />
+          </div>
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: 'var(--brd)' }} />
+        {/* Gradient section divider */}
+        <div className="section-divider mx-4" />
 
         {/* Detail rows */}
         <DetailRow
-          icon={<Clock size={13} />}
+          icon={<Clock size={12} />}
           label="Pomodoro"
           value={pomodoroValue}
           expanded={expanded === 'pomodoro'}
@@ -383,14 +415,13 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               onInc={() => onUpdate({ customShortBreakDuration: (task.customShortBreakDuration ?? settings.shortBreakDuration) + 1 })}
             />
 
-            {/* Long break section */}
             <div className="border-t pt-2 mt-0.5 flex flex-col gap-2" style={{ borderColor: 'var(--brd)' }}>
               <div className="flex items-center justify-between">
                 <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Skip long breaks</span>
                 <button
                   onClick={() => onUpdate({ skipLongBreak: !task.skipLongBreak })}
                   className="w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0"
-                  style={{ background: task.skipLongBreak ? 'var(--accent)' : 'var(--brd2)' }}
+                  style={{ background: task.skipLongBreak ? 'var(--accent)' : 'rgba(255,255,255,0.1)' }}
                 >
                   <span
                     className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200"
@@ -438,15 +469,14 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </DetailRow>
 
         <DetailRow
-          icon={<Calendar size={13} />}
+          icon={<Calendar size={12} />}
           label="Due Date"
           value={dueDateDisplay}
-          valueColor={task.dueDate ? (overdue ? '#e8453c' : 'var(--accent)') : 'var(--t3)'}
+          valueColor={task.dueDate ? (overdue ? '#ff6b5a' : 'var(--accent)') : 'var(--t3)'}
           expanded={expanded === 'dueDate'}
           onClick={() => toggleRow('dueDate')}
         >
           <div className="pt-2 flex flex-col gap-2">
-            {/* Quick shortcuts */}
             <div className="flex flex-wrap gap-1.5">
               {DATE_SHORTCUTS.map((s) => {
                 const isSelected = (task.dueDate ?? null) === s.value ||
@@ -458,7 +488,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                     onClick={() => { onUpdate({ dueDate: s.value ?? undefined }); setExpanded(null); }}
                     className="px-2 py-1 rounded-lg text-[11px] font-medium transition-all"
                     style={{
-                      background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
+                      background: isSelected ? 'var(--accent-d)' : 'rgba(255,255,255,0.05)',
                       color: isSelected ? 'var(--accent)' : 'var(--t3)',
                       border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
                     }}
@@ -468,7 +498,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 );
               })}
             </div>
-            {/* Custom date picker */}
             <div>
               <span className="text-[11px] block mb-1" style={{ color: 'var(--t3)' }}>Custom date</span>
               <input
@@ -479,10 +508,10 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                     : ''
                 }
                 onChange={(e) => {
-                  const val = e.target.value; // YYYY-MM-DD
+                  const val = e.target.value;
                   onUpdate({ dueDate: val || undefined });
                 }}
-                className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5"
+                className="w-full text-[12px] bg-transparent focus:outline-none border rounded-xl px-2 py-1.5"
                 style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
               />
             </div>
@@ -490,7 +519,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </DetailRow>
 
         <DetailRow
-          icon={<FolderOpen size={13} />}
+          icon={<FolderOpen size={12} />}
           label="Project"
           value={projects.find((p) => p.id === task.projectId)?.name ?? 'None'}
           valueColor={task.projectId ? 'var(--t2)' : 'var(--t3)'}
@@ -501,7 +530,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             <button
               onClick={() => { onUpdate({ projectId: undefined }); setExpanded(null); }}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
-              style={{ background: !task.projectId ? 'var(--bg2)' : 'transparent', color: !task.projectId ? 'var(--t2)' : 'var(--t3)' }}
+              style={{ background: !task.projectId ? 'rgba(255,255,255,0.05)' : 'transparent', color: !task.projectId ? 'var(--t2)' : 'var(--t3)' }}
             >
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
               <span className="text-[12px]">None</span>
@@ -511,11 +540,17 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 key={p.id}
                 onClick={() => { onUpdate({ projectId: p.id }); setExpanded(null); }}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
-                style={{ background: task.projectId === p.id ? 'var(--bg2)' : 'transparent', color: task.projectId === p.id ? 'var(--t)' : 'var(--t3)' }}
-                onMouseEnter={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'var(--bg2)'; }}
+                style={{ background: task.projectId === p.id ? 'rgba(255,255,255,0.05)' : 'transparent', color: task.projectId === p.id ? 'var(--t)' : 'var(--t3)' }}
+                onMouseEnter={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                 onMouseLeave={(e) => { if (task.projectId !== p.id) e.currentTarget.style.background = 'transparent'; }}
               >
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
+                <div
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    background: p.color,
+                    boxShadow: task.projectId === p.id ? `0 0 5px ${p.color}60` : 'none',
+                  }}
+                />
                 <span className="text-[12px]">{p.name}</span>
               </button>
             ))}
@@ -523,7 +558,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </DetailRow>
 
         <DetailRow
-          icon={<Bell size={13} />}
+          icon={<Bell size={12} />}
           label="Reminder"
           value={reminderLabel}
           valueColor={task.reminder ? 'var(--t2)' : 'var(--t3)'}
@@ -538,7 +573,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 const val = e.target.value;
                 onUpdate({ reminder: val ? new Date(val).getTime() : undefined });
               }}
-              className="w-full text-[12px] bg-transparent focus:outline-none border rounded-lg px-2 py-1.5"
+              className="w-full text-[12px] bg-transparent focus:outline-none border rounded-xl px-2 py-1.5"
               style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
             />
             {task.reminder && (
@@ -554,7 +589,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </DetailRow>
 
         <DetailRow
-          icon={<RefreshCw size={13} />}
+          icon={<RefreshCw size={12} />}
           label="Repeat"
           value={repeatLabel}
           valueColor={task.repeatType && task.repeatType !== 'none' ? 'var(--t2)' : 'var(--t3)'}
@@ -568,9 +603,9 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 <button
                   key={r}
                   onClick={() => { onUpdate({ repeatType: r }); setExpanded(null); }}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+                  className="px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all"
                   style={{
-                    background: isSelected ? 'var(--accent-d)' : 'var(--bg2)',
+                    background: isSelected ? 'var(--accent-d)' : 'rgba(255,255,255,0.05)',
                     color: isSelected ? 'var(--accent)' : 'var(--t3)',
                     border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
                   }}
@@ -582,8 +617,8 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           </div>
         </DetailRow>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: 'var(--brd)', margin: '4px 0' }} />
+        {/* Gradient divider */}
+        <div className="section-divider mx-0 my-1" />
 
         {/* Subtasks */}
         <div className="px-4 py-2">
@@ -597,14 +632,14 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 onClick={() => toggleSubtask(task.id, subtask.id)}
                 className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
                 style={{
-                  borderColor: subtask.completed ? 'var(--grn)' : 'var(--brd2)',
+                  borderColor: subtask.completed ? 'var(--grn)' : 'rgba(255,255,255,0.14)',
                   background: subtask.completed ? 'var(--grn)' : 'transparent',
                 }}
               >
                 {subtask.completed && <Check size={8} color="white" strokeWidth={3} />}
               </button>
               <span
-                className="flex-1 text-[13px] min-w-0"
+                className="flex-1 text-[12px] min-w-0"
                 style={{
                   color: subtask.completed ? 'var(--t3)' : 'var(--t)',
                   textDecoration: subtask.completed ? 'line-through' : 'none',
@@ -616,7 +651,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 onClick={() => deleteSubtask(task.id, subtask.id)}
                 className="opacity-0 group-hover/sub:opacity-100 transition-opacity"
                 style={{ color: 'var(--t3)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
               >
                 <X size={11} />
@@ -624,7 +659,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             </div>
           ))}
           <div className="flex items-center gap-2 pt-2">
-            <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'var(--brd2)' }} />
+            <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
             <input
               value={newSubtaskValue}
               onChange={(e) => setNewSubtaskValue(e.target.value)}
@@ -633,14 +668,14 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 if (e.key === 'Escape') setNewSubtaskValue('');
               }}
               placeholder="Add a step…"
-              className="flex-1 text-[13px] bg-transparent focus:outline-none"
+              className="flex-1 text-[12px] bg-transparent focus:outline-none"
               style={{ color: 'var(--t)', caretColor: 'var(--accent)' }}
             />
             {newSubtaskValue.trim() && (
               <button
                 onClick={handleAddSubtask}
-                className="w-5 h-5 flex items-center justify-center rounded shrink-0"
-                style={{ background: 'var(--accent)', color: 'white' }}
+                className="w-5 h-5 flex items-center justify-center rounded-lg shrink-0"
+                style={{ background: 'var(--accent)', color: 'white', boxShadow: '0 0 8px var(--accent-g)' }}
               >
                 <Plus size={10} />
               </button>
@@ -651,32 +686,32 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
       {/* Footer */}
       <div
-        className="flex items-center justify-between px-4 py-3 border-t shrink-0"
-        style={{ borderColor: 'var(--brd)' }}
+        className="flex items-center justify-between px-4 py-3 shrink-0"
+        style={{ borderTop: '1px solid var(--brd)' }}
       >
-        <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
+        <span className="text-[10px]" style={{ color: 'var(--t3)' }}>
           {formatCreatedAt(task.createdAt)}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsEditingTitle(true)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-xl transition-all"
             style={{ color: 'var(--t3)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.color = 'var(--t)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--t)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
             title="Edit title"
           >
-            <Edit3 size={13} />
+            <Edit3 size={12} />
           </button>
           <button
             onClick={() => { onDelete(); onClose(); }}
-            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-xl transition-all"
             style={{ color: 'var(--t3)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(232,69,60,0.12)'; e.currentTarget.style.color = '#e8453c'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,77,0.12)'; e.currentTarget.style.color = 'var(--accent)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
             title="Delete task"
           >
-            <Trash2 size={13} />
+            <Trash2 size={12} />
           </button>
         </div>
       </div>

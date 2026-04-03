@@ -14,7 +14,6 @@ export const TaskSelector: React.FC = () => {
   const incompleteTasks = tasks.filter((t) => !t.completed);
   const activeTask = tasks.find((t) => t.id === activeTaskId);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -34,21 +33,28 @@ export const TaskSelector: React.FC = () => {
       {/* Trigger */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-150 text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-150 text-left"
         style={{
-          background: activeTask ? 'var(--accent-d)' : 'var(--card)',
-          borderColor: activeTask ? 'var(--accent-g)' : 'var(--brd)',
+          background: activeTask ? 'var(--accent-d)' : 'rgba(255,255,255,0.04)',
+          border: `1px solid ${activeTask ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
           color: activeTask ? 'var(--t)' : 'var(--t3)',
+          boxShadow: activeTask ? '0 0 16px rgba(255,77,77,0.08)' : 'none',
         }}
         onMouseEnter={(e) => {
-          if (!activeTask) e.currentTarget.style.borderColor = 'var(--brd2)';
+          if (!activeTask) {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+          }
         }}
         onMouseLeave={(e) => {
-          if (!activeTask) e.currentTarget.style.borderColor = 'var(--brd)';
+          if (!activeTask) {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+          }
         }}
       >
         {/* Coffee cup dot */}
-        <span style={{ color: activeTask ? 'var(--accent)' : 'var(--t3)', fontSize: '13px', lineHeight: 1 }}>
+        <span style={{ color: activeTask ? 'var(--accent)' : 'var(--t3)', fontSize: '13px', lineHeight: 1, flexShrink: 0 }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 5h10v.8H2V5z" opacity="0.9"/>
             <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" opacity="0.9"/>
@@ -68,11 +74,11 @@ export const TaskSelector: React.FC = () => {
               style={{ color: 'var(--t3)' }}
               onClick={(e) => { e.stopPropagation(); handleSelect(null); }}
             >
-              <X size={12} />
+              <X size={11} />
             </span>
           )}
           <ChevronDown
-            size={13}
+            size={12}
             style={{
               color: 'var(--t3)',
               transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -94,8 +100,9 @@ export const TaskSelector: React.FC = () => {
             style={{
               transformOrigin: 'top',
               background: 'var(--card)',
-              borderColor: 'var(--brd)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              borderColor: 'rgba(255,255,255,0.1)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(20px)',
             }}
           >
             {incompleteTasks.length === 0 ? (
@@ -109,13 +116,13 @@ export const TaskSelector: React.FC = () => {
                   onClick={() => handleSelect(null)}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors text-[13px]"
                   style={{
-                    background: !activeTaskId ? 'var(--card-h)' : 'transparent',
+                    background: !activeTaskId ? 'rgba(255,255,255,0.04)' : 'transparent',
                     color: 'var(--t3)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = !activeTaskId ? 'var(--card-h)' : 'transparent')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = !activeTaskId ? 'rgba(255,255,255,0.04)' : 'transparent')}
                 >
-                  <span style={{ color: 'var(--t3)', opacity: 0.5 }}>—</span>
+                  <span style={{ color: 'var(--t3)', opacity: 0.4 }}>—</span>
                   No task
                 </button>
 
@@ -129,8 +136,9 @@ export const TaskSelector: React.FC = () => {
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors"
                       style={{
                         background: isSelected ? 'var(--accent-d)' : 'transparent',
+                        borderLeft: `2px solid ${isSelected ? 'var(--accent)' : 'transparent'}`,
                       }}
-                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--card-h)'; }}
+                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                       onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                     >
                       {/* Priority dot */}
@@ -140,7 +148,7 @@ export const TaskSelector: React.FC = () => {
                           background:
                             task.priority === 'p1' ? 'var(--accent)' :
                             task.priority === 'p2' ? 'var(--amb)' :
-                            task.priority === 'p3' ? 'var(--blu)' : 'var(--brd2)',
+                            task.priority === 'p3' ? 'var(--blu)' : 'rgba(255,255,255,0.12)',
                         }}
                       />
                       <span
@@ -158,7 +166,6 @@ export const TaskSelector: React.FC = () => {
                           {task.customWorkDuration}m
                         </span>
                       )}
-                      {/* Pomodoro cups */}
                       <span className="text-[11px] shrink-0" style={{ color: 'var(--t3)' }}>
                         {task.pomodoroCompleted}/{task.pomodoroEstimate}
                       </span>

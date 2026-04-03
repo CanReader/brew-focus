@@ -31,9 +31,9 @@ interface CommandPaletteProps {
 }
 
 const PRIORITY_META: { priority: Priority; label: string; color: string }[] = [
-  { priority: 'p1', label: 'High',   color: '#e8453c' },
-  { priority: 'p2', label: 'Medium', color: '#e8a83e' },
-  { priority: 'p3', label: 'Low',    color: '#5a9cf5' },
+  { priority: 'p1', label: 'High',   color: '#ff4d4d' },
+  { priority: 'p2', label: 'Medium', color: '#f5a623' },
+  { priority: 'p3', label: 'Low',    color: '#5b8dee' },
   { priority: 'p4', label: 'None',   color: 'var(--t3)' },
 ];
 

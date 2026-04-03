@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, Minus, Square, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { motion } from 'framer-motion';
 
 interface TitleBarProps {
   activeTab: 'focus' | 'tasks' | 'reports';
@@ -33,74 +34,103 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     await win.close();
   };
 
+  const tabs: { id: 'focus' | 'tasks' | 'reports'; label: string }[] = [
+    { id: 'focus', label: 'Focus' },
+    { id: 'tasks', label: 'Tasks' },
+    { id: 'reports', label: 'Reports' },
+  ];
+
   return (
     <div
-      className="h-[46px] flex items-center justify-between px-4 shrink-0 border-b"
-      style={{ borderColor: 'var(--brd)', background: 'var(--bg)' }}
+      className="h-[42px] flex items-center justify-between px-3 shrink-0 relative"
+      style={{
+        background: 'var(--bg)',
+        borderBottom: '1px solid var(--brd)',
+      }}
       data-tauri-drag-region
     >
+      {/* Top gradient accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, var(--accent) 40%, var(--blu) 70%, transparent 100%)',
+          opacity: 0.25,
+        }}
+      />
+
       {/* Left: Logo */}
-      <div className="flex items-center gap-2.5 select-none" data-no-drag>
+      <div className="flex items-center gap-2 select-none shrink-0" data-no-drag>
         <img
           src="/logo.svg"
           alt="Brew Focus"
-          className="w-7 h-7 rounded-lg shrink-0"
+          className="w-6 h-6 rounded-md shrink-0"
+          style={{ filter: 'drop-shadow(0 0 6px var(--accent-g))' }}
         />
-        <span className="font-fraunces text-[17px] font-semibold" style={{ color: 'var(--t)' }}>
+        <span
+          className="font-fraunces text-[15px] font-semibold"
+          style={{
+            color: 'var(--t)',
+            letterSpacing: '-0.3px',
+          }}
+        >
           Brew Focus
         </span>
       </div>
 
       {/* Center: Tab switcher */}
       <div
-        className="flex items-center gap-0.5 rounded-xl p-1"
-        style={{ background: 'var(--card)' }}
+        className="flex items-center gap-0.5 rounded-xl p-0.5 absolute left-1/2 -translate-x-1/2"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid var(--brd)',
+        }}
         data-no-drag
       >
-        <button
-          onClick={() => onTabChange('focus')}
-          className="px-4 py-1 rounded-lg text-[13px] font-medium transition-all duration-200"
-          style={{
-            background: activeTab === 'focus' ? 'var(--card-h)' : 'transparent',
-            color: activeTab === 'focus' ? 'var(--t)' : 'var(--t3)',
-            boxShadow: activeTab === 'focus' ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-          }}
-        >
-          Focus
-        </button>
-        <button
-          onClick={() => onTabChange('tasks')}
-          className="px-4 py-1 rounded-lg text-[13px] font-medium transition-all duration-200"
-          style={{
-            background: activeTab === 'tasks' ? 'var(--card-h)' : 'transparent',
-            color: activeTab === 'tasks' ? 'var(--t)' : 'var(--t3)',
-            boxShadow: activeTab === 'tasks' ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-          }}
-        >
-          Tasks
-        </button>
-        <button
-          onClick={() => onTabChange('reports')}
-          className="px-4 py-1 rounded-lg text-[13px] font-medium transition-all duration-200"
-          style={{
-            background: activeTab === 'reports' ? 'var(--card-h)' : 'transparent',
-            color: activeTab === 'reports' ? 'var(--t)' : 'var(--t3)',
-            boxShadow: activeTab === 'reports' ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-          }}
-        >
-          Reports
-        </button>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className="relative px-3.5 py-1 rounded-lg text-[12px] font-medium transition-colors duration-150"
+              style={{
+                color: isActive ? 'var(--t)' : 'var(--t3)',
+              }}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="tab-active-bg"
+                  className="absolute inset-0 rounded-lg"
+                  style={{
+                    background: 'var(--card-h)',
+                    boxShadow: '0 1px 6px rgba(0,0,0,0.4)',
+                  }}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
+                />
+              )}
+              <span className="relative z-10">{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="tab-active-dot"
+                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                  style={{ background: 'var(--accent)' }}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Right: Settings + window controls */}
-      <div className="flex items-center gap-1" data-no-drag>
+      <div className="flex items-center gap-0.5 shrink-0" data-no-drag>
         <button
           onClick={onSettingsClick}
-          className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg transition-all duration-150 hover:scale-105 font-medium text-[12px]"
+          className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--card-h)';
-            e.currentTarget.style.color = 'var(--t)';
+            e.currentTarget.style.background = 'var(--card)';
+            e.currentTarget.style.color = 'var(--t2)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
@@ -108,56 +138,57 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           }}
           title="Settings"
         >
-          <Settings size={14} />
-
+          <Settings size={13} />
         </button>
 
-        <div className="w-px h-4 mx-1" style={{ background: 'var(--brd)' }} />
+        <div className="w-px h-3.5 mx-1.5" style={{ background: 'var(--brd)' }} />
 
         <button
           onClick={handleMinimize}
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+          className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--brd2)';
-            e.currentTarget.style.color = 'var(--t)';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--t2)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
             e.currentTarget.style.color = 'var(--t3)';
           }}
         >
-          <Minus size={12} />
+          <Minus size={11} />
         </button>
         <button
           onClick={handleMaximize}
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+          className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--brd2)';
-            e.currentTarget.style.color = 'var(--t)';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--t2)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
             e.currentTarget.style.color = 'var(--t3)';
           }}
         >
-          <Square size={10} />
+          <Square size={9} />
         </button>
         <button
           onClick={handleClose}
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+          className="w-6 h-6 flex items-center justify-center rounded-md transition-all"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--accent)';
             e.currentTarget.style.color = 'white';
+            e.currentTarget.style.boxShadow = '0 0 12px var(--accent-g)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
             e.currentTarget.style.color = 'var(--t3)';
+            e.currentTarget.style.boxShadow = 'none';
           }}
         >
-          <X size={12} />
+          <X size={11} />
         </button>
       </div>
     </div>

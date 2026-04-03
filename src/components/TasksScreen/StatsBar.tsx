@@ -29,32 +29,36 @@ export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
 
   return (
     <div
-      className="flex items-stretch border-b shrink-0"
-      style={{ borderColor: 'var(--brd)', background: 'var(--bg)' }}
+      className="flex items-stretch shrink-0"
+      style={{ borderBottom: '1px solid var(--brd)', background: 'var(--bg)' }}
     >
       <StatCard
-        label="Estimated Time"
+        label="Estimated"
         main={estimatedTime.main}
         sub={estimatedTime.sub}
         color="var(--accent)"
+        gradient="rgba(255,77,77,0.06)"
       />
       <StatCard
-        label="Tasks to be Completed"
+        label="Remaining"
         main={String(activeTasks.length)}
         sub=""
-        color="var(--t)"
+        color="var(--t2)"
+        gradient="rgba(255,255,255,0.02)"
       />
       <StatCard
-        label="Elapsed Time"
+        label="Elapsed"
         main={elapsedTime.main}
         sub={elapsedTime.sub}
         color="var(--blu)"
+        gradient="rgba(91,141,238,0.06)"
       />
       <StatCard
-        label="Completed Tasks"
+        label="Completed"
         main={String(completedTasks.length)}
         sub=""
         color="var(--grn)"
+        gradient="rgba(34,211,165,0.06)"
       />
     </div>
   );
@@ -65,17 +69,33 @@ interface StatCardProps {
   main: string;
   sub: string;
   color: string;
+  gradient: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, main, sub, color }) => (
+const StatCard: React.FC<StatCardProps> = ({ label, main, sub, color, gradient }) => (
   <div
-    className="flex-1 flex flex-col items-center justify-center py-4 border-r last:border-r-0"
-    style={{ borderColor: 'var(--brd)' }}
+    className="flex-1 flex flex-col items-center justify-center py-3.5 relative overflow-hidden"
+    style={{ borderRight: '1px solid var(--brd)' }}
   >
-    <div className="flex items-baseline gap-0.5">
+    {/* Subtle gradient background */}
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ background: gradient }}
+    />
+    {/* Bottom accent */}
+    <div
+      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px w-8 rounded-full"
+      style={{ background: color, opacity: 0.5 }}
+    />
+    <div className="relative z-10 flex items-baseline gap-0.5">
       <span
         className="font-light tabular-nums leading-none"
-        style={{ fontSize: '28px', color, letterSpacing: '-0.5px' }}
+        style={{
+          fontSize: '26px',
+          color,
+          letterSpacing: '-0.5px',
+          textShadow: `0 0 20px ${color}40`,
+        }}
       >
         {main}
       </span>
@@ -85,7 +105,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, main, sub, color }) => (
         </span>
       )}
     </div>
-    <span className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--t3)' }}>
+    <span className="relative z-10 text-[10px] uppercase tracking-widest mt-1 font-medium" style={{ color: 'var(--t3)' }}>
       {label}
     </span>
   </div>

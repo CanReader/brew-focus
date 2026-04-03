@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw } from 'lucide-react';
+import { X, RotateCcw, Check } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
 
@@ -30,42 +30,56 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(20,20,22,0.8)' }}
+          style={{ background: 'rgba(8,8,16,0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            initial={{ scale: 0.95, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="w-[480px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: 'var(--card)', border: '1px solid var(--brd)' }}
+            exit={{ scale: 0.95, opacity: 0, y: 12 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            className="w-[480px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col relative"
+            style={{
+              background: 'var(--card)',
+              border: '1px solid var(--brd2)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
+            }}
           >
+            {/* Gradient top border */}
+            <div
+              className="absolute top-0 left-0 right-0 h-px"
+              style={{ background: 'linear-gradient(90deg, transparent, var(--accent), var(--blu), transparent)' }}
+            />
+
             {/* Header */}
             <div
-              className="flex items-center justify-between px-5 py-4 border-b shrink-0"
-              style={{ borderColor: 'var(--brd)' }}
+              className="flex items-center justify-between px-5 py-4 shrink-0"
+              style={{ borderBottom: '1px solid var(--brd)' }}
             >
               <div>
-                <h2 className="text-[16px] font-semibold" style={{ color: 'var(--t)' }}>
+                <h2 className="text-[16px] font-bold" style={{ color: 'var(--t)' }}>
                   Settings
                 </h2>
-                <p className="text-[12px]" style={{ color: 'var(--t3)' }}>
+                <p className="text-[12px] mt-0.5" style={{ color: 'var(--t3)' }}>
                   Customize your focus experience
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={resetSettings}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] transition-colors"
-                  style={{ color: 'var(--t3)', background: 'var(--bg)' }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] transition-all"
+                  style={{
+                    color: 'var(--t3)',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--brd)',
+                  }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = 'var(--t2)';
-                    e.currentTarget.style.background = 'var(--bg2)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color = 'var(--t3)';
-                    e.currentTarget.style.background = 'var(--bg)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                   }}
                 >
                   <RotateCcw size={11} />
@@ -73,10 +87,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-xl transition-all"
                   style={{ color: 'var(--t3)' }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--card-h)';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                     e.currentTarget.style.color = 'var(--t)';
                   }}
                   onMouseLeave={(e) => {
@@ -84,7 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                     e.currentTarget.style.color = 'var(--t3)';
                   }}
                 >
-                  <X size={16} />
+                  <X size={15} />
                 </button>
               </div>
             </div>
@@ -93,7 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
             <div className="overflow-y-auto flex-1 px-5 py-4">
               <div className="flex flex-col gap-5">
                 {/* Timer section */}
-                <Section title="Timer Durations">
+                <Section title="Timer Durations" accentColor="var(--accent)">
                   <NumberField
                     label="Focus Duration"
                     value={settings.workDuration}
@@ -129,7 +143,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 </Section>
 
                 {/* Auto-start */}
-                <Section title="Auto-start">
+                <Section title="Auto-start" accentColor="var(--grn)">
                   <ToggleField
                     label="Auto-start Breaks"
                     description="Automatically start break timer after focus"
@@ -145,7 +159,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 </Section>
 
                 {/* Goals */}
-                <Section title="Goals">
+                <Section title="Goals" accentColor="var(--blu)">
                   <NumberField
                     label="Daily Focus Goal"
                     value={settings.dailyFocusGoal}
@@ -157,7 +171,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 </Section>
 
                 {/* Sounds */}
-                <Section title="Sounds">
+                <Section title="Sounds" accentColor="var(--amb)">
                   <ToggleField
                     label="Session Sounds"
                     description="Play sound when work session or break ends"
@@ -181,35 +195,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                 </Section>
 
                 {/* Accent Color */}
-                <Section title="Accent Color">
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {accentOptions.map((opt) => (
-                      <button
-                        key={opt.key}
-                        onClick={() => updateSettings({ accentColor: opt.key })}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] border transition-all duration-150"
-                        style={{
-                          background:
-                            settings.accentColor === opt.key
-                              ? `${ACCENT_COLORS[opt.key]}20`
-                              : 'var(--bg)',
-                          borderColor:
-                            settings.accentColor === opt.key
-                              ? ACCENT_COLORS[opt.key]
-                              : 'var(--brd)',
-                          color:
-                            settings.accentColor === opt.key
-                              ? ACCENT_COLORS[opt.key]
-                              : 'var(--t2)',
-                        }}
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ background: ACCENT_COLORS[opt.key] }}
-                        />
-                        {opt.name}
-                      </button>
-                    ))}
+                <Section title="Accent Color" accentColor="var(--accent)">
+                  <div className="px-4 py-3 flex flex-wrap gap-2">
+                    {accentOptions.map((opt) => {
+                      const color = ACCENT_COLORS[opt.key];
+                      const isSelected = settings.accentColor === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => updateSettings({ accentColor: opt.key })}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 relative"
+                          style={{
+                            background: isSelected ? `${color}18` : 'rgba(255,255,255,0.04)',
+                            border: `1.5px solid ${isSelected ? color : 'var(--brd)'}`,
+                            color: isSelected ? color : 'var(--t2)',
+                            boxShadow: isSelected ? `0 0 16px ${color}30` : 'none',
+                          }}
+                        >
+                          <div
+                            className="w-4 h-4 rounded-full flex items-center justify-center"
+                            style={{
+                              background: color,
+                              boxShadow: isSelected ? `0 0 8px ${color}80` : 'none',
+                            }}
+                          >
+                            {isSelected && <Check size={9} color="white" strokeWidth={3} />}
+                          </div>
+                          {opt.name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </Section>
               </div>
@@ -225,20 +240,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
 
 // Sub-components
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
+const Section: React.FC<{ title: string; accentColor: string; children: React.ReactNode }> = ({
   title,
+  accentColor,
   children,
 }) => (
   <div>
-    <h3
-      className="text-[11px] font-semibold tracking-widest uppercase mb-2.5"
-      style={{ color: 'var(--t3)' }}
-    >
-      {title}
-    </h3>
+    <div className="flex items-center gap-2.5 mb-2.5">
+      <div
+        className="w-0.5 h-3.5 rounded-full"
+        style={{ background: accentColor }}
+      />
+      <h3
+        className="text-[11px] font-bold tracking-widest uppercase"
+        style={{ color: 'var(--t3)' }}
+      >
+        {title}
+      </h3>
+    </div>
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ background: 'var(--bg)', border: '1px solid var(--brd)' }}
+      className="rounded-2xl overflow-hidden relative"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid var(--brd)',
+      }}
     >
       {children}
     </div>
@@ -272,10 +297,14 @@ const NumberField: React.FC<NumberFieldProps> = ({
     <div className="flex items-center gap-2">
       <button
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-[16px] font-medium transition-colors"
-        style={{ background: 'var(--card)', color: 'var(--t2)' }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--card)')}
+        className="w-7 h-7 flex items-center justify-center rounded-xl text-[16px] font-medium transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          color: 'var(--t2)',
+          border: '1px solid var(--brd)',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
       >
         −
       </button>
@@ -289,10 +318,14 @@ const NumberField: React.FC<NumberFieldProps> = ({
       </div>
       <button
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-[16px] font-medium transition-colors"
-        style={{ background: 'var(--card)', color: 'var(--t2)' }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--card)')}
+        className="w-7 h-7 flex items-center justify-center rounded-xl text-[16px] font-medium transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          color: 'var(--t2)',
+          border: '1px solid var(--brd)',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
       >
         +
       </button>
@@ -321,11 +354,11 @@ const ToggleField: React.FC<ToggleFieldProps> = ({
       <div className="text-[13px]" style={{ color: 'var(--t)' }}>
         {label}
       </div>
-      <div className="text-[11px]" style={{ color: 'var(--t3)' }}>
+      <div className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>
         {description}
       </div>
     </div>
-    <label className="toggle">
+    <label className="toggle shrink-0">
       <input
         type="checkbox"
         checked={value}

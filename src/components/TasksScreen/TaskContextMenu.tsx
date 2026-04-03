@@ -15,10 +15,10 @@ interface TaskContextMenuProps {
 }
 
 const PRIORITIES: { value: Priority; label: string; color: string }[] = [
-  { value: 'p4', label: 'None', color: '#5e5c58' },
-  { value: 'p3', label: 'P3', color: '#5a9cf5' },
-  { value: 'p2', label: 'P2', color: '#e8a83e' },
-  { value: 'p1', label: 'P1', color: '#e8453c' },
+  { value: 'p4', label: 'None', color: '#55556a' },
+  { value: 'p3', label: 'P3', color: '#5b8dee' },
+  { value: 'p2', label: 'P2', color: '#f5a623' },
+  { value: 'p1', label: 'P1', color: '#ff4d4d' },
 ];
 
 export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
@@ -66,14 +66,15 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      className="fixed z-[999] rounded-xl overflow-hidden select-none"
+      className="fixed z-[999] rounded-2xl overflow-hidden select-none"
       style={{
         left: x,
         top: y,
         width: menuWidth,
         background: 'var(--card)',
-        border: '1px solid var(--brd2)',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
+        backdropFilter: 'blur(20px)',
       }}
     >
       {/* Estimated Pomodoros */}
@@ -227,7 +228,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
         <button
           onClick={() => { onDelete(); onClose(); }}
           className="w-full flex items-center gap-2.5 px-3 py-2 transition-colors text-left"
-          style={{ color: '#e8453c' }}
+          style={{ color: 'var(--accent)' }}
           onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(232,69,60,0.1)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >

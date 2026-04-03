@@ -192,7 +192,7 @@ const ProjectDetailCard: React.FC<{
         <div className="flex-1" />
         {/* Target date */}
         <div className="flex items-center gap-1">
-          <Target size={10} style={{ color: targetOverdue ? '#e8453c' : 'var(--t3)' }} />
+          <Target size={10} style={{ color: targetOverdue ? 'var(--accent)' : 'var(--t3)' }} />
           <input
             type="date"
             value={msToDateInput(project.targetDate)}
@@ -201,7 +201,7 @@ const ProjectDetailCard: React.FC<{
               onUpdate({ targetDate: val ? new Date(val).getTime() : undefined });
             }}
             className="text-[11px] bg-transparent focus:outline-none"
-            style={{ color: targetOverdue ? '#e8453c' : 'var(--t3)', colorScheme: 'dark', width: 90 }}
+            style={{ color: targetOverdue ? 'var(--accent)' : 'var(--t3)', colorScheme: 'dark', width: 90 }}
           />
         </div>
       </div>
@@ -298,7 +298,7 @@ const ProjectDetailCard: React.FC<{
                 onClick={() => deleteMilestone(project.id, m.id)}
                 className="opacity-0 group-hover/ms:opacity-100 transition-opacity shrink-0"
                 style={{ color: 'var(--t3)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
               >
                 <svg width="9" height="9" viewBox="0 0 9 9">
@@ -472,7 +472,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0" style={{ background: 'var(--bg)' }}>
         <StatsBar tasks={tasks} />
 
         {sidebarView === 'focus-week' ? (
@@ -482,7 +482,15 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
         {/* Header */}
         <div className="px-6 pt-4 pb-2 shrink-0">
           <div className="flex items-end justify-between mb-3">
-            <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>{title}</h1>
+            <h1
+              className="font-fraunces text-[26px]"
+              style={{
+                background: 'linear-gradient(135deg, var(--t) 0%, var(--t2) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >{title}</h1>
             {/* Sort button */}
             <div className="relative pb-1">
               <button
@@ -504,8 +512,13 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.95 }}
                     transition={{ duration: 0.1 }}
-                    className="absolute right-0 top-full mt-1 rounded-xl border overflow-hidden z-50"
-                    style={{ background: 'var(--card)', borderColor: 'var(--brd2)', minWidth: 140, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                    className="absolute right-0 top-full mt-1 rounded-2xl overflow-hidden z-50"
+                    style={{
+                      background: 'var(--card)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      minWidth: 140,
+                      boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                    }}
                     onMouseLeave={() => setShowSortMenu(false)}
                   >
                     {([
@@ -547,8 +560,12 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
 
           {/* Search bar */}
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border mb-1"
-            style={{ background: 'var(--card)', borderColor: searchQuery ? 'var(--brd2)' : 'transparent' }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-1 transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              borderColor: searchQuery ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
+              boxShadow: searchQuery ? '0 0 0 2px rgba(255,255,255,0.04)' : 'none',
+            }}
           >
             <Search size={13} style={{ color: 'var(--t3)', flexShrink: 0 }} />
             <input
@@ -570,13 +587,20 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
         {/* Add task bar */}
         <div className="px-6 pb-3 shrink-0">
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
-            style={{ background: 'var(--card)', borderColor: 'var(--brd)' }}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-2xl transition-all focus-within:border-opacity-100"
+            style={{
+              background: 'var(--card)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+            }}
           >
             {/* Plus button */}
             <div
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 cursor-pointer"
-              style={{ background: 'var(--accent)' }}
+              className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, var(--accent) 0%, #ff2929 100%)',
+                boxShadow: '0 2px 8px var(--accent-g)',
+              }}
               onClick={handleAddTask}
             >
               <Plus size={14} color="white" />
@@ -712,7 +736,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                           {overdueGroup.length > 0 && (
                             <>
                               <div className="flex items-center gap-2 mb-2 mt-1">
-                                <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#e8453c' }}>Overdue</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>Overdue</span>
                                 <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{overdueGroup.length}</span>
                               </div>
                               {overdueGroup.map((task) => (
@@ -825,8 +849,12 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
 
         {/* Mini timer bar at bottom */}
         <div
-          className="absolute bottom-0 left-44 right-0 flex items-center justify-center gap-4 px-6 py-2.5 border-t"
-          style={{ background: 'var(--bg2)', borderColor: 'var(--brd)' }}
+          className="absolute bottom-0 left-44 right-0 flex items-center justify-center gap-4 px-6 py-2.5"
+          style={{
+            background: 'linear-gradient(180deg, transparent 0%, var(--bg) 100%)',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(8px)',
+          }}
         >
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: phaseColor }} />

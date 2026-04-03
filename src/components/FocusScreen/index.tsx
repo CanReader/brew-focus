@@ -44,14 +44,12 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
 
   // Auto-start next session + trigger animation when phase actually changes (not on mount)
   useEffect(() => {
-    // Skip on initial mount — only react to genuine phase transitions
     if (prevPhaseRef.current === phase) {
       return;
     }
     const completedPhase = prevPhaseRef.current;
     prevPhaseRef.current = phase;
 
-    // Show animation for whichever phase just finished
     if (completedPhase === 'work') {
       setSessionAnim('session-complete');
     } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
@@ -92,28 +90,86 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     reset(effectiveWorkDuration);
   };
 
+  const phaseGlowRgba =
+    phase === 'work' ? 'rgba(255,77,77,' :
+    phase === 'shortBreak' ? 'rgba(34,211,165,' :
+    'rgba(91,141,238,';
+
   return (
     <div className="flex w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center relative min-w-0 gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center relative min-w-0 gap-5 overflow-hidden">
+        {/* Gradient mesh background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Primary accent blob */}
+          <div
+            className="mesh-blob absolute"
+            style={{
+              width: 400,
+              height: 400,
+              top: '20%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: `${phaseGlowRgba}0.06)`,
+              transition: 'background 1.5s ease',
+            }}
+          />
+          {/* Secondary blue blob */}
+          <div
+            className="mesh-blob mesh-blob-2 absolute"
+            style={{
+              width: 300,
+              height: 300,
+              bottom: '15%',
+              right: '10%',
+              background: 'rgba(91,141,238,0.04)',
+            }}
+          />
+          {/* Purple blob */}
+          <div
+            className="mesh-blob absolute"
+            style={{
+              width: 250,
+              height: 250,
+              top: '60%',
+              left: '5%',
+              background: 'rgba(167,139,250,0.03)',
+              animationDelay: '2s',
+            }}
+          />
+          {/* Subtle dot grid */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+              maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
+            }}
+          />
+        </div>
+
         {/* Panel toggle */}
         <button
           onClick={() => setPanelOpen(!panelOpen)}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200"
           style={{
             color: panelOpen ? 'var(--accent)' : 'var(--t3)',
-            background: panelOpen ? 'var(--accent-d)' : 'transparent',
+            background: panelOpen ? 'var(--accent-d)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${panelOpen ? 'var(--accent-g)' : 'var(--brd)'}`,
           }}
           onMouseEnter={(e) => {
             if (!panelOpen) {
-              e.currentTarget.style.background = 'var(--card)';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
               e.currentTarget.style.color = 'var(--t2)';
+              e.currentTarget.style.borderColor = 'var(--brd2)';
             }
           }}
           onMouseLeave={(e) => {
             if (!panelOpen) {
-              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
               e.currentTarget.style.color = 'var(--t3)';
+              e.currentTarget.style.borderColor = 'var(--brd)';
             }
           }}
           title="Toggle side panel"
@@ -121,23 +177,37 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           <PanelRight size={15} />
         </button>
 
-        {/* Task Selector — above the coffee cup */}
-        <div className="w-full max-w-xs px-4">
+        {/* Task Selector */}
+        <div className="w-full max-w-xs px-4 relative z-10">
           <TaskSelector />
         </div>
 
         {/* Coffee Cup + Timer */}
-        <div className="flex flex-col items-center gap-6">
-          <motion.div
-            animate={isRunning ? { scale: [1, 1.02, 1] } : { scale: 1 }}
-            transition={
-              isRunning
-                ? { duration: 4, repeat: Infinity, ease: 'easeInOut' }
-                : { duration: 0.3 }
-            }
-          >
-            <CoffeeCup progress={progress} isRunning={isRunning} size={180} />
-          </motion.div>
+        <div className="flex flex-col items-center gap-5 relative z-10">
+          {/* Halo ring when running */}
+          <div className="relative">
+            {isRunning && (
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `radial-gradient(circle, ${phaseGlowRgba}0.12) 0%, transparent 70%)`,
+                  scale: 1.5,
+                }}
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
+            <motion.div
+              animate={isRunning ? { scale: [1, 1.015, 1] } : { scale: 1 }}
+              transition={
+                isRunning
+                  ? { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                  : { duration: 0.3 }
+              }
+            >
+              <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={180} />
+            </motion.div>
+          </div>
 
           <TimerDisplay
             timeString={timeString}

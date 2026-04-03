@@ -148,10 +148,10 @@ export interface TaskState {
 }
 
 export const ACCENT_COLORS: Record<AccentColor, string> = {
-  red: '#e8453c',
-  blue: '#5a9cf5',
-  amber: '#e8a83e',
-  green: '#34c759',
+  red: '#ff4d4d',
+  blue: '#5b8dee',
+  amber: '#f5a623',
+  green: '#22d3a5',
   purple: '#a78bfa',
   pink: '#f472b6',
 };

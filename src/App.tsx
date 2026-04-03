@@ -51,36 +51,61 @@ function AppContent() {
   if (!appReady) {
     return (
       <div
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full flex items-center justify-center relative overflow-hidden"
         style={{ background: 'var(--bg)' }}
       >
+        {/* Background blobs */}
+        <div
+          className="absolute w-96 h-96 rounded-full pointer-events-none"
+          style={{
+            background: 'rgba(255,77,77,0.06)',
+            filter: 'blur(80px)',
+            top: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
+        />
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0, scale: 0.9, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="flex flex-col items-center gap-5 relative z-10"
         >
-          <img
-            src="/logo.svg"
-            alt="Brew Focus"
-            className="w-12 h-12 rounded-2xl"
-          />
+          <div
+            className="relative"
+            style={{ filter: 'drop-shadow(0 0 20px rgba(255,77,77,0.3))' }}
+          >
+            <img
+              src="/logo.svg"
+              alt="Brew Focus"
+              className="w-14 h-14 rounded-2xl"
+            />
+          </div>
           <div className="text-center">
-            <div className="font-fraunces text-xl font-semibold" style={{ color: 'var(--t)' }}>
+            <div
+              className="font-fraunces text-2xl font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, var(--t) 0%, var(--t2) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               Brew Focus
             </div>
             <div className="text-[12px] mt-1" style={{ color: 'var(--t3)' }}>
-              Loading...
+              Brewing your workspace…
             </div>
           </div>
           <div
-            className="w-32 h-0.5 rounded-full overflow-hidden"
-            style={{ background: 'var(--brd)' }}
+            className="w-36 h-0.5 rounded-full overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.06)' }}
           >
             <motion.div
               className="h-full rounded-full"
-              style={{ background: 'var(--accent)' }}
+              style={{ background: 'linear-gradient(90deg, var(--accent), #ff8080)' }}
               animate={{ x: ['-100%', '100%'] }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
             />
           </div>
         </motion.div>

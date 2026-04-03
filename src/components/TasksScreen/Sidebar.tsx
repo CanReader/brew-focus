@@ -63,7 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     return s + t.pomodoroEstimate * workMin * 60;
   }, 0);
 
-  // Collect all unique tags from all tasks
   const allTags = Array.from(new Set(tasks.flatMap((t) => t.tags))).sort();
 
   const handleAddProject = async () => {
@@ -74,7 +73,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
     setAddingProject(false);
   };
 
-  // "This Week" count: tasks due this week or overdue
   const thisWeekCount = (() => {
     const now = new Date();
     const dow = now.getDay();
@@ -106,36 +104,49 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   return (
     <div
       className="flex flex-col h-full select-none"
-      style={{ background: 'var(--bg2)', borderRight: '1px solid var(--brd)' }}
+      style={{
+        background: 'var(--bg2)',
+        borderRight: '1px solid var(--brd)',
+      }}
     >
       {/* Nav items */}
-      <div className="flex-1 overflow-y-auto py-2">
-        {navItems.map((item) => {
-          const isActive = activeView === item.id;
+      <div className="flex-1 overflow-y-auto py-2 px-2">
+        {navItems.map((item, i) => {
+          const isActiveItem = activeView === item.id;
           return (
-            <button
+            <motion.button
               key={item.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.03, duration: 0.2 }}
               onClick={() => onViewChange(item.id as SidebarView)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 transition-all duration-100 text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2 transition-all duration-150 text-left relative rounded-xl mb-0.5"
               style={{
-                background: isActive ? 'var(--card)' : 'transparent',
-                color: isActive ? 'var(--t)' : 'var(--t2)',
-                borderRadius: '8px',
-                margin: '1px 6px',
-                width: 'calc(100% - 12px)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'var(--card)';
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'transparent';
+                color: isActiveItem ? 'var(--t)' : 'var(--t2)',
               }}
             >
-              <span style={{ color: isActive ? 'var(--accent)' : 'var(--t3)', flexShrink: 0 }}>
+              {/* Active background */}
+              {isActiveItem && (
+                <motion.div
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,77,77,0.08) 0%, rgba(255,77,77,0.04) 100%)',
+                    border: '1px solid rgba(255,77,77,0.12)',
+                  }}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
+                />
+              )}
+              <span
+                className="relative z-10 shrink-0 transition-colors"
+                style={{ color: isActiveItem ? 'var(--accent)' : 'var(--t3)' }}
+              >
                 {item.icon}
               </span>
-              <span className="flex-1 text-[13px] font-medium truncate">{item.label}</span>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <span className="relative z-10 flex-1 text-[13px] font-medium truncate">
+                {item.label}
+              </span>
+              <div className="relative z-10 flex items-center gap-1.5 shrink-0">
                 {item.time > 0 && (
                   <span className="text-[10px]" style={{ color: 'var(--t3)' }}>
                     {formatTime(item.time)}
@@ -143,31 +154,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                 )}
                 {item.count > 0 && (
                   <span
-                    className="text-[11px] min-w-[18px] text-center"
-                    style={{ color: isActive ? 'var(--accent)' : 'var(--t3)' }}
+                    className="text-[10px] min-w-[18px] text-center px-1 py-0.5 rounded-md tabular-nums"
+                    style={{
+                      background: isActiveItem ? 'rgba(255,77,77,0.12)' : 'rgba(255,255,255,0.05)',
+                      color: isActiveItem ? 'var(--accent)' : 'var(--t3)',
+                    }}
                   >
                     {item.count}
                   </span>
                 )}
               </div>
-            </button>
+            </motion.button>
           );
         })}
 
         {/* Projects section */}
-        <div className="mt-2 mx-2">
+        <div className="mt-3 px-1">
           <button
             onClick={() => setShowProjects(!showProjects)}
-            className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors"
+            className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors mb-1"
             style={{ color: 'var(--t3)' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--t2)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
           >
             <ChevronDown
-              size={11}
+              size={10}
               style={{ transform: showProjects ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
             />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Projects</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Projects</span>
           </button>
 
           <AnimatePresence>
@@ -188,41 +202,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                     <button
                       key={proj.id}
                       onClick={() => onViewChange(proj.id)}
-                      className="w-full flex flex-col px-2 py-1.5 rounded-lg transition-all text-left group"
+                      className="w-full flex flex-col px-2 py-2 rounded-xl transition-all text-left group mb-0.5"
                       style={{
-                        background: isActive ? 'var(--card)' : 'transparent',
-                        color: isActive ? 'var(--t)' : 'var(--t2)',
-                        opacity: proj.status === 'on_hold' ? 0.7 : 1,
+                        background: isActive
+                          ? `${proj.color}14`
+                          : 'transparent',
+                        border: isActive ? `1px solid ${proj.color}25` : '1px solid transparent',
+                        opacity: proj.status === 'on_hold' ? 0.6 : 1,
                       }}
-                      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--card)'; }}
-                      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) e.currentTarget.style.background = 'transparent';
+                      }}
                     >
                       <div className="flex items-center gap-2.5 w-full">
-                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: proj.color }} />
-                        <span className="flex-1 text-[13px] truncate">{proj.name}</span>
+                        {/* Colored dot */}
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{
+                            background: proj.color,
+                            boxShadow: isActive ? `0 0 6px ${proj.color}60` : 'none',
+                          }}
+                        />
+                        <span
+                          className="flex-1 text-[12px] font-medium truncate"
+                          style={{ color: isActive ? 'var(--t)' : 'var(--t2)' }}
+                        >
+                          {proj.name}
+                        </span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => { e.stopPropagation(); deleteProject(proj.id); }}
                             className="w-4 h-4 flex items-center justify-center rounded"
                             style={{ color: 'var(--t3)' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
                           >
                             <X size={10} />
                           </button>
                         </div>
                         {projActiveTasks.length > 0 && (
-                          <span className="text-[11px] shrink-0" style={{ color: 'var(--t3)' }}>
+                          <span
+                            className="text-[10px] shrink-0 px-1 rounded"
+                            style={{
+                              color: isActive ? proj.color : 'var(--t3)',
+                              background: isActive ? `${proj.color}18` : 'transparent',
+                            }}
+                          >
                             {projActiveTasks.length}
                           </span>
                         )}
                       </div>
-                      {/* Progress bar */}
+                      {/* Gradient progress bar */}
                       {projAllTasks.length > 0 && (
-                        <div className="w-full mt-1 h-0.5 rounded-full overflow-hidden" style={{ background: 'var(--brd2)' }}>
+                        <div className="w-full mt-1.5 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                           <div
-                            className="h-full rounded-full transition-all duration-300"
-                            style={{ width: `${progress * 100}%`, background: proj.status === 'completed' ? 'var(--t3)' : proj.color }}
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${progress * 100}%`,
+                              background: proj.status === 'completed'
+                                ? 'var(--t3)'
+                                : `linear-gradient(90deg, ${proj.color}, ${proj.color}cc)`,
+                              boxShadow: progress > 0 ? `0 0 6px ${proj.color}60` : 'none',
+                            }}
                           />
                         </div>
                       )}
@@ -237,7 +281,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="px-2 py-2"
+                      className="px-2 py-2 rounded-xl"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
                     >
                       {/* Color picker */}
                       <div className="flex flex-wrap gap-1 mb-2">
@@ -245,12 +290,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                           <button
                             key={c}
                             onClick={() => setNewProjectColor(c)}
-                            className="w-4 h-4 rounded-full transition-transform"
+                            className="w-4 h-4 rounded-full transition-all"
                             style={{
                               background: c,
                               transform: newProjectColor === c ? 'scale(1.3)' : 'scale(1)',
                               outline: newProjectColor === c ? `2px solid ${c}` : 'none',
                               outlineOffset: '1px',
+                              boxShadow: newProjectColor === c ? `0 0 8px ${c}80` : 'none',
                             }}
                           />
                         ))}
@@ -270,15 +316,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={handleAddProject}
-                          className="text-[11px] px-2 py-1 rounded-md transition-colors"
-                          style={{ background: 'var(--accent)', color: 'white' }}
+                          className="text-[11px] px-2.5 py-1 rounded-lg transition-all"
+                          style={{
+                            background: 'var(--accent)',
+                            color: 'white',
+                            boxShadow: '0 2px 8px var(--accent-g)',
+                          }}
                         >
                           Add
                         </button>
                         <button
                           onClick={() => { setAddingProject(false); setNewProjectName(''); }}
-                          className="text-[11px] px-2 py-1 rounded-md transition-colors"
-                          style={{ background: 'var(--brd)', color: 'var(--t3)' }}
+                          className="text-[11px] px-2.5 py-1 rounded-lg transition-colors"
+                          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--t3)' }}
                         >
                           Cancel
                         </button>
@@ -304,19 +354,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
 
         {/* Tags section */}
         {allTags.length > 0 && (
-          <div className="mt-2 mx-2">
+          <div className="mt-3 px-1">
             <button
               onClick={() => setShowTags(!showTags)}
-              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors"
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors mb-1"
               style={{ color: 'var(--t3)' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--t2)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
             >
               <ChevronDown
-                size={11}
+                size={10}
                 style={{ transform: showTags ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
               />
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Tags</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">Tags</span>
             </button>
 
             <AnimatePresence>
@@ -329,24 +379,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                 >
                   {allTags.map((tag) => {
                     const tagView = `tag:${tag}`;
-                    const isActive = activeView === tagView;
+                    const isActiveTag = activeView === tagView;
                     const tagCount = tasks.filter((t) => !t.completed && t.tags.includes(tag)).length;
                     return (
                       <button
                         key={tag}
                         onClick={() => onViewChange(tagView)}
-                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-all text-left"
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-all text-left mb-0.5"
                         style={{
-                          background: isActive ? 'var(--card)' : 'transparent',
-                          color: isActive ? 'var(--t)' : 'var(--t2)',
+                          background: isActiveTag ? 'rgba(255,255,255,0.04)' : 'transparent',
+                          color: isActiveTag ? 'var(--t)' : 'var(--t2)',
                         }}
-                        onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--card)'; }}
-                        onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                        onMouseEnter={(e) => { if (!isActiveTag) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={(e) => { if (!isActiveTag) e.currentTarget.style.background = 'transparent'; }}
                       >
-                        <Tag size={11} style={{ color: isActive ? 'var(--accent)' : 'var(--t3)', flexShrink: 0 }} />
-                        <span className="flex-1 text-[13px] truncate">{tag}</span>
+                        <Tag size={11} style={{ color: isActiveTag ? 'var(--accent)' : 'var(--t3)', flexShrink: 0 }} />
+                        <span className="flex-1 text-[12px] truncate">{tag}</span>
                         {tagCount > 0 && (
-                          <span className="text-[11px] shrink-0" style={{ color: isActive ? 'var(--accent)' : 'var(--t3)' }}>
+                          <span
+                            className="text-[10px] shrink-0 px-1 rounded"
+                            style={{ color: isActiveTag ? 'var(--accent)' : 'var(--t3)' }}
+                          >
                             {tagCount}
                           </span>
                         )}
@@ -362,13 +415,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
 
       {/* Bottom: elapsed today */}
       <div
-        className="px-3 py-3 border-t"
-        style={{ borderColor: 'var(--brd)' }}
+        className="px-4 py-3 shrink-0"
+        style={{ borderTop: '1px solid var(--brd)' }}
       >
-        <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'var(--t3)' }}>
+        <div className="text-[10px] uppercase tracking-widest mb-0.5 font-semibold" style={{ color: 'var(--t3)' }}>
           Today's Focus
         </div>
-        <div className="text-[14px] font-medium" style={{ color: 'var(--accent)' }}>
+        <div
+          className="text-[15px] font-semibold tabular-nums"
+          style={{
+            background: 'linear-gradient(135deg, var(--accent) 0%, #ff8080 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
           {formatTime(todayFocusSeconds)}
         </div>
       </div>
