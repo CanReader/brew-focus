@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Calendar, CalendarDays, AlignLeft, CloudSun,
-  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2
+  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2, Inbox
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -10,7 +10,7 @@ import { Task, PROJECT_COLORS, resolveDueDateToTs } from '../../types';
 import { useTimerStore } from '../../store/timerStore';
 
 export type SidebarView =
-  | 'today' | 'tomorrow' | 'week' | 'planned' | 'someday'
+  | 'inbox' | 'today' | 'tomorrow' | 'week' | 'planned' | 'someday'
   | 'completed' | 'all' | 'focus-week' | string; // string = project id or tag:tagname
 
 interface SidebarProps {
@@ -41,11 +41,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   const active = tasks.filter((t) => !t.completed);
   const completed = tasks.filter((t) => t.completed);
 
+  const inboxCount = active.filter((t) => !t.dueDate && !t.projectId).length;
+
   const todayTasks = active.filter((t) => isToday(t.dueDate));
   const tomorrowTasks = active.filter((t) => isTomorrow(t.dueDate));
   const somedayTasks = active.filter((t) => t.dueDate === 'someday');
   const plannedTasks = active.filter((t) => t.dueDate && t.dueDate !== 'someday');
   const allTasks = active;
+
+  const overdueCount = (() => {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    return active.filter((t) => {
+      if (!t.dueDate || t.dueDate === 'someday') return false;
+      const ts = resolveDueDateToTs(t.dueDate);
+      return ts !== null && ts < now.getTime();
+    }).length;
+  })();
 
   const todayEstimate = todayTasks.reduce((s, t) => {
     const workMin = t.customWorkDuration ?? settings.workDuration;
@@ -81,7 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   })();
 
   const navItems = [
-    { id: 'today', label: 'Today', icon: <Sun size={14} />, count: todayTasks.length, time: todayEstimate },
+    { id: 'inbox', label: 'Inbox', icon: <Inbox size={14} />, count: inboxCount, time: 0 },
+    { id: 'today', label: 'Today', icon: <Sun size={14} />, count: todayTasks.length + overdueCount, time: todayEstimate },
     { id: 'tomorrow', label: 'Tomorrow', icon: <Calendar size={14} />, count: tomorrowTasks.length, time: 0 },
     { id: 'week', label: 'This Week', icon: <CalendarDays size={14} />, count: thisWeekCount, time: 0 },
     { id: 'planned', label: 'Planned', icon: <AlignLeft size={14} />, count: plannedTasks.length, time: 0 },
