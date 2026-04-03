@@ -1,7 +1,49 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FocusTimeWidget } from './FocusTimeWidget';
 import { UpcomingWidget } from './UpcomingWidget';
 import { FocusCalendar } from './FocusCalendar';
+import { useTimerStore } from '../../store/timerStore';
+
+const SessionScratchPad: React.FC = () => {
+  const [notes, setNotes] = useState('');
+  const { isRunning, phase } = useTimerStore();
+  const prevPhaseRef = useRef(phase);
+  const prevRunningRef = useRef(isRunning);
+
+  // Clear notes when a new work session starts
+  useEffect(() => {
+    const wasRunning = prevRunningRef.current;
+    const prevPhase = prevPhaseRef.current;
+    prevPhaseRef.current = phase;
+    prevRunningRef.current = isRunning;
+    // Clear when transitioning from break to work and starting
+    if (isRunning && phase === 'work' && (prevPhase !== 'work' || !wasRunning)) {
+      setNotes('');
+    }
+  }, [isRunning, phase]);
+
+  return (
+    <div className="rounded-xl p-3" style={{ background: 'var(--card)' }}>
+      <div className="flex items-center gap-1.5 mb-2">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <rect x="1" y="1" width="9" height="9" rx="1.5" stroke="var(--t3)" strokeWidth="1.2" />
+          <path d="M3 4h5M3 6h3" stroke="var(--t3)" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+        <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: 'var(--t3)' }}>
+          Session Notes
+        </span>
+      </div>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Jot things down for this session…"
+        rows={3}
+        className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
+        style={{ color: 'var(--t2)', minHeight: 56 }}
+      />
+    </div>
+  );
+};
 
 export const SidePanel: React.FC = () => {
   return (
@@ -14,6 +56,7 @@ export const SidePanel: React.FC = () => {
       </h3>
       <FocusTimeWidget />
       <UpcomingWidget />
+      <SessionScratchPad />
       <FocusCalendar />
       <div className="h-4" /> {/* Bottom padding */}
     </div>

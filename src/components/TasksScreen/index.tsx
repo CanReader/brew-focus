@@ -149,6 +149,9 @@ const ProjectDetailCard: React.FC<{
 }> = ({ project, tasks, onUpdate }) => {
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(project.description || '');
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
+  const [newMilestoneDate, setNewMilestoneDate] = useState('');
+  const { addMilestone, toggleMilestone, deleteMilestone } = useTaskStore();
 
   React.useEffect(() => {
     setDescValue(project.description || '');
@@ -245,6 +248,102 @@ const ProjectDetailCard: React.FC<{
           {project.description || 'Add description…'}
         </p>
       )}
+
+      {/* Milestones */}
+      <div className="mt-3">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
+            Milestones
+          </span>
+          {project.milestones.length > 0 && (
+            <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
+              {project.milestones.filter((m) => m.completed).length}/{project.milestones.length}
+            </span>
+          )}
+        </div>
+
+        {/* Milestone list - max height with scroll */}
+        <div className="flex flex-col gap-0.5 max-h-[120px] overflow-y-auto">
+          {project.milestones.map((m) => (
+            <div key={m.id} className="flex items-center gap-2 py-1 group/ms">
+              <button
+                onClick={() => toggleMilestone(project.id, m.id)}
+                className="w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                style={{
+                  borderColor: m.completed ? 'var(--grn)' : 'var(--brd2)',
+                  background: m.completed ? 'var(--grn)' : 'transparent',
+                }}
+              >
+                {m.completed && (
+                  <svg width="7" height="6" viewBox="0 0 7 6">
+                    <path d="M1 3L2.5 4.5L6 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span
+                className="flex-1 text-[12px] min-w-0 truncate"
+                style={{
+                  color: m.completed ? 'var(--t3)' : 'var(--t2)',
+                  textDecoration: m.completed ? 'line-through' : 'none',
+                }}
+              >
+                {m.title}
+              </span>
+              {m.targetDate && (
+                <span className="text-[10px] shrink-0" style={{ color: 'var(--t3)' }}>
+                  {new Date(m.targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+              <button
+                onClick={() => deleteMilestone(project.id, m.id)}
+                className="opacity-0 group-hover/ms:opacity-100 transition-opacity shrink-0"
+                style={{ color: 'var(--t3)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#e8453c')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+              >
+                <svg width="9" height="9" viewBox="0 0 9 9">
+                  <path d="M1 1l7 7M8 1L1 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add milestone input */}
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <input
+            value={newMilestoneTitle}
+            onChange={(e) => setNewMilestoneTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newMilestoneTitle.trim()) {
+                addMilestone(
+                  project.id,
+                  newMilestoneTitle.trim(),
+                  newMilestoneDate ? new Date(newMilestoneDate).getTime() : undefined
+                );
+                setNewMilestoneTitle('');
+                setNewMilestoneDate('');
+              }
+              if (e.key === 'Escape') {
+                setNewMilestoneTitle('');
+                setNewMilestoneDate('');
+              }
+            }}
+            placeholder="+ Add milestone…"
+            className="flex-1 text-[12px] bg-transparent focus:outline-none"
+            style={{ color: 'var(--t3)' }}
+          />
+          {newMilestoneTitle.trim() && (
+            <input
+              type="date"
+              value={newMilestoneDate}
+              onChange={(e) => setNewMilestoneDate(e.target.value)}
+              className="text-[11px] bg-transparent focus:outline-none"
+              style={{ color: 'var(--t3)', colorScheme: 'dark', width: 100 }}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };
