@@ -29,6 +29,7 @@ interface ContextMenuState {
 function getViewTitle(view: SidebarView, projects: { id: string; name: string }[]): string {
   if (view.startsWith('tag:')) return `#${view.slice(4)}`;
   switch (view) {
+    case 'inbox': return 'Inbox';
     case 'today': return 'Today';
     case 'tomorrow': return 'Tomorrow';
     case 'week': return 'This Week';
@@ -56,7 +57,16 @@ function filterTasks(tasks: Task[], view: SidebarView): Task[] {
     return tasks.filter((t) => !t.completed && t.tags.includes(tag));
   }
   switch (view) {
-    case 'today': return tasks.filter((t) => !t.completed && t.dueDate === 'today');
+    case 'inbox': return tasks.filter((t) => !t.completed && !t.dueDate && !t.projectId);
+    case 'today': {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      return tasks.filter((t) => {
+        if (t.completed) return false;
+        if (t.dueDate === 'today') return true;
+        const ts = resolveDueDateToTs(t.dueDate);
+        return ts !== null && ts < now.getTime();
+      });
+    }
     case 'tomorrow': return tasks.filter((t) => !t.completed && t.dueDate === 'tomorrow');
     case 'week': {
       const now = new Date();
@@ -565,7 +575,64 @@ export const TasksScreen: React.FC = () => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={viewTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                   <AnimatePresence mode="popLayout">
-                    {viewTasks.map((task) => (
+                    {sidebarView === 'today' ? (() => {
+                      const nowMidnight = new Date(); nowMidnight.setHours(0, 0, 0, 0);
+                      const overdueGroup = viewTasks.filter((t) => {
+                        const ts = resolveDueDateToTs(t.dueDate);
+                        return ts !== null && ts < nowMidnight.getTime();
+                      });
+                      const todayGroup = viewTasks.filter((t) => t.dueDate === 'today');
+                      return (
+                        <>
+                          {overdueGroup.length > 0 && (
+                            <>
+                              <div className="flex items-center gap-2 mb-2 mt-1">
+                                <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#e8453c' }}>Overdue</span>
+                                <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{overdueGroup.length}</span>
+                              </div>
+                              {overdueGroup.map((task) => (
+                                <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                                  <TaskItem
+                                    task={task}
+                                    isActive={task.id === activeTaskId}
+                                    isSelected={task.id === selectedTaskId}
+                                    onToggle={() => toggleTask(task.id)}
+                                    onUpdate={(partial) => updateTask(task.id, partial)}
+                                    onSetActive={() => handleSetActive(task)}
+                                    onPlay={() => handlePlayTask(task)}
+                                    onContextMenu={(e) => handleContextMenu(e, task)}
+                                  />
+                                </div>
+                              ))}
+                            </>
+                          )}
+                          {todayGroup.length > 0 && (
+                            <>
+                              {overdueGroup.length > 0 && (
+                                <div className="flex items-center gap-2 mb-2 mt-3">
+                                  <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--t3)' }}>Today</span>
+                                  <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{todayGroup.length}</span>
+                                </div>
+                              )}
+                              {todayGroup.map((task) => (
+                                <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                                  <TaskItem
+                                    task={task}
+                                    isActive={task.id === activeTaskId}
+                                    isSelected={task.id === selectedTaskId}
+                                    onToggle={() => toggleTask(task.id)}
+                                    onUpdate={(partial) => updateTask(task.id, partial)}
+                                    onSetActive={() => handleSetActive(task)}
+                                    onPlay={() => handlePlayTask(task)}
+                                    onContextMenu={(e) => handleContextMenu(e, task)}
+                                  />
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </>
+                      );
+                    })() : viewTasks.map((task) => (
                       <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
                         <TaskItem
                           task={task}
