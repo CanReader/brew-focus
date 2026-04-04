@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PanelRight } from 'lucide-react';
+import { PanelRight, Sliders } from 'lucide-react';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTimer } from '../../hooks/useTimer';
@@ -10,14 +10,19 @@ import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { TaskSelector } from './TaskSelector';
 import { SidePanel } from '../SidePanel';
-import { playTimerStart, playTimerPause } from '../../utils/sounds';
+import { playTimerPause } from '../../utils/sounds';
+import { playSoundOption, playCustomSoundFile } from '../../utils/soundOptions';
+import { getBackground } from '../../utils/backgrounds';
 import { SessionAnimation, SessionAnimationType } from '../SessionAnimation';
+import { FocusCustomizePanel } from '../FocusCustomizePanel';
 
 interface FocusScreenProps {}
 
 export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [panelOpen, setPanelOpen] = useState(true);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [sessionAnim, setSessionAnim] = useState<SessionAnimationType>(null);
+  const [moodSessionId, setMoodSessionId] = useState<string | null>(null);
   const {
     isRunning,
     phase,
@@ -27,6 +32,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     skip,
     reset,
     secondsLeft,
+    sessions,
+    rateMood,
   } = useTimerStore();
   const { settings } = useSettingsStore();
   const {
@@ -52,6 +59,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
 
     if (completedPhase === 'work') {
       setSessionAnim('session-complete');
+      const latest = sessions.find(s => s.phase === 'work');
+      if (latest) setMoodSessionId(latest.id);
     } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
       setSessionAnim('break-complete');
     }
@@ -72,8 +81,22 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     }
   }, [phase]);
 
+  const activeBg = getBackground(settings.backgroundId ?? 'default');
+  const bgImageUrl = settings.backgroundId === 'custom'
+    ? settings.customBackgroundDataUrl
+    : activeBg.src;
+
   const handlePlay = () => {
-    if (settings.soundNotifications) playTimerStart(settings.soundVolume ?? 70);
+    if (settings.soundNotifications) {
+      const eventKey = phase === 'work' ? 'sessionStartSound' : 'breakStartSound';
+      const soundId = (settings[eventKey as keyof typeof settings] as string) ?? (phase === 'work' ? 'chime' : 'soft');
+      if (soundId === 'custom') {
+        const cf = settings.customSoundFiles?.[eventKey];
+        if (cf) playCustomSoundFile(cf.dataUrl, settings.soundVolume ?? 70);
+      } else {
+        playSoundOption(soundId, settings.soundVolume ?? 70);
+      }
+    }
     start();
   };
 
@@ -96,15 +119,25 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     'rgba(91,141,238,';
 
   return (
-    <div className="flex w-full h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+    <div
+      className="flex w-full h-full overflow-hidden"
+      style={{
+        background: bgImageUrl ? undefined : 'var(--bg)',
+        backgroundImage: bgImageUrl ? `url("${bgImageUrl}")` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        transition: 'background-image 0.4s ease',
+      }}
+    >
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center relative min-w-0 gap-5 overflow-hidden">
-        {/* Gradient mesh background — single div, % positions, scales with any window size */}
+        {/* Gradient mesh background — only shown when no custom background is active */}
         <motion.div
           className="absolute inset-0 pointer-events-none"
           animate={{ opacity: [0.85, 1, 0.85] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           style={{
+            display: bgImageUrl ? 'none' : undefined,
             background: [
               // Phase-reactive center glow — circle keyword keeps it round at any aspect ratio
               `radial-gradient(circle at 50% 36%, ${phaseGlowRgba}0.24) 0%, ${phaseGlowRgba}0.08) 30%, transparent 55%)`,
@@ -128,6 +161,35 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
             WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, black 30%, transparent 100%)',
           }}
         />
+
+        {/* Center scrim — darkens the wallpaper behind the timer so text is readable.
+            Pure CSS radial gradient (no backdrop-filter) for full WebKit compatibility.
+            Strongest in the center, fades to transparent at the edges so the wallpaper
+            stays vibrant around the frame. */}
+        {bgImageUrl && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse 80% 90% at 50% 50%, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.08) 80%, transparent 100%)',
+            }}
+          />
+        )}
+
+        {/* Customize button */}
+        <button
+          onClick={() => setCustomizeOpen(true)}
+          className="absolute top-4 right-14 w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200"
+          style={{
+            color: 'var(--t3)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid var(--brd)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'var(--t2)'; e.currentTarget.style.borderColor = 'var(--brd2)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.borderColor = 'var(--brd)'; }}
+          title="Customize sounds & background"
+        >
+          <Sliders size={14} />
+        </button>
 
         {/* Panel toggle */}
         <button
@@ -227,11 +289,60 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
         )}
       </AnimatePresence>
 
+      {/* Customize panel */}
+      <FocusCustomizePanel open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+
       {/* Session end animations */}
       <SessionAnimation
         type={sessionAnim}
         onDone={() => setSessionAnim(null)}
       />
+
+      {/* Mood prompt */}
+      <AnimatePresence>
+        {moodSessionId && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 px-5 py-3 rounded-2xl z-50"
+            style={{
+              background: 'var(--card)',
+              border: '1px solid var(--brd2)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}
+          >
+            <span className="text-[11px] font-medium" style={{ color: 'var(--t3)' }}>How was your energy?</span>
+            <div className="flex items-center gap-1.5">
+              {(['😴','😐','🙂','😊','🔥'] as const).map((emoji, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    rateMood(moodSessionId, i + 1);
+                    setMoodSessionId(null);
+                  }}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-lg transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.transform = 'scale(1.15)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                >
+                  {emoji}
+                </button>
+              ))}
+              <button
+                onClick={() => setMoodSessionId(null)}
+                className="ml-1 text-[10px] px-2 py-1 rounded-lg"
+                style={{ color: 'var(--t3)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--t2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; }}
+              >
+                skip
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
 import { TimerPhase } from '../../types';
+import { getBackground } from '../../utils/backgrounds';
 
 const phaseLabels: Record<TimerPhase, string> = {
   work: 'Focus',
@@ -28,6 +29,13 @@ interface TimerViewProps {
 export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
   const { isRunning, phase, sessionCount, start, pause, skip, secondsLeft } = useTimerStore();
   const { settings } = useSettingsStore();
+
+  const bgSrc = settings.backgroundId === 'custom'
+    ? settings.customBackgroundDataUrl
+    : getBackground(settings.backgroundId ?? 'default').src;
+  const bgStyle = bgSrc
+    ? { backgroundImage: `url("${bgSrc}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { background: 'var(--bg)' };
   const { tasks, activeTaskId } = useTaskStore();
   const { formatTime, progress, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
   const { exitToNormal, toggleWidget } = useWindowModeContext();
@@ -44,7 +52,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
     return (
       <div
         className="w-full h-full flex flex-col items-center justify-center p-4 select-none"
-        style={{ background: 'var(--bg)' }}
+        style={bgStyle}
         data-tauri-drag-region
       >
         {/* Close/Expand button */}
@@ -180,9 +188,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
   // Fullscreen variant
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center select-none"
-      style={{ background: 'var(--bg)' }}
+      className="w-full h-full flex flex-col items-center justify-center select-none relative"
+      style={bgStyle}
     >
+      {/* Center scrim when wallpaper is active */}
+      {bgSrc && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 65% 80% at 50% 50%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.06) 80%, transparent 100%)',
+          }}
+        />
+      )}
+
       {/* Exit button */}
       <button
         onClick={exitToNormal}

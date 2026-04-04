@@ -89,7 +89,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             textShadow: 'none',
-            filter: 'drop-shadow(0 2px 16px rgba(0,0,0,0.3))',
+            filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9)) drop-shadow(0 0 48px rgba(0,0,0,0.6))',
           }}
         >
           {timeString}

@@ -108,6 +108,7 @@ export interface TimerSession {
   taskId?: string;
   taskTitle?: string;
   notes?: string;
+  mood?: number; // 1–5 energy/mood rating
 }
 
 // Settings types
@@ -125,6 +126,18 @@ export interface AppSettings {
   soundVolume: number; // 0–100
   accentColor: AccentColor;
   longBreakInterval: number; // after how many pomodoros
+  theme: string; // theme id
+  backgroundId: string;
+  customBackgroundDataUrl: string; // base64 data URL when backgroundId === 'custom'
+  sessionStartSound: string;
+  breakStartSound: string;
+  sessionCompleteSound: string;
+  breakCompleteSound: string;
+  // Custom uploaded sound files (data URLs), keyed by event name
+  customSoundFiles: Record<string, { name: string; dataUrl: string }>;
+  // Background noise
+  backgroundNoise: string;  // noise id, 'none' = off
+  noiseVolume: number;      // 0–100
 }
 
 // Store types

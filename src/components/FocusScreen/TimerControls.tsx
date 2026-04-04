@@ -23,19 +23,20 @@ const GlassIconButton: React.FC<{
     onClick={onClick}
     className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-150"
     style={{
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      color: 'var(--t3)',
+      background: 'rgba(0,0,0,0.35)',
+      border: '1px solid rgba(255,255,255,0.14)',
+      color: 'rgba(255,255,255,0.65)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
     }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-      e.currentTarget.style.color = 'var(--t2)';
+      e.currentTarget.style.background = 'rgba(0,0,0,0.50)';
+      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)';
+      e.currentTarget.style.color = 'rgba(255,255,255,0.90)';
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-      e.currentTarget.style.color = 'var(--t3)';
+      e.currentTarget.style.background = 'rgba(0,0,0,0.35)';
+      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
+      e.currentTarget.style.color = 'rgba(255,255,255,0.65)';
     }}
     title={title}
   >

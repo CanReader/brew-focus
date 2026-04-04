@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useTimerStore } from '../store/timerStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
-import { playSessionComplete, playBreakComplete } from '../utils/sounds';
+import { playSoundOption, playCustomSoundFile } from '../utils/soundOptions';
 import {
   isPermissionGranted,
   requestPermission,
@@ -107,7 +107,13 @@ export function useTimer() {
             incrementPomodoroCompleted(activeTaskId);
           }
           if (settings.soundNotifications) {
-            playSessionComplete(settings.soundVolume ?? 70);
+            const scSound = settings.sessionCompleteSound ?? 'fanfare';
+            if (scSound === 'custom') {
+              const cf = settings.customSoundFiles?.['sessionCompleteSound'];
+              if (cf) playCustomSoundFile(cf.dataUrl, settings.soundVolume ?? 70);
+            } else {
+              playSoundOption(scSound, settings.soundVolume ?? 70);
+            }
             const taskTitle = currentActiveTask?.title;
             notify(
               'Focus session complete!',
@@ -116,7 +122,13 @@ export function useTimer() {
           }
         } else {
           if (settings.soundNotifications) {
-            playBreakComplete(settings.soundVolume ?? 70);
+            const bcSound = settings.breakCompleteSound ?? 'bell';
+            if (bcSound === 'custom') {
+              const cf = settings.customSoundFiles?.['breakCompleteSound'];
+              if (cf) playCustomSoundFile(cf.dataUrl, settings.soundVolume ?? 70);
+            } else {
+              playSoundOption(bcSound, settings.soundVolume ?? 70);
+            }
             const label = completedPhase === 'longBreak' ? 'Long break' : 'Break';
             notify('Break over', `${label} finished. Time to focus!`);
           }
