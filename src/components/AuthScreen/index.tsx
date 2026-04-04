@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Coffee, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Coffee, CheckCircle, AtSign } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 type Mode = 'signIn' | 'signUp' | 'forgot';
@@ -57,7 +57,9 @@ function InputField({
 export const AuthScreen: React.FC = () => {
   const { signIn, signUp, resetPassword, isLoading, error, clearError } = useAuthStore();
   const [mode, setMode] = useState<Mode>('signIn');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -66,12 +68,16 @@ export const AuthScreen: React.FC = () => {
 
   const switchMode = (next: Mode) => {
     setMode(next);
+    setUsernameOrEmail('');
     setEmail('');
+    setUsername('');
     setPassword('');
     setConfirmPassword('');
     setSuccessMsg('');
     clearError();
   };
+
+  const isValidUsername = (v: string) => /^[a-z0-9_]{3,20}$/.test(v.toLowerCase());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,14 +92,15 @@ export const AuthScreen: React.FC = () => {
 
     if (mode === 'signUp') {
       if (password !== confirmPassword) return;
-      const result = await signUp(email, password);
+      if (!isValidUsername(username)) return;
+      const result = await signUp(email, password, username);
       if (result.success && result.needsConfirmation) {
         setSuccessMsg('Account created! Check your email to confirm before signing in.');
       }
       return;
     }
 
-    await signIn(email, password);
+    await signIn(usernameOrEmail, password);
   };
 
   const eyeButton = (show: boolean, toggle: () => void) => (
@@ -266,16 +273,51 @@ export const AuthScreen: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Email */}
-              <InputField
-                label="Email address"
-                type="email"
-                value={email}
-                onChange={setEmail}
-                placeholder="you@example.com"
-                icon={<Mail size={14} />}
-                autoComplete="email"
-              />
+              {/* Sign in: username or email */}
+              {mode === 'signIn' && (
+                <InputField
+                  label="Username or email"
+                  type="text"
+                  value={usernameOrEmail}
+                  onChange={setUsernameOrEmail}
+                  placeholder="username or you@example.com"
+                  icon={<AtSign size={14} />}
+                  autoComplete="username"
+                />
+              )}
+
+              {/* Sign up: username */}
+              {mode === 'signUp' && (
+                <div>
+                  <InputField
+                    label="Username"
+                    type="text"
+                    value={username}
+                    onChange={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                    placeholder="your_username"
+                    icon={<AtSign size={14} />}
+                    autoComplete="username"
+                  />
+                  {username && !isValidUsername(username) && (
+                    <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#f5a623' }}>
+                      3–20 chars, letters, numbers, underscores only
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Email (sign up + forgot) */}
+              {mode !== 'signIn' && (
+                <InputField
+                  label="Email address"
+                  type="email"
+                  value={email}
+                  onChange={setEmail}
+                  placeholder="you@example.com"
+                  icon={<Mail size={14} />}
+                  autoComplete="email"
+                />
+              )}
 
               {/* Password (not shown on forgot) */}
               {mode !== 'forgot' && (
@@ -331,7 +373,7 @@ export const AuthScreen: React.FC = () => {
               {/* Submit button */}
               <button
                 type="submit"
-                disabled={isLoading || (mode === 'signUp' && !passwordsMatch)}
+                disabled={isLoading || (mode === 'signUp' && (!passwordsMatch || !isValidUsername(username)))}
                 className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-semibold mt-1 transition-all duration-150"
                 style={{
                   background: isLoading ? 'rgba(255,77,77,0.4)' : 'linear-gradient(135deg, var(--accent) 0%, rgba(255,77,77,0.75) 100%)',

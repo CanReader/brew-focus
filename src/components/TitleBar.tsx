@@ -15,12 +15,16 @@ function getInitials(user: User): string {
       ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
       : parts[0][0].toUpperCase();
   }
+  const username = user.user_metadata?.username as string | undefined;
+  if (username) return username[0].toUpperCase();
   return (user.email?.[0] ?? 'U').toUpperCase();
 }
 
 function getDisplayName(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
   if (name) return name;
+  const username = user.user_metadata?.username as string | undefined;
+  if (username) return username;
   return user.email?.split('@')[0] ?? 'User';
 }
 
