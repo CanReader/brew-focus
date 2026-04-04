@@ -32,11 +32,11 @@ function InputField({
         className="flex items-center gap-2.5 px-3.5 rounded-xl h-11 transition-all duration-150"
         style={{
           background: 'rgba(255,255,255,0.04)',
-          border: `1px solid ${focused ? 'rgba(255,255,255,0.25)' : 'var(--brd)'}`,
-          boxShadow: focused ? '0 0 0 3px rgba(255,255,255,0.05)' : 'none',
+          border: `1px solid ${focused ? 'var(--accent-g)' : 'var(--brd)'}`,
+          boxShadow: focused ? '0 0 0 3px var(--accent-d)' : 'none',
         }}
       >
-        <span style={{ color: focused ? 'var(--t2)' : 'var(--t3)', transition: 'color 0.15s' }}>{icon}</span>
+        <span style={{ color: focused ? 'var(--accent)' : 'var(--t3)', transition: 'color 0.15s' }}>{icon}</span>
         <input
           type={type}
           value={value}
@@ -46,7 +46,7 @@ function InputField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           className="flex-1 bg-transparent text-[13px] outline-none placeholder:opacity-30"
-          style={{ color: 'var(--t)' }}
+          style={{ color: 'var(--t)', outline: 'none', boxShadow: 'none', WebkitAppearance: 'none' } as React.CSSProperties}
         />
         {rightSlot}
       </div>
