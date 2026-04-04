@@ -1,14 +1,7 @@
 import { create } from 'zustand';
 import { TimerPhase, TimerSession } from '../types';
-import Database from '@tauri-apps/plugin-sql';
+import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
-
-let _db: Database | null = null;
-
-async function getDb(): Promise<Database> {
-  if (!_db) _db = await Database.load('sqlite:brewfocus.db');
-  return _db;
-}
 
 function todayStr() {
   return new Date().toISOString().split('T')[0];
@@ -39,6 +32,7 @@ interface TimerStore {
   setActiveTask: (id: string | null) => void;
   recordSession: (phase: TimerPhase, duration: number, taskId?: string, taskTitle?: string, notes?: string) => Promise<void>;
   addFocusSeconds: (seconds: number) => Promise<void>;
+  rateMood: (sessionId: string, mood: number) => Promise<void>;
 }
 
 export const useTimerStore = create<TimerStore>((set, get) => ({
@@ -55,14 +49,22 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   isLoaded: false,
 
   loadState: async (workDuration) => {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      set({ isLoaded: true, secondsLeft: workDuration * 60, totalSeconds: workDuration * 60 });
+      return;
+    }
     try {
-      const db = await getDb();
       const today = todayStr();
 
-      const sessionRows = await db.select<Record<string, unknown>[]>(
-        'SELECT * FROM sessions ORDER BY startedAt DESC LIMIT 100'
-      );
-      const sessions: TimerSession[] = sessionRows.map((r) => ({
+      const { data: sessionRows } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('startedAt', { ascending: false })
+        .limit(100);
+
+      const sessions: TimerSession[] = (sessionRows ?? []).map((r) => ({
         id: r.id as string,
         startedAt: r.startedAt as number,
         duration: r.duration as number,
@@ -70,13 +72,17 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         taskId: r.taskId as string | undefined,
         taskTitle: r.taskTitle as string | undefined,
         notes: r.notes as string | undefined,
+        mood: r.mood != null ? (r.mood as number) : undefined,
       }));
 
-      const focusRows = await db.select<{ date: string; seconds: number }[]>(
-        "SELECT * FROM focus_days WHERE date=?",
-        [today]
-      );
-      const todayFocusSeconds = focusRows[0]?.seconds ?? 0;
+      const { data: focusRow } = await supabase
+        .from('focus_days')
+        .select('seconds')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle();
+
+      const todayFocusSeconds = focusRow?.seconds ?? 0;
 
       set({
         sessions,
@@ -102,24 +108,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   setPhase: (phase, workDuration, shortBreakDuration, longBreakDuration) => {
     let totalSeconds: number;
     switch (phase) {
-      case 'work':
-        totalSeconds = workDuration * 60;
-        break;
-      case 'shortBreak':
-        totalSeconds = shortBreakDuration * 60;
-        break;
-      case 'longBreak':
-        totalSeconds = longBreakDuration * 60;
-        break;
+      case 'work':        totalSeconds = workDuration * 60;       break;
+      case 'shortBreak':  totalSeconds = shortBreakDuration * 60; break;
+      case 'longBreak':   totalSeconds = longBreakDuration * 60;  break;
     }
     set({ phase, secondsLeft: totalSeconds, totalSeconds, isRunning: false });
   },
 
   tick: () => {
     const { secondsLeft } = get();
-    if (secondsLeft > 0) {
-      set({ secondsLeft: secondsLeft - 1 });
-    }
+    if (secondsLeft > 0) set({ secondsLeft: secondsLeft - 1 });
   },
 
   start: () => set({ isRunning: true }),
@@ -127,14 +125,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   reset: (workDuration) => {
     const totalSeconds = workDuration * 60;
-    set({
-      phase: 'work',
-      secondsLeft: totalSeconds,
-      totalSeconds,
-      isRunning: false,
-      sessionCount: 0,
-      completedPomodoros: 0,
-    });
+    set({ phase: 'work', secondsLeft: totalSeconds, totalSeconds, isRunning: false, sessionCount: 0, completedPomodoros: 0 });
   },
 
   skip: (workDuration, shortBreakDuration, longBreakDuration, longBreakInterval) => {
@@ -150,41 +141,24 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     if (phase === 'work') {
       nextCompletedPomodoros = completedPomodoros + 1;
       nextSessionCount = (sessionCount + 1) % longBreakInterval;
-      if (nextSessionCount === 0) {
-        nextPhase = 'longBreak';
-      } else {
-        nextPhase = 'shortBreak';
-      }
+      nextPhase = nextSessionCount === 0 ? 'longBreak' : 'shortBreak';
     } else {
       nextPhase = 'work';
     }
 
     let totalSeconds: number;
     switch (nextPhase) {
-      case 'work':
-        totalSeconds = workDuration * 60;
-        break;
-      case 'shortBreak':
-        totalSeconds = shortBreakDuration * 60;
-        break;
-      case 'longBreak':
-        totalSeconds = longBreakDuration * 60;
-        break;
+      case 'work':        totalSeconds = workDuration * 60;       break;
+      case 'shortBreak':  totalSeconds = shortBreakDuration * 60; break;
+      case 'longBreak':   totalSeconds = longBreakDuration * 60;  break;
     }
 
-    set({
-      phase: nextPhase,
-      secondsLeft: totalSeconds,
-      totalSeconds,
-      isRunning: false,
-      sessionCount: nextSessionCount,
-      completedPomodoros: nextCompletedPomodoros,
-    });
+    set({ phase: nextPhase, secondsLeft: totalSeconds, totalSeconds, isRunning: false, sessionCount: nextSessionCount, completedPomodoros: nextCompletedPomodoros });
   },
 
   setActiveTask: (id) => set({ activeTaskId: id }),
 
-  recordSession: async (phase, duration, taskId, taskTitle, notes?) => {
+  recordSession: async (phase, duration, taskId, taskTitle, notes) => {
     const session: TimerSession = {
       id: nanoid(),
       startedAt: Date.now() - duration * 1000,
@@ -196,26 +170,47 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     };
     const sessions = [session, ...get().sessions].slice(0, 100);
     set({ sessions });
+
+    const userId = await getCurrentUserId();
+    if (!userId) return;
     try {
-      const db = await getDb();
-      await db.execute(
-        'INSERT INTO sessions (id, startedAt, duration, phase, taskId, taskTitle, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [session.id, session.startedAt, session.duration, session.phase, session.taskId ?? null, session.taskTitle ?? null, notes ?? null]
-      );
+      await supabase.from('sessions').insert({
+        id: session.id,
+        user_id: userId,
+        startedAt: session.startedAt,
+        duration: session.duration,
+        phase: session.phase,
+        taskId: session.taskId ?? null,
+        taskTitle: session.taskTitle ?? null,
+        notes: session.notes ?? null,
+      });
     } catch (e) {
       console.warn('Failed to save session:', e);
+    }
+  },
+
+  rateMood: async (sessionId, mood) => {
+    set({ sessions: get().sessions.map((s) => s.id === sessionId ? { ...s, mood } : s) });
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    try {
+      await supabase.from('sessions').update({ mood }).eq('id', sessionId).eq('user_id', userId);
+    } catch (e) {
+      console.warn('Failed to save mood:', e);
     }
   },
 
   addFocusSeconds: async (seconds) => {
     const newTotal = get().todayFocusSeconds + seconds;
     set({ todayFocusSeconds: newTotal });
+
+    const userId = await getCurrentUserId();
+    if (!userId) return;
     try {
-      const db = await getDb();
       const today = todayStr();
-      await db.execute(
-        'INSERT OR REPLACE INTO focus_days (date, seconds) VALUES (?, ?)',
-        [today, newTotal]
+      await supabase.from('focus_days').upsert(
+        { user_id: userId, date: today, seconds: newTotal },
+        { onConflict: 'user_id,date' }
       );
     } catch (e) {
       console.warn('Failed to save focus time:', e);

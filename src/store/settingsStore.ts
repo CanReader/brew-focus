@@ -1,13 +1,7 @@
 import { create } from 'zustand';
 import { AppSettings, AccentColor, ACCENT_COLORS } from '../types';
-import Database from '@tauri-apps/plugin-sql';
-
-let _db: Database | null = null;
-
-async function getDb(): Promise<Database> {
-  if (!_db) _db = await Database.load('sqlite:brewfocus.db');
-  return _db;
-}
+import { supabase, getCurrentUserId } from '../utils/supabase';
+import { applyTheme, DEFAULT_THEME_ID } from '../utils/themes';
 
 const defaultSettings: AppSettings = {
   workDuration: 30,
@@ -21,6 +15,16 @@ const defaultSettings: AppSettings = {
   soundVolume: 70,
   accentColor: 'red',
   longBreakInterval: 4,
+  theme: DEFAULT_THEME_ID,
+  backgroundId: 'default',
+  customBackgroundDataUrl: '',
+  sessionStartSound: 'chime',
+  breakStartSound: 'soft',
+  sessionCompleteSound: 'fanfare',
+  breakCompleteSound: 'bell',
+  customSoundFiles: {},
+  backgroundNoise: 'none',
+  noiseVolume: 50,
 };
 
 interface SettingsStore {
@@ -36,46 +40,56 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   isLoaded: false,
 
   loadSettings: async () => {
-    try {
-      const db = await getDb();
-      const rows = await db.select<{ key: string; value: string }[]>('SELECT * FROM settings');
-      if (rows.length > 0) {
-        const loaded: Partial<AppSettings> = {};
-        for (const row of rows) {
-          try {
-            (loaded as Record<string, unknown>)[row.key] = JSON.parse(row.value);
-          } catch {
-            (loaded as Record<string, unknown>)[row.key] = row.value;
-          }
-        }
-        const merged = { ...defaultSettings, ...loaded };
-        set({ settings: merged, isLoaded: true });
-        applyAccentColor(merged.accentColor);
-      } else {
-        set({ isLoaded: true });
-        applyAccentColor(defaultSettings.accentColor);
-      }
-    } catch (e) {
-      console.warn('Failed to load settings from SQLite:', e);
+    const userId = await getCurrentUserId();
+    if (!userId) {
       set({ isLoaded: true });
       applyAccentColor(defaultSettings.accentColor);
+      applyTheme(DEFAULT_THEME_ID);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('key, value')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const loaded: Partial<AppSettings> = {};
+      for (const row of data ?? []) {
+        try {
+          (loaded as Record<string, unknown>)[row.key] = JSON.parse(row.value);
+        } catch {
+          (loaded as Record<string, unknown>)[row.key] = row.value;
+        }
+      }
+      const merged = { ...defaultSettings, ...loaded };
+      set({ settings: merged, isLoaded: true });
+      applyAccentColor(merged.accentColor);
+      applyTheme(merged.theme ?? DEFAULT_THEME_ID);
+    } catch (e) {
+      console.warn('Failed to load settings:', e);
+      set({ isLoaded: true });
+      applyAccentColor(defaultSettings.accentColor);
+      applyTheme(DEFAULT_THEME_ID);
     }
   },
 
   updateSettings: async (partial) => {
     const newSettings = { ...get().settings, ...partial };
     set({ settings: newSettings });
-    if (partial.accentColor) {
-      applyAccentColor(partial.accentColor);
-    }
+    if (partial.accentColor) applyAccentColor(partial.accentColor);
+    if (partial.theme) applyTheme(partial.theme);
+
+    const userId = await getCurrentUserId();
+    if (!userId) return;
     try {
-      const db = await getDb();
-      for (const [key, value] of Object.entries(partial)) {
-        await db.execute(
-          'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-          [key, JSON.stringify(value)]
-        );
-      }
+      const upserts = Object.entries(partial).map(([key, value]) => ({
+        user_id: userId,
+        key,
+        value: JSON.stringify(value),
+      }));
+      await supabase.from('settings').upsert(upserts, { onConflict: 'user_id,key' });
     } catch (e) {
       console.warn('Failed to save settings:', e);
     }
@@ -84,15 +98,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   resetSettings: async () => {
     set({ settings: defaultSettings });
     applyAccentColor(defaultSettings.accentColor);
+    applyTheme(DEFAULT_THEME_ID);
+
+    const userId = await getCurrentUserId();
+    if (!userId) return;
     try {
-      const db = await getDb();
-      await db.execute('DELETE FROM settings');
-      for (const [key, value] of Object.entries(defaultSettings)) {
-        await db.execute(
-          'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-          [key, JSON.stringify(value)]
-        );
-      }
+      await supabase.from('settings').delete().eq('user_id', userId);
+      const rows = Object.entries(defaultSettings).map(([key, value]) => ({
+        user_id: userId,
+        key,
+        value: JSON.stringify(value),
+      }));
+      await supabase.from('settings').insert(rows);
     } catch (e) {
       console.warn('Failed to reset settings:', e);
     }
