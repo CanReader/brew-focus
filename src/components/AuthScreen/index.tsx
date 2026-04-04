@@ -239,6 +239,7 @@ export const AuthScreen: React.FC = () => {
               exit={{ opacity: 0, x: mode === 'signUp' ? -12 : 12 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
               onSubmit={handleSubmit}
+              noValidate
               className="flex flex-col gap-3.5"
             >
               {/* Success message */}
