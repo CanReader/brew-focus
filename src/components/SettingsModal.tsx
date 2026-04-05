@@ -71,13 +71,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
               boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
             }}
           >
-            {/* Gradient top border */}
             <div
               className="absolute top-0 left-0 right-0 h-px pointer-events-none"
               style={{ background: 'linear-gradient(90deg, transparent, var(--accent), var(--blu), transparent)' }}
             />
 
-            {/* Header */}
             <div
               className="flex items-center justify-between px-5 py-3.5 shrink-0"
               style={{ borderBottom: '1px solid var(--brd)' }}
@@ -111,9 +109,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
               </div>
             </div>
 
-            {/* Two-column body */}
             <div className="flex flex-1 min-h-0">
-              {/* Left sidebar */}
               <div
                 className="w-[160px] shrink-0 flex flex-col gap-0.5 p-3 overflow-y-auto"
                 style={{ borderRight: '1px solid var(--brd)' }}
@@ -150,7 +146,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                 })}
               </div>
 
-              {/* Right content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <motion.div
                   key={activeSection}
@@ -226,7 +221,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
 
                   {activeSection === 'appearance' && (
                     <div className="flex flex-col gap-5">
-                      {/* Accent color */}
                       <div>
                         <div className="text-[11px] font-semibold tracking-widest uppercase mb-2.5" style={{ color: 'var(--t3)' }}>
                           Accent Color
@@ -263,7 +257,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                         </div>
                       </div>
 
-                      {/* Themes by category */}
                       {THEME_CATEGORIES.map((cat) => {
                         const themes = THEMES.filter((t) => t.category === cat.key);
                         return (
@@ -286,7 +279,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                                       boxShadow: isSelected ? '0 0 14px rgba(255,255,255,0.08)' : 'none',
                                     }}
                                   >
-                                    {/* Mini preview */}
                                     <div className="h-14 p-1.5" style={{ background: theme.bg }}>
                                       <div
                                         className="w-full h-full rounded-lg p-1.5 flex flex-col justify-between"
@@ -302,7 +294,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                                         </div>
                                       </div>
                                     </div>
-                                    {/* Label */}
                                     <div
                                       className="px-2 py-1.5 flex items-center justify-between"
                                       style={{ background: theme.bg2 }}
@@ -337,8 +328,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
     </AnimatePresence>
   );
 };
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 const FieldGroup: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div

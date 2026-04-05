@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
 import { useAuthStore } from '../store/authStore';
 
-// ── Avatar helpers ─────────────────────────────────────────────────────────────
-
 function getInitials(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
   if (name) {
@@ -34,8 +32,6 @@ function getAvatarColor(seed: string): string {
   for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
   return palette[Math.abs(hash) % palette.length];
 }
-
-// ── Avatar component ──────────────────────────────────────────────────────────
 
 function Avatar({ user, size = 24 }: { user: User; size?: number }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -73,8 +69,6 @@ function Avatar({ user, size = 24 }: { user: User; size?: number }) {
   );
 }
 
-// ── User popover ──────────────────────────────────────────────────────────────
-
 function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose: () => void; onAccountSettings: () => void }) {
   const { signOut } = useAuthStore();
   const displayName = getDisplayName(user);
@@ -92,7 +86,6 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         boxShadow: '0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
       }}
     >
-      {/* Gradient top border */}
       <div
         className="absolute top-0 left-0 right-0 h-px pointer-events-none"
         style={{ background: 'linear-gradient(90deg, transparent, var(--accent), var(--blu), transparent)' }}
@@ -117,13 +110,11 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         </div>
       </div>
 
-      {/* Divider */}
       <div style={{ height: 1, background: 'var(--brd)', margin: '0 12px' }} />
 
       {/* Actions */}
       <div className="p-2 flex flex-col gap-0.5">
 
-        {/* Account Settings */}
         <button
           onClick={() => { onAccountSettings(); onClose(); }}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
@@ -146,7 +137,6 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
           Account Settings
         </button>
 
-        {/* Sync Now */}
         <button
           onClick={() => { /* TODO: implement sync */ onClose(); }}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
@@ -175,10 +165,8 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
           </span>
         </button>
 
-        {/* Divider */}
         <div style={{ height: 1, background: 'var(--brd)', margin: '4px 4px' }} />
 
-        {/* Sign out */}
         <button
           onClick={() => { signOut(); onClose(); }}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
@@ -202,7 +190,6 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         </button>
       </div>
 
-      {/* Footer: version / plan */}
       <div
         className="flex items-center gap-1.5 px-4 py-2.5"
         style={{ borderTop: '1px solid var(--brd)' }}
@@ -214,15 +201,12 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
   );
 }
 
-// ── User badge (button in titlebar) ──────────────────────────────────────────
-
 function UserBadge({ user, onAccountSettings }: { user: User; onAccountSettings: () => void }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const displayName = getDisplayName(user);
   const shortName = displayName.length > 14 ? displayName.slice(0, 13) + '…' : displayName;
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -282,8 +266,6 @@ function UserBadge({ user, onAccountSettings }: { user: User; onAccountSettings:
   );
 }
 
-// ── TitleBar ──────────────────────────────────────────────────────────────────
-
 interface TitleBarProps {
   activeTab: 'focus' | 'tasks' | 'reports';
   onTabChange: (tab: 'focus' | 'tasks' | 'reports') => void;
@@ -313,7 +295,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
       style={{ background: 'var(--bg)', borderBottom: '1px solid var(--brd)' }}
       data-tauri-drag-region
     >
-      {/* Top gradient accent line */}
       <div
         className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none"
         style={{
@@ -322,7 +303,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
         }}
       />
 
-      {/* Left: Logo */}
       <div className="flex items-center gap-2 select-none shrink-0" data-no-drag>
         <img
           src="/logo.svg"
@@ -338,7 +318,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
         </span>
       </div>
 
-      {/* Center: Tab switcher */}
       <div
         className="flex items-center gap-0.5 rounded-xl p-0.5 absolute left-1/2 -translate-x-1/2"
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brd)' }}
@@ -375,14 +354,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
         })}
       </div>
 
-      {/* Right: User badge + settings + window controls */}
       <div className="flex items-center gap-1.5 shrink-0" data-no-drag>
-        {/* User badge */}
         {user && <UserBadge user={user} onAccountSettings={onAccountSettingsClick ?? (() => {})} />}
 
         <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--brd)' }} />
 
-        {/* Settings */}
         <button
           onClick={onSettingsClick}
           className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150"
@@ -396,7 +372,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
 
         <div className="w-px h-3.5 mx-1" style={{ background: 'var(--brd)' }} />
 
-        {/* Window controls */}
         <button
           onClick={handleMinimize}
           className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"

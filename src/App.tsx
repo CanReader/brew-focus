@@ -19,8 +19,6 @@ import { UpdateBanner } from './components/UpdateBanner';
 
 type Tab = 'focus' | 'tasks' | 'reports';
 
-// ── Loading screen ─────────────────────────────────────────────────────────────
-
 function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: string }) {
   return (
     <div
@@ -65,8 +63,6 @@ function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: st
   );
 }
 
-// ── Main app (authenticated) ──────────────────────────────────────────────────
-
 function MainApp() {
   const [activeTab, setActiveTab] = useState<Tab>('focus');
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -82,7 +78,6 @@ function MainApp() {
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
   const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();
 
-  // Background noise lifecycle
   useEffect(() => {
     const id = settings.backgroundNoise ?? 'none';
     if (id !== 'none') {
@@ -96,7 +91,6 @@ function MainApp() {
     setNoiseVolume(settings.noiseVolume ?? 50);
   }, [settings.noiseVolume]);
 
-  // Load all data
   useEffect(() => {
     const init = async () => {
       await Promise.all([loadSettings(), loadTasks()]);
@@ -148,8 +142,6 @@ function MainApp() {
     </div>
   );
 }
-
-// ── Root ──────────────────────────────────────────────────────────────────────
 
 function AppContent() {
   const { user, isLoading, initialize } = useAuthStore();

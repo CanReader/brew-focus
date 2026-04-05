@@ -147,7 +147,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     const cleaned = newUsername.toLowerCase().trim();
 
-    // Check availability
     const { data: existing } = await supabase
       .from('profiles')
       .select('id')
@@ -174,7 +173,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser?.email) return { success: false, error: 'Not authenticated.' };
 
-    // Verify current password
     const { error: verifyErr } = await supabase.auth.signInWithPassword({
       email: currentUser.email,
       password: currentPassword,
@@ -191,7 +189,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return { success: false, error: 'Not authenticated.' };
 
-    // Upload to Supabase Storage bucket "avatars"
     const ext = file.name.split('.').pop() || 'jpg';
     const path = `${currentUser.id}/avatar.${ext}`;
     const { error: uploadErr } = await supabase.storage
@@ -199,7 +196,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
       .upload(path, file, { upsert: true, contentType: file.type });
     if (uploadErr) return { success: false, error: uploadErr.message };
 
-    // Get public URL with cache-buster
     const { data: { publicUrl } } = supabase.storage.from('Avatars').getPublicUrl(path);
     const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 

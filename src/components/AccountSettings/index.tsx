@@ -8,8 +8,6 @@ import type { User } from '@supabase/supabase-js';
 import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../utils/supabase';
 
-// ── Avatar helpers ─────────────────────────────────────────────────────────────
-
 function getInitials(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
   if (name) {
@@ -29,8 +27,6 @@ function getAvatarColor(seed: string): string {
   for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
   return palette[Math.abs(hash) % palette.length];
 }
-
-// ── Shared styles ──────────────────────────────────────────────────────────────
 
 const sectionStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.03)',
@@ -87,8 +83,6 @@ const ghostBtnStyle: React.CSSProperties = {
   color: 'var(--t2)',
 };
 
-// ── Inline feedback ────────────────────────────────────────────────────────────
-
 function FeedbackMsg({ type, text }: { type: 'success' | 'error'; text: string }) {
   return (
     <motion.div
@@ -128,7 +122,6 @@ function AvatarSection({ user }: { user: User }) {
   const color = getAvatarColor(user.id);
   const initials = getInitials(user);
 
-  // Displayed image: local preview if selected, else saved avatar, else initials
   const displayUrl = preview ?? (imgFailed ? null : avatarUrl ?? null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +156,6 @@ function AvatarSection({ user }: { user: User }) {
         Profile Photo
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        {/* Avatar preview */}
         <div style={{ flexShrink: 0, position: 'relative' }}>
           {displayUrl ? (
             <img
@@ -185,7 +177,6 @@ function AvatarSection({ user }: { user: User }) {
               {initials}
             </div>
           )}
-          {/* Camera overlay */}
           <button
             onClick={() => fileInputRef.current?.click()}
             title="Choose photo"
@@ -201,7 +192,6 @@ function AvatarSection({ user }: { user: User }) {
           </button>
         </div>
 
-        {/* File picker + upload */}
         <div style={{ flex: 1 }}>
           <input
             ref={fileInputRef}
@@ -621,8 +611,6 @@ function DangerSection() {
     </div>
   );
 }
-
-// ── Main export ────────────────────────────────────────────────────────────────
 
 export const AccountSettings: React.FC = () => {
   const { user } = useAuthStore();

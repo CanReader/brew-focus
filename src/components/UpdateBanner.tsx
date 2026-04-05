@@ -34,7 +34,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
               borderBottom: `1px solid ${error ? 'rgba(255,77,77,0.2)' : 'rgba(91,141,238,0.2)'}`,
             }}
           >
-            {/* Animated shimmer when downloading */}
             {downloading && (
               <motion.div
                 className="absolute inset-0 pointer-events-none"
@@ -46,7 +45,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
               />
             )}
 
-            {/* Icon */}
             <div
               className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
               style={{
@@ -61,7 +59,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
                 : <ArrowUp size={12} />}
             </div>
 
-            {/* Text */}
             <div className="flex-1 min-w-0">
               {error ? (
                 <span style={{ color: '#ff6b6b' }}>{error}</span>
@@ -87,7 +84,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
               )}
             </div>
 
-            {/* Progress bar */}
             {downloading && progress > 0 && (
               <div
                 className="h-1 rounded-full overflow-hidden shrink-0"
@@ -103,7 +99,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
               </div>
             )}
 
-            {/* Install button */}
             {!downloading && !error && (
               <button
                 onClick={onInstall}
@@ -121,7 +116,6 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
               </button>
             )}
 
-            {/* Dismiss */}
             {!downloading && (
               <button
                 onClick={onDismiss}

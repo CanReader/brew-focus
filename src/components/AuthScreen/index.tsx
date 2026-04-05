@@ -123,7 +123,6 @@ export const AuthScreen: React.FC = () => {
       className="w-full h-full flex items-center justify-center relative overflow-hidden"
       style={{ background: 'var(--bg)' }}
     >
-      {/* Background blobs */}
       <div
         className="absolute pointer-events-none"
         style={{
@@ -152,7 +151,6 @@ export const AuthScreen: React.FC = () => {
         }}
       />
 
-      {/* Card */}
       <motion.div
         initial={{ opacity: 0, y: 28, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -165,13 +163,11 @@ export const AuthScreen: React.FC = () => {
           boxShadow: '0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.03)',
         }}
       >
-        {/* Gradient top border */}
         <div
           className="absolute top-0 left-0 right-0 h-px rounded-t-3xl pointer-events-none"
           style={{ background: 'linear-gradient(90deg, transparent 5%, var(--accent) 35%, var(--blu) 65%, transparent 95%)' }}
         />
 
-        {/* Brand header */}
         <div className="flex flex-col items-center pt-9 pb-7 px-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -203,7 +199,7 @@ export const AuthScreen: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Tab switcher — hidden on forgot mode */}
+        {/* hidden on forgot mode */}
         {mode !== 'forgot' && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -229,7 +225,6 @@ export const AuthScreen: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Form */}
         <div className="px-6 pb-8">
           <AnimatePresence mode="wait">
             <motion.form
@@ -242,7 +237,6 @@ export const AuthScreen: React.FC = () => {
               noValidate
               className="flex flex-col gap-3.5"
             >
-              {/* Success message */}
               <AnimatePresence>
                 {successMsg && (
                   <motion.div
@@ -258,7 +252,6 @@ export const AuthScreen: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Error message */}
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -274,7 +267,6 @@ export const AuthScreen: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Sign in: username or email */}
               {mode === 'signIn' && (
                 <InputField
                   label="Username or email"
@@ -287,7 +279,6 @@ export const AuthScreen: React.FC = () => {
                 />
               )}
 
-              {/* Sign up: username */}
               {mode === 'signUp' && (
                 <div>
                   <InputField
@@ -307,7 +298,6 @@ export const AuthScreen: React.FC = () => {
                 </div>
               )}
 
-              {/* Email (sign up + forgot) */}
               {mode !== 'signIn' && (
                 <InputField
                   label="Email address"
@@ -320,7 +310,6 @@ export const AuthScreen: React.FC = () => {
                 />
               )}
 
-              {/* Password (not shown on forgot) */}
               {mode !== 'forgot' && (
                 <InputField
                   label="Password"
@@ -334,7 +323,6 @@ export const AuthScreen: React.FC = () => {
                 />
               )}
 
-              {/* Confirm password (sign up only) */}
               {mode === 'signUp' && (
                 <div>
                   <InputField
@@ -355,7 +343,6 @@ export const AuthScreen: React.FC = () => {
                 </div>
               )}
 
-              {/* Forgot password link */}
               {mode === 'signIn' && (
                 <div className="flex justify-end -mt-1">
                   <button
@@ -371,7 +358,6 @@ export const AuthScreen: React.FC = () => {
                 </div>
               )}
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={isLoading || (mode === 'signUp' && (!passwordsMatch || !isValidUsername(username)))}
@@ -401,7 +387,6 @@ export const AuthScreen: React.FC = () => {
                 )}
               </button>
 
-              {/* Back to sign in (forgot mode) */}
               {mode === 'forgot' && (
                 <button
                   type="button"
@@ -418,7 +403,6 @@ export const AuthScreen: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Footer divider */}
         <div className="flex items-center gap-3 px-6 pb-6">
           <div className="flex-1 h-px" style={{ background: 'var(--brd)' }} />
           <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
