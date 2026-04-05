@@ -14,6 +14,8 @@ import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
 import { useClickSound } from './hooks/useClickSound';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
+import { useUpdater } from './hooks/useUpdater';
+import { UpdateBanner } from './components/UpdateBanner';
 
 type Tab = 'focus' | 'tasks' | 'reports';
 
@@ -78,6 +80,7 @@ function MainApp() {
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
+  const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();
 
   // Background noise lifecycle
   useEffect(() => {
@@ -121,6 +124,7 @@ function MainApp() {
   return (
     <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
       <TitleBar activeTab={activeTab} onTabChange={setActiveTab} onSettingsClick={() => setSettingsOpen(true)} onAccountSettingsClick={openAccountSettings} />
+      <UpdateBanner update={update} downloading={downloading} progress={progress} error={updateError} onInstall={installUpdate} onDismiss={dismiss} />
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {activeTab === 'focus' && (
