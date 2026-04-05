@@ -195,12 +195,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const ext = file.name.split('.').pop() || 'jpg';
     const path = `${currentUser.id}/avatar.${ext}`;
     const { error: uploadErr } = await supabase.storage
-      .from('avatars')
+      .from('Avatars')
       .upload(path, file, { upsert: true, contentType: file.type });
     if (uploadErr) return { success: false, error: uploadErr.message };
 
     // Get public URL with cache-buster
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage.from('Avatars').getPublicUrl(path);
     const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
     const { error: authErr } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });

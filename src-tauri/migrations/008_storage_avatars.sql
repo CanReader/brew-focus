@@ -6,7 +6,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 -- ============================================================
 --
 -- 1. Go to Storage → Create bucket
---    Name: avatars
+--    Name: Avatars
 --    Public: YES (toggle on)
 --
 -- 2. Go to Storage → avatars → Policies → Add policy
