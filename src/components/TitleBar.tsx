@@ -75,7 +75,7 @@ function Avatar({ user, size = 24 }: { user: User; size?: number }) {
 
 // ── User popover ──────────────────────────────────────────────────────────────
 
-function UserPopover({ user, onClose }: { user: User; onClose: () => void }) {
+function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose: () => void; onAccountSettings: () => void }) {
   const { signOut } = useAuthStore();
   const displayName = getDisplayName(user);
 
@@ -122,6 +122,29 @@ function UserPopover({ user, onClose }: { user: User; onClose: () => void }) {
 
       {/* Actions */}
       <div className="p-2 flex flex-col gap-0.5">
+
+        {/* Account Settings */}
+        <button
+          onClick={() => { onAccountSettings(); onClose(); }}
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
+          style={{ color: 'var(--t2)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--t)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--t2)';
+          }}
+        >
+          <div
+            className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(167,139,250,0.15)', color: 'var(--blu)' }}
+          >
+            <Settings size={11} />
+          </div>
+          Account Settings
+        </button>
 
         {/* Sync Now */}
         <button
@@ -193,7 +216,7 @@ function UserPopover({ user, onClose }: { user: User; onClose: () => void }) {
 
 // ── User badge (button in titlebar) ──────────────────────────────────────────
 
-function UserBadge({ user }: { user: User }) {
+function UserBadge({ user, onAccountSettings }: { user: User; onAccountSettings: () => void }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const displayName = getDisplayName(user);
@@ -253,7 +276,7 @@ function UserBadge({ user }: { user: User }) {
       </button>
 
       <AnimatePresence>
-        {open && <UserPopover user={user} onClose={() => setOpen(false)} />}
+        {open && <UserPopover user={user} onClose={() => setOpen(false)} onAccountSettings={onAccountSettings} />}
       </AnimatePresence>
     </div>
   );
@@ -265,9 +288,10 @@ interface TitleBarProps {
   activeTab: 'focus' | 'tasks' | 'reports';
   onTabChange: (tab: 'focus' | 'tasks' | 'reports') => void;
   onSettingsClick: () => void;
+  onAccountSettingsClick?: () => void;
 }
 
-export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSettingsClick }) => {
+export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSettingsClick, onAccountSettingsClick }) => {
   const { user } = useAuthStore();
 
   const handleMinimize = async () => { const win = getCurrentWindow(); await win.minimize(); };
@@ -354,7 +378,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
       {/* Right: User badge + settings + window controls */}
       <div className="flex items-center gap-1.5 shrink-0" data-no-drag>
         {/* User badge */}
-        {user && <UserBadge user={user} />}
+        {user && <UserBadge user={user} onAccountSettings={onAccountSettingsClick ?? (() => {})} />}
 
         <div className="w-px h-3.5 mx-0.5" style={{ background: 'var(--brd)' }} />
 

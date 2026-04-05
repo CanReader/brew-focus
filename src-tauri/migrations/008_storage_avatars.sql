@@ -1,0 +1,24 @@
+-- Add avatar_url column to profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+-- ============================================================
+-- IMPORTANT: Run these steps manually in the Supabase Dashboard
+-- ============================================================
+--
+-- 1. Go to Storage → Create bucket
+--    Name: avatars
+--    Public: YES (toggle on)
+--
+-- 2. Go to Storage → avatars → Policies → Add policy
+--    For INSERT (upload):
+--      Policy name: Users can upload their own avatar
+--      Target roles: authenticated
+--      USING expression: (auth.uid()::text = (storage.foldername(name))[1])
+--
+--    For UPDATE (re-upload / upsert):
+--      Policy name: Users can update their own avatar
+--      Target roles: authenticated
+--      USING expression: (auth.uid()::text = (storage.foldername(name))[1])
+--
+--    For SELECT (public read — since bucket is public, this is automatic)
+-- ============================================================

@@ -68,6 +68,7 @@ function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: st
 function MainApp() {
   const [activeTab, setActiveTab] = useState<Tab>('focus');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'account'>('timer');
   const [appReady, setAppReady] = useState(false);
 
   const { settings } = useSettingsStore();
@@ -107,6 +108,11 @@ function MainApp() {
     init();
   }, []);
 
+  const openAccountSettings = () => {
+    setSettingsSection('account');
+    setSettingsOpen(true);
+  };
+
   if (!appReady) return <LoadingScreen />;
 
   if (isFullscreen) return <TimerView variant="fullscreen" />;
@@ -114,7 +120,7 @@ function MainApp() {
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
-      <TitleBar activeTab={activeTab} onTabChange={setActiveTab} onSettingsClick={() => setSettingsOpen(true)} />
+      <TitleBar activeTab={activeTab} onTabChange={setActiveTab} onSettingsClick={() => setSettingsOpen(true)} onAccountSettingsClick={openAccountSettings} />
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {activeTab === 'focus' && (
@@ -134,7 +140,7 @@ function MainApp() {
           )}
         </AnimatePresence>
       </div>
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} initialSection={settingsSection} />
     </div>
   );
 }

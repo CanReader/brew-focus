@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette } from 'lucide-react';
+import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
 import { THEMES, AppTheme } from '../utils/themes';
+import { AccountSettings } from './AccountSettings';
 
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
+  initialSection?: SectionKey;
 }
 
-type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance';
+type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'account';
 
 const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
   { key: 'timer',      label: 'Timer',      icon: <Clock size={15} /> },
@@ -18,6 +20,7 @@ const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
   { key: 'goals',      label: 'Goals',      icon: <Target size={15} /> },
   { key: 'sounds',     label: 'Sounds',     icon: <Volume2 size={15} /> },
   { key: 'appearance', label: 'Appearance', icon: <Palette size={15} /> },
+  { key: 'account',    label: 'Account',    icon: <User size={15} /> },
 ];
 
 const THEME_CATEGORIES: { key: AppTheme['category']; label: string }[] = [
@@ -36,9 +39,13 @@ const ACCENT_OPTIONS: { key: AccentColor; name: string }[] = [
   { key: 'pink',   name: 'Pink' },
 ];
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, initialSection }) => {
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const [activeSection, setActiveSection] = useState<SectionKey>('timer');
+
+  useEffect(() => {
+    if (open) setActiveSection(initialSection ?? 'timer');
+  }, [open, initialSection]);
 
   return (
     <AnimatePresence>
@@ -214,6 +221,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) =
                       />
                     </FieldGroup>
                   )}
+
+                  {activeSection === 'account' && <AccountSettings />}
 
                   {activeSection === 'appearance' && (
                     <div className="flex flex-col gap-5">

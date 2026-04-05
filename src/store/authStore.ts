@@ -25,6 +25,10 @@ interface AuthStore {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<boolean>;
   clearError: () => void;
+  updateUsername: (newUsername: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  updateAvatar: (file: File) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -136,4 +140,83 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  updateUsername: async (newUsername) => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return { success: false, error: 'Not authenticated.' };
+
+    const cleaned = newUsername.toLowerCase().trim();
+
+    // Check availability
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', cleaned)
+      .neq('id', currentUser.id)
+      .maybeSingle();
+    if (existing) return { success: false, error: 'That username is already taken.' };
+
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({ username: cleaned })
+      .eq('id', currentUser.id);
+    if (profileErr) return { success: false, error: mapError(profileErr.message) };
+
+    const { error: authErr } = await supabase.auth.updateUser({ data: { username: cleaned } });
+    if (authErr) return { success: false, error: mapError(authErr.message) };
+
+    const { data: { user } } = await supabase.auth.getUser();
+    set({ user });
+    return { success: true };
+  },
+
+  updatePassword: async (currentPassword, newPassword) => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser?.email) return { success: false, error: 'Not authenticated.' };
+
+    // Verify current password
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: currentUser.email,
+      password: currentPassword,
+    });
+    if (verifyErr) return { success: false, error: 'Current password is incorrect.' };
+
+    const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateErr) return { success: false, error: mapError(updateErr.message) };
+
+    return { success: true };
+  },
+
+  updateAvatar: async (file) => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return { success: false, error: 'Not authenticated.' };
+
+    // Upload to Supabase Storage bucket "avatars"
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${currentUser.id}/avatar.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadErr) return { success: false, error: uploadErr.message };
+
+    // Get public URL with cache-buster
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+
+    const { error: authErr } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
+    if (authErr) return { success: false, error: mapError(authErr.message) };
+
+    await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    set({ user });
+    return { success: true };
+  },
+
+  deleteAccount: async () => {
+    const { error } = await supabase.rpc('delete_user');
+    if (error) return false;
+    window.location.reload();
+    return true;
+  },
 }));
