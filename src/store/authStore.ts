@@ -96,7 +96,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username: username.toLowerCase().trim() } },
+      options: {
+        data: { username: username.toLowerCase().trim() },
+        emailRedirectTo: 'brewfocus://auth/callback',
+      },
     });
     if (error) {
       set({ error: mapError(error.message), isLoading: false });

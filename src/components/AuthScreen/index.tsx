@@ -66,14 +66,14 @@ export const AuthScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  const switchMode = (next: Mode) => {
+  const switchMode = (next: Mode, keepMsg?: string) => {
     setMode(next);
     setUsernameOrEmail('');
     setEmail('');
     setUsername('');
     setPassword('');
     setConfirmPassword('');
-    setSuccessMsg('');
+    setSuccessMsg(keepMsg ?? '');
     clearError();
   };
 
@@ -94,8 +94,11 @@ export const AuthScreen: React.FC = () => {
       if (password !== confirmPassword) return;
       if (!isValidUsername(username)) return;
       const result = await signUp(email, password, username);
-      if (result.success && result.needsConfirmation) {
-        setSuccessMsg('Account created! Check your email to confirm before signing in.');
+      if (result.success) {
+        if (result.needsConfirmation) {
+          switchMode('signIn', 'Account created! Check your email to confirm, then sign in.');
+        }
+        // if !needsConfirmation the auth listener auto-navigates to the app
       }
       return;
     }

@@ -16,6 +16,8 @@ import { useClickSound } from './hooks/useClickSound';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
 import { UpdateBanner } from './components/UpdateBanner';
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+import { supabase } from './utils/supabase';
 
 type Tab = 'focus' | 'tasks' | 'reports';
 
@@ -148,6 +150,22 @@ function AppContent() {
 
   useEffect(() => {
     initialize();
+
+    // Handle email confirmation deep links (brewfocus://auth/callback?code=...)
+    onOpenUrl(async (urls) => {
+      for (const url of urls) {
+        if (!url.startsWith('brewfocus://')) continue;
+        const parsed = new URL(url);
+        const code = parsed.searchParams.get('code');
+        const accessToken = new URLSearchParams(parsed.hash.slice(1)).get('access_token');
+        const refreshToken = new URLSearchParams(parsed.hash.slice(1)).get('refresh_token');
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        } else if (accessToken && refreshToken) {
+          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   if (isLoading) return <LoadingScreen />;
