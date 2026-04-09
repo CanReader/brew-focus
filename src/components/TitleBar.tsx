@@ -4,6 +4,9 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
 import { useAuthStore } from '../store/authStore';
+import { useTaskStore } from '../store/taskStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { useTimerStore } from '../store/timerStore';
 
 function getInitials(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
@@ -72,6 +75,31 @@ function Avatar({ user, size = 24 }: { user: User; size?: number }) {
 function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose: () => void; onAccountSettings: () => void }) {
   const { signOut } = useAuthStore();
   const displayName = getDisplayName(user);
+  const [syncing, setSyncing] = useState(false);
+  const [syncDone, setSyncDone] = useState(false);
+
+  async function handleSync() {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncDone(false);
+    try {
+      const { loadTasks } = useTaskStore.getState();
+      const { loadSettings } = useSettingsStore.getState();
+      const { loadState } = useTimerStore.getState();
+      const { settings } = useSettingsStore.getState();
+      await Promise.all([
+        loadTasks(),
+        loadSettings(),
+        loadState(settings.workDuration),
+      ]);
+      setSyncDone(true);
+      setTimeout(() => setSyncDone(false), 2500);
+    } catch {
+      // silent — data that loaded will still be fresh
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <motion.div
@@ -138,31 +166,34 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         </button>
 
         <button
-          onClick={() => { /* TODO: implement sync */ onClose(); }}
+          onClick={handleSync}
+          disabled={syncing}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
-          style={{ color: 'var(--t2)' }}
+          style={{ color: syncing ? 'var(--t3)' : 'var(--t2)', cursor: syncing ? 'default' : 'pointer' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.color = 'var(--t)';
+            if (!syncing) {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = 'var(--t)';
+            }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--t2)';
+            e.currentTarget.style.color = syncing ? 'var(--t3)' : 'var(--t2)';
           }}
         >
           <div
             className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(91,141,238,0.15)', color: 'var(--blu)' }}
+            style={{ background: 'rgba(91,141,238,0.15)', color: syncDone ? 'var(--grn)' : 'var(--blu)' }}
           >
-            <RefreshCw size={11} />
+            <RefreshCw
+              size={11}
+              style={{
+                animation: syncing ? 'spin 0.8s linear infinite' : 'none',
+                color: syncDone ? 'var(--grn)' : undefined,
+              }}
+            />
           </div>
-          Sync Now
-          <span
-            className="ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-            style={{ background: 'rgba(245,166,35,0.15)', color: '#f5a623' }}
-          >
-            SOON
-          </span>
+          {syncing ? 'Syncing…' : syncDone ? 'Up to date' : 'Sync Now'}
         </button>
 
         <div style={{ height: 1, background: 'var(--brd)', margin: '4px 4px' }} />
