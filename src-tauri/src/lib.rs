@@ -1,4 +1,4 @@
-use tauri::Manager;
+use tauri::{Manager, WindowEvent};
 
 pub mod commands;
 pub mod events;
@@ -34,16 +34,25 @@ pub fn run() {
             timer_snapshot,
             timer_update_config,
         ])
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" {
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
+            }
+        })
         .setup(|app| {
-            let win = app.get_webview_window("main").unwrap();
-            win.show().unwrap();
+            // Propagate errors rather than panicking — a panic in .setup()
+            // would take down the app before the tray is registered, leaving
+            // no recovery path.
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.show();
+            } else {
+                return Err("main window not found".into());
+            }
 
-            // System tray
             tray::setup_tray(&app.handle())?;
-
-            // Background tick loop
-            let bg_timer = app.state::<BackgroundTimer>().inner().clone();
-            bg_timer.spawn_tick_loop(app.handle().clone());
 
             Ok(())
         })

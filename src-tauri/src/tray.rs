@@ -14,8 +14,18 @@ pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         .items(&[&show, &hide, &sep, &quit])
         .build()?;
 
+    let icon = app
+        .default_window_icon()
+        .ok_or_else(|| {
+            tauri::Error::from(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "default window icon missing — check tauri.conf.json bundle.icon",
+            ))
+        })?
+        .clone();
+
     TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(icon)
         .menu(&menu)
         .tooltip("Brew Focus")
         .on_menu_event(|app, event| match event.id().as_ref() {
