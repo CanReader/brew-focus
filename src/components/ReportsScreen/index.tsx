@@ -7,6 +7,7 @@ import {
 import { useTimerStore } from '../../store/timerStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { ProBadge } from '../ProBadge';
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -19,7 +20,16 @@ function fmtTime(seconds: number): string {
 
 function dayKey(ts: number): string {
   const d = new Date(ts);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  // Zero-padded so lexical sort matches chronological order (required by the
+  // longest-streak calculation in records).
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function parseDayKey(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -258,8 +268,9 @@ export const ReportsScreen: React.FC = () => {
     const sorted = Array.from(focusDays).sort();
     let longestStreak = sorted.length > 0 ? 1 : 0, streak = 1;
     for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(sorted[i-1]), curr = new Date(sorted[i]);
-      if ((curr.getTime()-prev.getTime())/86400000 === 1) { streak++; longestStreak = Math.max(longestStreak, streak); }
+      const prev = parseDayKey(sorted[i-1]), curr = parseDayKey(sorted[i]);
+      const deltaDays = Math.round((curr.getTime()-prev.getTime())/86400000);
+      if (deltaDays === 1) { streak++; longestStreak = Math.max(longestStreak, streak); }
       else streak = 1;
     }
     const avgSecs = work.length > 0 ? work.reduce((a,s) => a+s.duration, 0) / work.length : 0;
@@ -312,10 +323,10 @@ export const ReportsScreen: React.FC = () => {
     if (!ms.length) return null;
     const dm: Record<string, number[]> = {};
     ms.forEach(s => { const k=dayKey(s.startedAt); if(!dm[k]) dm[k]=[]; dm[k].push(s.mood!); });
-    const days = Object.entries(dm).map(([k,moods]) => {
-      const [y,m,d]=k.split('-').map(Number);
-      return { date: new Date(y,m,d), avg: moods.reduce((a,v)=>a+v,0)/moods.length };
-    }).sort((a,b)=>a.date.getTime()-b.date.getTime()).slice(-14);
+    const days = Object.entries(dm).map(([k,moods]) => ({
+      date: parseDayKey(k),
+      avg: moods.reduce((a,v)=>a+v,0)/moods.length,
+    })).sort((a,b)=>a.date.getTime()-b.date.getTime()).slice(-14);
     const overall = ms.reduce((a,s)=>a+s.mood!,0)/ms.length;
     return { days, overall: Math.round(overall*10)/10, emoji: ['','😴','😐','🙂','😊','🔥'][Math.round(overall)], count: ms.length };
   }, [sessions]);
@@ -399,7 +410,10 @@ export const ReportsScreen: React.FC = () => {
       <div className="sticky top-0 z-10 px-6 pt-5 pb-4 flex items-end justify-between"
         style={{ background: 'linear-gradient(180deg, var(--bg) 70%, transparent 100%)' }}>
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--t)' }}>Reports</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--t)' }}>Reports</h1>
+            <ProBadge size="md" />
+          </div>
           <p className="text-[12px] mt-0.5" style={{ color: 'var(--t3)' }}>Your focus journey at a glance</p>
         </div>
         <button
@@ -891,7 +905,7 @@ export const ReportsScreen: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-4 text-[11px] mb-3" style={{ color:'var(--t3)' }}>
-              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{Math.max(...focusChartData.map(d=>d.value))}m</span></span>
+              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.max(...focusChartData.map(d=>d.value)):0}m</span></span>
               <span>Avg: <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.round(focusChartData.reduce((a,d)=>a+d.value,0)/focusChartData.length):0}m</span></span>
             </div>
             <BarChart data={focusChartData} maxVal={maxFocusMins} height={150} color={`rgb(${ACCENT_R})`} colorRgb={ACCENT_R} activeIdx={focusChartOffset===0?focusChartData.length-1:undefined} />
@@ -910,7 +924,7 @@ export const ReportsScreen: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-4 text-[11px] mb-3" style={{ color:'var(--t3)' }}>
-              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{Math.max(...taskChartData.map(d=>d.value))} tasks</span></span>
+              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{taskChartData.length>0?Math.max(...taskChartData.map(d=>d.value)):0} tasks</span></span>
               <span>Avg: <span style={{ color:'var(--t2)', fontWeight:600 }}>{taskChartData.length>0?(taskChartData.reduce((a,d)=>a+d.value,0)/taskChartData.length).toFixed(1):0} tasks</span></span>
             </div>
             <BarChart data={taskChartData} maxVal={maxTaskCnt} height={150} color={`rgb(${GRN_R})`} colorRgb={GRN_R} activeIdx={taskChartOffset===0?taskChartData.length-1:undefined} />
