@@ -16,7 +16,7 @@ import { useClickSound } from './hooks/useClickSound';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
 import { UpdateBanner } from './components/UpdateBanner';
-import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+import { onOpenUrl, getCurrent as getCurrentDeepLink } from '@tauri-apps/plugin-deep-link';
 import { supabase } from './utils/supabase';
 
 type Tab = 'focus' | 'tasks' | 'reports';
@@ -74,7 +74,7 @@ function MainApp() {
   const { settings } = useSettingsStore();
   const { loadSettings } = useSettingsStore();
   const { loadTasks } = useTaskStore();
-  const { loadState, setActiveTask } = useTimerStore();
+  const { loadState, setActiveTask, isRunning: timerIsRunning, phase: timerPhase } = useTimerStore();
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
@@ -82,12 +82,13 @@ function MainApp() {
 
   useEffect(() => {
     const id = settings.backgroundNoise ?? 'none';
-    if (id !== 'none') {
+    const shouldPlay = id !== 'none' && timerIsRunning && timerPhase === 'work';
+    if (shouldPlay) {
       setBackgroundNoise(id, settings.noiseVolume ?? 50).catch(console.warn);
     } else {
       stopBackgroundNoise();
     }
-  }, [settings.backgroundNoise]);
+  }, [settings.backgroundNoise, timerIsRunning, timerPhase]);
 
   useEffect(() => {
     setNoiseVolume(settings.noiseVolume ?? 50);
@@ -95,14 +96,19 @@ function MainApp() {
 
   useEffect(() => {
     const init = async () => {
-      await Promise.all([loadSettings(), loadTasks()]);
-      const currentSettings = useSettingsStore.getState().settings;
-      const { tasks: loadedTasks, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
-      setActiveTask(loadedActiveTaskId);
-      const activeTask = loadedTasks.find((t) => t.id === loadedActiveTaskId);
-      const effectiveWorkDuration = activeTask?.customWorkDuration ?? currentSettings.workDuration;
-      await loadState(effectiveWorkDuration);
-      setAppReady(true);
+      try {
+        await Promise.all([loadSettings(), loadTasks()]);
+        const currentSettings = useSettingsStore.getState().settings;
+        const { tasks: loadedTasks, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
+        setActiveTask(loadedActiveTaskId);
+        const activeTask = loadedTasks.find((t) => t.id === loadedActiveTaskId);
+        const effectiveWorkDuration = activeTask?.customWorkDuration ?? currentSettings.workDuration;
+        await loadState(effectiveWorkDuration);
+      } catch (e) {
+        console.error('App init failed:', e);
+      } finally {
+        setAppReady(true);
+      }
     };
     init();
   }, []);
@@ -122,7 +128,7 @@ function MainApp() {
       <TitleBar activeTab={activeTab} onTabChange={setActiveTab} onSettingsClick={() => setSettingsOpen(true)} onAccountSettingsClick={openAccountSettings} />
       <UpdateBanner update={update} downloading={downloading} progress={progress} error={updateError} onInstall={installUpdate} onDismiss={dismiss} />
       <div className="flex-1 overflow-hidden relative">
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false}>
           {activeTab === 'focus' && (
             <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
               <FocusScreen />
@@ -145,27 +151,56 @@ function MainApp() {
   );
 }
 
+async function handleAuthUrl(url: string) {
+  if (!url.startsWith('brewfocus://')) return;
+  const parsed = new URL(url);
+
+  const errCode = parsed.searchParams.get('error') ?? new URLSearchParams(parsed.hash.slice(1)).get('error');
+  const errDesc = parsed.searchParams.get('error_description') ?? new URLSearchParams(parsed.hash.slice(1)).get('error_description');
+  if (errCode) {
+    console.error('Deep link auth error:', errCode, errDesc);
+    return;
+  }
+
+  const code = parsed.searchParams.get('code');
+  const hashParams = new URLSearchParams(parsed.hash.slice(1));
+  const accessToken = hashParams.get('access_token');
+  const refreshToken = hashParams.get('refresh_token');
+
+  try {
+    if (code) {
+      await supabase.auth.exchangeCodeForSession(code);
+    } else if (accessToken && refreshToken) {
+      await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    }
+  } catch (e) {
+    console.error('Deep link auth exchange failed:', e);
+  }
+}
+
 function AppContent() {
   const { user, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
     initialize();
 
-    // Handle email confirmation deep links (brewfocus://auth/callback?code=...)
-    onOpenUrl(async (urls) => {
-      for (const url of urls) {
-        if (!url.startsWith('brewfocus://')) continue;
-        const parsed = new URL(url);
-        const code = parsed.searchParams.get('code');
-        const accessToken = new URLSearchParams(parsed.hash.slice(1)).get('access_token');
-        const refreshToken = new URLSearchParams(parsed.hash.slice(1)).get('refresh_token');
-        if (code) {
-          await supabase.auth.exchangeCodeForSession(code);
-        } else if (accessToken && refreshToken) {
-          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      try {
+        const initial = await getCurrentDeepLink();
+        if (initial) {
+          for (const url of initial) await handleAuthUrl(url);
         }
-      }
-    }).catch(() => {});
+      } catch {}
+
+      try {
+        unlisten = await onOpenUrl(async (urls) => {
+          for (const url of urls) await handleAuthUrl(url);
+        });
+      } catch {}
+    })();
+
+    return () => { unlisten?.(); };
   }, []);
 
   if (isLoading) return <LoadingScreen />;
