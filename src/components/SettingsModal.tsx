@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User } from 'lucide-react';
+import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User, Crown } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
-import { THEMES, AppTheme } from '../utils/themes';
+import { THEMES, AppTheme, FREE_THEME_IDS } from '../utils/themes';
 import { AccountSettings } from './AccountSettings';
+import { ProBadge } from './ProBadge';
 
 interface SettingsModalProps {
   open: boolean;
@@ -46,6 +47,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
   useEffect(() => {
     if (open) setActiveSection(initialSection ?? 'timer');
   }, [open, initialSection]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
 
   return (
     <AnimatePresence>
@@ -259,19 +269,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
 
                       {THEME_CATEGORIES.map((cat) => {
                         const themes = THEMES.filter((t) => t.category === cat.key);
+                        const hasPro = themes.some((t) => !FREE_THEME_IDS.includes(t.id));
                         return (
                           <div key={cat.key}>
-                            <div className="text-[11px] font-semibold tracking-widest uppercase mb-2.5" style={{ color: 'var(--t3)' }}>
-                              {cat.label}
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <span className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: 'var(--t3)' }}>
+                                {cat.label}
+                              </span>
+                              {hasPro && <ProBadge />}
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                               {themes.map((theme) => {
                                 const isSelected = settings.theme === theme.id;
+                                // Pro gating is disabled until pricing ships — treat every theme as free.
+                                const isPro = false && !FREE_THEME_IDS.includes(theme.id);
                                 return (
                                   <button
                                     key={theme.id}
                                     onClick={() => updateSettings({ theme: theme.id })}
-                                    className="rounded-xl overflow-hidden transition-all duration-150 text-left"
+                                    className="rounded-xl overflow-hidden transition-all duration-150 text-left relative"
                                     style={{
                                       border: isSelected
                                         ? '2px solid var(--accent)'
@@ -279,6 +295,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                                       boxShadow: isSelected ? '0 0 14px rgba(255,255,255,0.08)' : 'none',
                                     }}
                                   >
+                                    {isPro && (
+                                      <div
+                                        className="absolute top-1.5 left-1.5 z-10 w-4 h-4 rounded-full flex items-center justify-center"
+                                        style={{ background: 'color-mix(in srgb, var(--accent) 85%, transparent)' }}
+                                      >
+                                        <Crown size={8} color="#fff" strokeWidth={2.5} />
+                                      </div>
+                                    )}
                                     <div className="h-14 p-1.5" style={{ background: theme.bg }}>
                                       <div
                                         className="w-full h-full rounded-lg p-1.5 flex flex-col justify-between"

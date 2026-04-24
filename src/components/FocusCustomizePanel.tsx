@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Music, Image, Play, Plus, Upload, Waves } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
@@ -28,6 +28,15 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
   const [tab, setTab] = useState<Tab>('sounds');
   const bgFileRef = useRef<HTMLInputElement>(null);
   const soundFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
 
   const handleCustomImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
