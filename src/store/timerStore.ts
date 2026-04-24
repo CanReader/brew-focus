@@ -50,8 +50,14 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
   loadState: async (workDuration) => {
     const userId = await getCurrentUserId();
+    // Never clobber an active session's remaining seconds — loadState can be
+    // called during a sync or an auth refresh and we'd otherwise reset the
+    // user's in-progress timer mid-tick.
+    const alreadyRunning = get().isRunning;
     if (!userId) {
-      set({ isLoaded: true, secondsLeft: workDuration * 60, totalSeconds: workDuration * 60 });
+      set(alreadyRunning
+        ? { isLoaded: true }
+        : { isLoaded: true, secondsLeft: workDuration * 60, totalSeconds: workDuration * 60 });
       return;
     }
     try {
@@ -84,14 +90,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
       const todayFocusSeconds = focusRow?.seconds ?? 0;
 
-      set({
-        sessions,
-        todayFocusSeconds,
-        lastResetDate: today,
-        secondsLeft: workDuration * 60,
-        totalSeconds: workDuration * 60,
-        isLoaded: true,
-      });
+      set(alreadyRunning
+        ? { sessions, todayFocusSeconds, lastResetDate: today, isLoaded: true }
+        : {
+            sessions,
+            todayFocusSeconds,
+            lastResetDate: today,
+            secondsLeft: workDuration * 60,
+            totalSeconds: workDuration * 60,
+            isLoaded: true,
+          });
     } catch (e) {
       console.warn('Failed to load timer state:', e);
       set({ isLoaded: true });
@@ -101,7 +109,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   checkDateReset: () => {
     const today = todayStr();
     if (get().lastResetDate !== today) {
-      set({ todayFocusSeconds: 0, lastResetDate: today, sessions: [] });
+      set({ todayFocusSeconds: 0, lastResetDate: today });
     }
   },
 
@@ -201,19 +209,29 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   addFocusSeconds: async (seconds) => {
-    const newTotal = get().todayFocusSeconds + seconds;
-    set({ todayFocusSeconds: newTotal });
-
     const userId = await getCurrentUserId();
-    if (!userId) return;
+    if (!userId) {
+      set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
+      return;
+    }
     try {
       const today = todayStr();
+      const { data: existing } = await supabase
+        .from('focus_days')
+        .select('seconds')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle();
+      const currentServer = existing?.seconds ?? 0;
+      const newTotal = currentServer + seconds;
       await supabase.from('focus_days').upsert(
         { user_id: userId, date: today, seconds: newTotal },
         { onConflict: 'user_id,date' }
       );
+      set({ todayFocusSeconds: newTotal });
     } catch (e) {
       console.warn('Failed to save focus time:', e);
+      set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
     }
   },
 }));

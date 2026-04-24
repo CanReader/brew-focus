@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { useTaskStore } from '../store/taskStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTimerStore } from '../store/timerStore';
+import { ProBadge } from './ProBadge';
 
 function getInitials(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
@@ -85,13 +86,17 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
     try {
       const { loadTasks } = useTaskStore.getState();
       const { loadSettings } = useSettingsStore.getState();
-      const { loadState } = useTimerStore.getState();
-      const { settings } = useSettingsStore.getState();
-      await Promise.all([
-        loadTasks(),
-        loadSettings(),
-        loadState(settings.workDuration),
-      ]);
+      const { loadState, isRunning } = useTimerStore.getState();
+      // Reload settings + tasks first so the effective duration below reflects
+      // whatever the server has before we snap the timer display.
+      await Promise.all([loadTasks(), loadSettings()]);
+      if (!isRunning) {
+        const { tasks, activeTaskId } = useTaskStore.getState();
+        const { settings } = useSettingsStore.getState();
+        const active = tasks.find((t) => t.id === activeTaskId);
+        const effective = active?.customWorkDuration ?? settings.workDuration;
+        await loadState(effective);
+      }
       setSyncDone(true);
       setTimeout(() => setSyncDone(false), 2500);
     } catch {
@@ -193,7 +198,8 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
               }}
             />
           </div>
-          {syncing ? 'Syncing…' : syncDone ? 'Up to date' : 'Sync Now'}
+          <span className="flex-1">{syncing ? 'Syncing…' : syncDone ? 'Up to date' : 'Sync Now'}</span>
+          <ProBadge />
         </button>
 
         <div style={{ height: 1, background: 'var(--brd)', margin: '4px 4px' }} />
@@ -312,7 +318,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
     const win = getCurrentWindow();
     (await win.isMaximized()) ? await win.unmaximize() : await win.maximize();
   };
-  const handleClose = async () => { const win = getCurrentWindow(); await win.close(); };
+  // Hide instead of close so the timer keeps ticking in the background.
+  // Tray menu's "Quit" is the only path that truly exits the app.
+  const handleClose = async () => { const win = getCurrentWindow(); await win.hide(); };
 
   const tabs: { id: 'focus' | 'tasks' | 'reports'; label: string }[] = [
     { id: 'focus',   label: 'Focus'   },
