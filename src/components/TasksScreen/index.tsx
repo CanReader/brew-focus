@@ -119,6 +119,15 @@ function searchTasks(tasks: Task[], query: string): Task[] {
   );
 }
 
+// Parse a YYYY-MM-DD string from an <input type="date"> as LOCAL midnight,
+// not UTC midnight. new Date("YYYY-MM-DD") is UTC and shifts by a day in
+// negative-offset timezones.
+function parseLocalDateInput(val: string): number | undefined {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val);
+  if (!m) return undefined;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
+}
+
 function getDueDateForView(view: SidebarView): DueDate {
   if (view === 'today') return 'today';
   if (view === 'tomorrow') return 'tomorrow';
@@ -198,7 +207,7 @@ const ProjectDetailCard: React.FC<{
             value={msToDateInput(project.targetDate)}
             onChange={(e) => {
               const val = e.target.value;
-              onUpdate({ targetDate: val ? new Date(val).getTime() : undefined });
+              onUpdate({ targetDate: val ? parseLocalDateInput(val) : undefined });
             }}
             className="text-[11px] bg-transparent focus:outline-none"
             style={{ color: targetOverdue ? 'var(--accent)' : 'var(--t3)', colorScheme: 'dark', width: 90 }}
@@ -319,7 +328,7 @@ const ProjectDetailCard: React.FC<{
                 addMilestone(
                   project.id,
                   newMilestoneTitle.trim(),
-                  newMilestoneDate ? new Date(newMilestoneDate).getTime() : undefined
+                  newMilestoneDate ? parseLocalDateInput(newMilestoneDate) : undefined
                 );
                 setNewMilestoneTitle('');
                 setNewMilestoneDate('');
@@ -372,7 +381,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
 
   const { isRunning, phase, secondsLeft, start, pause, skip, reset, setActiveTask: setTimerActiveTask } = useTimerStore();
   const { settings } = useSettingsStore();
-  const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
+  const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useTimer();
 
   const viewTasks = sortTasks(searchTasks(filterTasks(tasks, sidebarView), searchQuery), sortBy);
   const completedTasks = sidebarView !== 'completed' ? tasks.filter((t) => t.completed) : [];
@@ -423,8 +432,13 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     const newIdx = viewTasks.findIndex((t) => t.id === over.id);
     if (oldIdx === -1 || newIdx === -1) return;
     const reordered = arrayMove(viewTasks, oldIdx, newIdx);
-    const otherTasks = tasks.filter((t) => !viewTasks.find((vt) => vt.id === t.id));
-    reorderTasks([...reordered, ...otherTasks]);
+    // Splice the reordered view tasks back into the full list at their original
+    // positions, keeping non-view tasks exactly where they were. Concatenating
+    // view + others would collapse the filtered subset to the front of the list.
+    const viewIds = new Set(viewTasks.map((t) => t.id));
+    let vi = 0;
+    const merged = tasks.map((t) => (viewIds.has(t.id) ? reordered[vi++]! : t));
+    reorderTasks(merged);
   };
 
   const handleSetActive = (task: Task) => {
@@ -595,16 +609,19 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
             }}
           >
             {/* Plus button */}
-            <div
+            <button
+              type="button"
+              aria-label="Add task"
               className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105"
               style={{
                 background: 'linear-gradient(135deg, var(--accent) 0%, #ff2929 100%)',
                 boxShadow: '0 2px 8px var(--accent-g)',
+                border: 'none',
               }}
               onClick={handleAddTask}
             >
               <Plus size={14} color="white" />
-            </div>
+            </button>
 
             {/* Input */}
             <input
@@ -745,6 +762,8 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                                     task={task}
                                     isActive={task.id === activeTaskId}
                                     isSelected={task.id === selectedTaskId}
+                                    projectName={projects.find((p) => p.id === task.projectId)?.name}
+                                    projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                     onToggle={() => toggleTask(task.id)}
                                     onUpdate={(partial) => updateTask(task.id, partial)}
                                     onSetActive={() => handleSetActive(task)}
@@ -769,6 +788,8 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                                     task={task}
                                     isActive={task.id === activeTaskId}
                                     isSelected={task.id === selectedTaskId}
+                                    projectName={projects.find((p) => p.id === task.projectId)?.name}
+                                    projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                     onToggle={() => toggleTask(task.id)}
                                     onUpdate={(partial) => updateTask(task.id, partial)}
                                     onSetActive={() => handleSetActive(task)}
@@ -787,6 +808,8 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                           task={task}
                           isActive={task.id === activeTaskId}
                           isSelected={task.id === selectedTaskId}
+                          projectName={projects.find((p) => p.id === task.projectId)?.name}
+                          projectColor={projects.find((p) => p.id === task.projectId)?.color}
                           onToggle={() => toggleTask(task.id)}
                           onUpdate={(partial) => updateTask(task.id, partial)}
                           onSetActive={() => handleSetActive(task)}
@@ -828,6 +851,8 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                                 task={task}
                                 isActive={false}
                                 isSelected={task.id === selectedTaskId}
+                                projectName={projects.find((p) => p.id === task.projectId)?.name}
+                                projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                 onToggle={() => toggleTask(task.id)}
                                 onUpdate={(partial) => updateTask(task.id, partial)}
                                 onSetActive={() => {}}
@@ -875,7 +900,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
               }
             </button>
             <button
-              onClick={() => skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, settings.longBreakInterval)}
+              onClick={() => skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval)}
               className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
               style={{ background: 'var(--card)', color: 'var(--t3)' }}
             >
