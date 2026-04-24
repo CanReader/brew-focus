@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTimerStore } from '../../store/timerStore';
 import { TimerSession } from '../../types';
 
@@ -57,10 +57,19 @@ function sessionBlocks(sessions: TimerSession[]): Block[] {
 export const WeeklyCalendar: React.FC = () => {
   const { sessions } = useTimerStore();
 
+  // Refresh every minute so the "now" indicator tracks real time.
+  const [nowTick, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick((v) => v + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const today = new Date();
   const todayKey = dateKey(today);
   const nowMin = today.getHours() * 60 + today.getMinutes();
   const days = weekDays(today);
+  // Reference nowTick so the linter and React see it as consumed.
+  void nowTick;
 
   const weekMap = useMemo(() => {
     const map: Record<string, TimerSession[]> = {};
