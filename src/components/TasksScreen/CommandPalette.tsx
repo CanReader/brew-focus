@@ -123,7 +123,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           id: `priority-${pm.priority}`,
           label: `Set Priority: ${pm.label}`,
           sublabel: 'Active task',
-          icon: <Flag size={14} style={{ color: pm.color }} />,
+          icon: <Flag size={14} color={pm.color} fill={pm.priority !== 'p4' ? pm.color : 'transparent'} strokeWidth={2} />,
           action: () => { onSetPriority(activeTaskId, pm.priority); onClose(); },
           keywords: ['priority', pm.label.toLowerCase(), pm.priority, 'flag'],
         }))

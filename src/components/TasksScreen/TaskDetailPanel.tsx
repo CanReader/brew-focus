@@ -1,12 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Trash2, Check, Plus, Flag,
+  X, Trash2, Check, Plus, Flag, GripVertical,
   Clock, Calendar, FolderOpen, Bell, RefreshCw, Edit3, FileText,
 } from 'lucide-react';
-import { Task, Priority, DueDate, Project, RepeatType, formatDueDateDisplay, isDueDateOverdue } from '../../types';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,
+  arrayMove, useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Task, Priority, DueDate, Project, RepeatType, SubTask, formatDueDateDisplay, isDueDateOverdue } from '../../types';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { ProBadge } from '../ProBadge';
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -57,7 +67,8 @@ const DetailRow: React.FC<{
   onClick?: () => void;
   children?: React.ReactNode;
   expanded?: boolean;
-}> = ({ icon, label, value, valueColor, onClick, children, expanded }) => (
+  pro?: boolean;
+}> = ({ icon, label, value, valueColor, onClick, children, expanded, pro }) => (
   <div>
     <button
       onClick={onClick}
@@ -71,6 +82,7 @@ const DetailRow: React.FC<{
     >
       <span style={{ color: 'var(--t3)', flexShrink: 0, width: 15 }}>{icon}</span>
       <span className="text-[12px] w-20 shrink-0 font-medium" style={{ color: 'var(--t3)' }}>{label}</span>
+      {pro && <ProBadge />}
       <span className="flex-1 text-[12px] text-right truncate" style={{ color: valueColor ?? 'var(--t2)' }}>
         {value}
       </span>
@@ -139,9 +151,26 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   const [newSubtaskValue, setNewSubtaskValue] = useState('');
   const [newTagValue, setNewTagValue] = useState('');
   const [expanded, setExpanded] = useState<ExpandedRow>(null);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [subtaskDraft, setSubtaskDraft] = useState('');
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
-  const { addSubtask, toggleSubtask, deleteSubtask, addTag, removeTag } = useTaskStore();
+  const { addSubtask, toggleSubtask, updateSubtask, deleteSubtask, reorderSubtasks, addTag, removeTag } = useTaskStore();
+
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleSubtaskDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = task.subtasks.map((s) => s.id);
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    reorderSubtasks(task.id, arrayMove(ids, oldIndex, newIndex));
+  };
   const { settings } = useSettingsStore();
 
   useEffect(() => {
@@ -302,28 +331,33 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--brd)' }}
             >
               <div className="flex gap-1.5">
-                {PRIORITY_OPTIONS.map((p) => (
-                  <button
-                    key={p.value}
-                    onClick={() => { onUpdate({ priority: p.value }); setExpanded(null); }}
-                    className="flex-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
-                    style={{
-                      background: task.priority === p.value ? `${p.color}20` : 'rgba(255,255,255,0.04)',
-                      color: task.priority === p.value ? p.color : 'var(--t3)',
-                      border: `1.5px solid ${task.priority === p.value ? p.color : 'var(--brd)'}`,
-                      boxShadow: task.priority === p.value ? `0 0 10px ${p.color}30` : 'none',
-                    }}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+                {PRIORITY_OPTIONS.map((p) => {
+                  const isSelected = task.priority === p.value;
+                  return (
+                    <button
+                      key={p.value}
+                      onClick={() => { onUpdate({ priority: p.value }); setExpanded(null); }}
+                      className="flex-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5"
+                      style={{
+                        background: isSelected ? `${p.color}20` : 'rgba(255,255,255,0.04)',
+                        color: isSelected ? p.color : 'var(--t3)',
+                        border: `1.5px solid ${isSelected ? p.color : 'var(--brd)'}`,
+                        boxShadow: isSelected ? `0 0 10px ${p.color}30` : 'none',
+                      }}
+                    >
+                      <Flag size={11} color={isSelected ? p.color : 'var(--t3)'} fill={isSelected ? p.color : 'transparent'} strokeWidth={2} />
+                      {p.label}
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Tags */}
-        <div className="px-4 py-2.5 flex flex-wrap gap-1.5 items-center min-h-[40px]" style={{ borderBottom: '1px solid var(--brd)' }}>
+        <div className="px-4 py-2.5 flex flex-wrap gap-1.5 items-center min-h-[40px] relative" style={{ borderBottom: '1px solid var(--brd)' }}>
+          <div className="absolute top-1.5 right-3"><ProBadge /></div>
           {task.tags.map((tag) => (
             <span
               key={tag}
@@ -391,6 +425,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           value={pomodoroValue}
           expanded={expanded === 'pomodoro'}
           onClick={() => toggleRow('pomodoro')}
+          pro
         >
           <div className="pt-2 flex flex-col gap-2">
             <PomodoroRow
@@ -418,16 +453,14 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             <div className="border-t pt-2 mt-0.5 flex flex-col gap-2" style={{ borderColor: 'var(--brd)' }}>
               <div className="flex items-center justify-between">
                 <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Skip long breaks</span>
-                <button
-                  onClick={() => onUpdate({ skipLongBreak: !task.skipLongBreak })}
-                  className="w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0"
-                  style={{ background: task.skipLongBreak ? 'var(--accent)' : 'rgba(255,255,255,0.1)' }}
-                >
-                  <span
-                    className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform duration-200"
-                    style={{ transform: task.skipLongBreak ? 'translateX(17px)' : 'translateX(1px)' }}
+                <label className="toggle shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={!!task.skipLongBreak}
+                    onChange={(e) => onUpdate({ skipLongBreak: e.target.checked })}
                   />
-                </button>
+                  <span className="toggle-slider" />
+                </label>
               </div>
               {!task.skipLongBreak && (
                 <>
@@ -595,6 +628,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           valueColor={task.repeatType && task.repeatType !== 'none' ? 'var(--t2)' : 'var(--t3)'}
           expanded={expanded === 'repeat'}
           onClick={() => toggleRow('repeat')}
+          pro
         >
           <div className="pt-2 flex gap-1.5 flex-wrap">
             {(['none', 'daily', 'weekly', 'monthly'] as RepeatType[]).map((r) => {
@@ -621,43 +655,46 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         <div className="section-divider mx-0 my-1" />
 
         {/* Subtasks */}
-        <div className="px-4 py-2">
-          {task.subtasks.map((subtask) => (
-            <div
-              key={subtask.id}
-              className="flex items-center gap-2.5 py-2 group/sub border-b"
-              style={{ borderColor: 'var(--brd)' }}
+        <div className="px-4 py-2 relative">
+          <div className="absolute top-1.5 right-3"><ProBadge /></div>
+          <DndContext
+            sensors={dndSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleSubtaskDragEnd}
+          >
+            <SortableContext
+              items={task.subtasks.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <button
-                onClick={() => toggleSubtask(task.id, subtask.id)}
-                className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                style={{
-                  borderColor: subtask.completed ? 'var(--grn)' : 'rgba(255,255,255,0.14)',
-                  background: subtask.completed ? 'var(--grn)' : 'transparent',
-                }}
-              >
-                {subtask.completed && <Check size={8} color="white" strokeWidth={3} />}
-              </button>
-              <span
-                className="flex-1 text-[12px] min-w-0"
-                style={{
-                  color: subtask.completed ? 'var(--t3)' : 'var(--t)',
-                  textDecoration: subtask.completed ? 'line-through' : 'none',
-                }}
-              >
-                {subtask.title}
-              </span>
-              <button
-                onClick={() => deleteSubtask(task.id, subtask.id)}
-                className="opacity-0 group-hover/sub:opacity-100 transition-opacity"
-                style={{ color: 'var(--t3)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
-              >
-                <X size={11} />
-              </button>
-            </div>
-          ))}
+              {task.subtasks.map((subtask) => (
+                <SortableSubtaskRow
+                  key={subtask.id}
+                  subtask={subtask}
+                  isEditing={editingSubtaskId === subtask.id}
+                  draft={subtaskDraft}
+                  onDraftChange={setSubtaskDraft}
+                  onStartEdit={() => {
+                    setEditingSubtaskId(subtask.id);
+                    setSubtaskDraft(subtask.title);
+                  }}
+                  onCommit={() => {
+                    const trimmed = subtaskDraft.trim();
+                    if (trimmed && trimmed !== subtask.title) {
+                      updateSubtask(task.id, subtask.id, trimmed);
+                    }
+                    setEditingSubtaskId(null);
+                    setSubtaskDraft('');
+                  }}
+                  onCancel={() => {
+                    setEditingSubtaskId(null);
+                    setSubtaskDraft('');
+                  }}
+                  onToggle={() => toggleSubtask(task.id, subtask.id)}
+                  onDelete={() => deleteSubtask(task.id, subtask.id)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <div className="flex items-center gap-2 pt-2">
             <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
             <input
@@ -716,5 +753,91 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         </div>
       </div>
     </motion.div>
+  );
+};
+
+interface SortableSubtaskRowProps {
+  subtask: SubTask;
+  isEditing: boolean;
+  draft: string;
+  onDraftChange: (v: string) => void;
+  onStartEdit: () => void;
+  onCommit: () => void;
+  onCancel: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
+}
+
+const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
+  subtask, isEditing, draft, onDraftChange, onStartEdit, onCommit, onCancel, onToggle, onDelete,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id });
+  return (
+    <div
+      ref={setNodeRef}
+      className="flex items-center gap-1.5 py-2 group/sub border-b"
+      style={{
+        borderColor: 'var(--brd)',
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        background: isDragging ? 'rgba(255,255,255,0.03)' : undefined,
+      }}
+    >
+      <span
+        {...attributes}
+        {...listeners}
+        className="shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/sub:opacity-60 transition-opacity"
+        style={{ color: 'var(--t3)', touchAction: 'none' }}
+        title="Drag to reorder"
+      >
+        <GripVertical size={12} />
+      </span>
+      <button
+        onClick={onToggle}
+        className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+        style={{
+          borderColor: subtask.completed ? 'var(--grn)' : 'rgba(255,255,255,0.14)',
+          background: subtask.completed ? 'var(--grn)' : 'transparent',
+        }}
+      >
+        {subtask.completed && <Check size={8} color="white" strokeWidth={3} />}
+      </button>
+      {isEditing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onBlur={onCommit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); onCommit(); }
+            if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+          }}
+          className="flex-1 text-[12px] bg-transparent focus:outline-none min-w-0"
+          style={{ color: 'var(--t)', caretColor: 'var(--accent)' }}
+        />
+      ) : (
+        <span
+          onDoubleClick={() => { if (!subtask.completed) onStartEdit(); }}
+          className="flex-1 text-[12px] min-w-0 cursor-text"
+          style={{
+            color: subtask.completed ? 'var(--t3)' : 'var(--t)',
+            textDecoration: subtask.completed ? 'line-through' : 'none',
+          }}
+          title="Double-click to edit"
+        >
+          {subtask.title}
+        </span>
+      )}
+      <button
+        onClick={onDelete}
+        className="opacity-0 group-hover/sub:opacity-100 transition-opacity"
+        style={{ color: 'var(--t3)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+      >
+        <X size={11} />
+      </button>
+    </div>
   );
 };

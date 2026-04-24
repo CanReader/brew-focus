@@ -1,31 +1,22 @@
 import React from 'react';
-import { ListTodo, Target } from 'lucide-react';
+import { ListTodo, Target, Coffee } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { Priority } from '../../types';
 
-const CupIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 16 16" fill="var(--t3)" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }}>
-    <path d="M2 5h10v.8H2V5z" opacity="0.9" />
-    <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" opacity="0.9" />
-    <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke="var(--t3)" strokeWidth="1.1" strokeLinecap="round" fill="none" />
-    <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke="var(--t3)" strokeWidth="1" strokeLinecap="round" fill="none" />
-  </svg>
-);
-
-const priorityBorderColors: Record<Priority, string> = {
+const priorityAccent: Record<Priority, string> = {
   p1: 'var(--accent)',
   p2: 'var(--amb)',
   p3: 'var(--blu)',
-  p4: 'var(--brd2)',
+  p4: 'var(--t3)',
 };
 
-const priorityBgColors: Record<Priority, string> = {
-  p1: 'rgba(255,77,77,0.05)',
-  p2: 'rgba(245,166,35,0.05)',
-  p3: 'rgba(91,141,238,0.05)',
-  p4: 'transparent',
+const priorityAccentRgba: Record<Priority, string> = {
+  p1: '255,77,77',
+  p2: '245,166,35',
+  p3: '91,141,238',
+  p4: '120,120,130',
 };
 
 export const UpcomingWidget: React.FC = () => {
@@ -68,15 +59,21 @@ export const UpcomingWidget: React.FC = () => {
       </div>
 
       {upcoming.length === 0 ? (
-        <div className="py-4 text-center">
+        <div className="py-6 text-center">
           <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
             No upcoming tasks
           </span>
         </div>
       ) : (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           {upcoming.map((task, i) => {
             const isActive = task.id === activeTaskId;
+            const accent = priorityAccent[task.priority];
+            const accentRgba = priorityAccentRgba[task.priority];
+            const done = task.pomodoroCompleted;
+            const total = task.pomodoroEstimate;
+            const pct = total > 0 ? Math.min(1, done / total) : 0;
+
             return (
               <motion.button
                 key={task.id}
@@ -88,41 +85,75 @@ export const UpcomingWidget: React.FC = () => {
                   setActiveTask(newId);
                   setTimerActiveTask(newId);
                 }}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-all duration-150 relative overflow-hidden"
+                className="w-full flex flex-col gap-1.5 px-2.5 py-2 rounded-lg text-left transition-all duration-150 relative overflow-hidden group"
                 style={{
-                  background: isActive ? 'var(--accent-d)' : priorityBgColors[task.priority],
-                  borderLeft: `2px solid ${isActive ? 'var(--accent)' : priorityBorderColors[task.priority]}`,
-                  border: isActive ? `1px solid var(--accent-g)` : `1px solid transparent`,
-                  borderLeftWidth: 2,
-                  boxShadow: isActive ? '0 0 16px rgba(255,77,77,0.08)' : 'none',
+                  backgroundColor: isActive
+                    ? 'var(--accent-d)'
+                    : `rgba(${accentRgba},0.06)`,
+                  borderStyle: 'solid',
+                  borderTopWidth: 1,
+                  borderRightWidth: 1,
+                  borderBottomWidth: 1,
+                  borderLeftWidth: 3,
+                  borderTopColor: isActive ? 'var(--accent-g)' : 'transparent',
+                  borderRightColor: isActive ? 'var(--accent-g)' : 'transparent',
+                  borderBottomColor: isActive ? 'var(--accent-g)' : 'transparent',
+                  borderLeftColor: isActive ? 'var(--accent)' : accent,
+                  boxShadow: isActive
+                    ? `0 0 18px rgba(255,77,77,0.14)`
+                    : 'none',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    e.currentTarget.style.backgroundColor = `rgba(${accentRgba},0.12)`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = priorityBgColors[task.priority];
+                    e.currentTarget.style.backgroundColor = `rgba(${accentRgba},0.06)`;
                   }
                 }}
               >
-                <span
-                  className="text-[12px] flex-1 truncate"
-                  style={{ color: isActive ? 'var(--t)' : 'var(--t2)' }}
-                >
-                  {task.title}
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-2 w-full">
+                  <span
+                    className="text-[12px] font-medium flex-1 truncate leading-tight"
+                    style={{ color: isActive ? 'var(--t)' : 'var(--t)' }}
+                  >
+                    {task.title}
+                  </span>
                   {isActive && (
-                    <Target size={10} style={{ color: 'var(--accent)' }} />
+                    <Target size={11} style={{ color: 'var(--accent)', flexShrink: 0 }} strokeWidth={2.5} />
                   )}
-                  {task.pomodoroEstimate > 0 && (
-                    <span style={{ color: 'var(--t3)', fontSize: '10px' }}>
-                      <CupIcon />{task.pomodoroCompleted}/{task.pomodoroEstimate}
+                  {total > 0 && (
+                    <span
+                      className="flex items-center gap-1 shrink-0 text-[10px] tabular-nums font-medium"
+                      style={{ color: isActive ? 'var(--t2)' : 'var(--t3)' }}
+                    >
+                      <Coffee size={9} strokeWidth={2.2} />
+                      {done}/{total}
                     </span>
                   )}
                 </div>
+
+                {total > 0 && (
+                  <div
+                    className="w-full h-1 rounded-full overflow-hidden"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                  >
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct * 100}%` }}
+                      transition={{ duration: 0.4, ease: 'easeOut' }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: isActive
+                          ? `linear-gradient(90deg, var(--accent), #ff8a7a)`
+                          : `linear-gradient(90deg, rgba(${accentRgba},0.9), rgba(${accentRgba},0.55))`,
+                        boxShadow: pct > 0 ? `0 0 6px rgba(${accentRgba},0.4)` : 'none',
+                      }}
+                    />
+                  </div>
+                )}
               </motion.button>
             );
           })}

@@ -65,7 +65,9 @@ interface TaskStore {
   deleteProject: (id: string) => Promise<void>;
   addSubtask: (taskId: string, title: string) => Promise<void>;
   toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+  updateSubtask: (taskId: string, subtaskId: string, title: string) => Promise<void>;
   deleteSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+  reorderSubtasks: (taskId: string, orderedIds: string[]) => Promise<void>;
   addTag: (taskId: string, tag: string) => Promise<void>;
   removeTag: (taskId: string, tag: string) => Promise<void>;
   addMilestone: (projectId: string, title: string, targetDate?: number) => Promise<void>;
@@ -243,17 +245,28 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   incrementPomodoroCompleted: async (id) => {
-    const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: t.pomodoroCompleted + 1 } : t);
-    set({ tasks });
     const userId = await getCurrentUserId();
-    if (!userId) return;
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+    if (!userId) {
+      const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: t.pomodoroCompleted + 1 } : t);
+      set({ tasks });
+      return;
+    }
     try {
-      await supabase.from('tasks').update({ pomodoroCompleted: task.pomodoroCompleted })
+      const { data: row } = await supabase
+        .from('tasks')
+        .select('pomodoroCompleted')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      const next = (row?.pomodoroCompleted ?? 0) + 1;
+      await supabase.from('tasks').update({ pomodoroCompleted: next })
         .eq('id', id).eq('user_id', userId);
+      const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: next } : t);
+      set({ tasks });
     } catch (e) {
       console.warn('Failed to increment pomodoro count:', e);
+      const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: t.pomodoroCompleted + 1 } : t);
+      set({ tasks });
     }
   },
 
@@ -332,6 +345,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     } catch (e) { console.warn('Failed to toggle subtask:', e); }
   },
 
+  updateSubtask: async (taskId, subtaskId, title) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const subtasks = task.subtasks.map((s) => s.id === subtaskId ? { ...s, title: trimmed } : s);
+    set({ tasks: get().tasks.map((t) => t.id === taskId ? { ...t, subtasks } : t) });
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    try {
+      await supabase.from('tasks').update({ subtasks }).eq('id', taskId).eq('user_id', userId);
+    } catch (e) { console.warn('Failed to update subtask:', e); }
+  },
+
   deleteSubtask: async (taskId, subtaskId) => {
     const task = get().tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -342,6 +369,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     try {
       await supabase.from('tasks').update({ subtasks }).eq('id', taskId).eq('user_id', userId);
     } catch (e) { console.warn('Failed to delete subtask:', e); }
+  },
+
+  reorderSubtasks: async (taskId, orderedIds) => {
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const byId = new Map(task.subtasks.map((s) => [s.id, s]));
+    const subtasks = orderedIds.map((id) => byId.get(id)).filter((s): s is typeof task.subtasks[number] => !!s);
+    if (subtasks.length !== task.subtasks.length) return;
+    set({ tasks: get().tasks.map((t) => t.id === taskId ? { ...t, subtasks } : t) });
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    try {
+      await supabase.from('tasks').update({ subtasks }).eq('id', taskId).eq('user_id', userId);
+    } catch (e) { console.warn('Failed to reorder subtasks:', e); }
   },
 
   // ── Tags ──────────────────────────────────────────────────────────────────

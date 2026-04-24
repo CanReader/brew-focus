@@ -37,7 +37,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
     ? { backgroundImage: `url("${bgSrc}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: 'var(--bg)' };
   const { tasks, activeTaskId } = useTaskStore();
-  const { formatTime, progress, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration } = useTimer();
+  const { formatTime, progress, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useTimer();
   const { exitToNormal, toggleWidget } = useWindowModeContext();
 
   const timeString = formatTime(secondsLeft);
@@ -45,7 +45,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
   const phaseColor = phaseColors[phase];
 
   const handleSkip = () => {
-    skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, settings.longBreakInterval);
+    skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval);
   };
 
   if (variant === 'widget') {
@@ -115,18 +115,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
         {/* Session dots */}
         <div className="flex items-center gap-1.5 mt-2" data-no-drag>
-          {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all"
-              style={{
-                width: i === sessionCount ? '8px' : '5px',
-                height: i === sessionCount ? '8px' : '5px',
-                background:
-                  i < sessionCount ? 'var(--t3)' : i === sessionCount ? phaseColor : 'var(--brd2)',
-              }}
-            />
-          ))}
+          {(() => {
+            const goal = Math.max(
+              1,
+              Math.min(
+                12,
+                activeTask && activeTask.pomodoroEstimate > 0
+                  ? activeTask.pomodoroEstimate
+                  : Number.isFinite(effectiveLongBreakInterval)
+                  ? effectiveLongBreakInterval
+                  : settings.longBreakInterval,
+              ),
+            );
+            const completed = Math.min(
+              goal,
+              Math.max(0, activeTask && activeTask.pomodoroEstimate > 0 ? activeTask.pomodoroCompleted : sessionCount),
+            );
+            return Array.from({ length: goal }).map((_, i) => {
+              const isActive = i === completed && completed < goal;
+              const isCompleted = i < completed;
+              return (
+                <div
+                  key={i}
+                  className="rounded-full transition-all"
+                  style={{
+                    width: isActive ? '8px' : '5px',
+                    height: isActive ? '8px' : '5px',
+                    background: isCompleted ? 'var(--t3)' : isActive ? phaseColor : 'var(--brd2)',
+                  }}
+                />
+              );
+            });
+          })()}
         </div>
 
         {/* Task name */}
@@ -271,18 +291,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
       {/* Session dots */}
       <div className="flex items-center gap-3 mt-6">
-        {Array.from({ length: settings.longBreakInterval }).map((_, i) => (
-          <div
-            key={i}
-            className="rounded-full transition-all"
-            style={{
-              width: i === sessionCount ? '12px' : '8px',
-              height: i === sessionCount ? '12px' : '8px',
-              background:
-                i < sessionCount ? 'var(--t3)' : i === sessionCount ? phaseColor : 'var(--brd2)',
-            }}
-          />
-        ))}
+        {(() => {
+          const goal = Math.max(
+            1,
+            Math.min(
+              12,
+              activeTask && activeTask.pomodoroEstimate > 0
+                ? activeTask.pomodoroEstimate
+                : Number.isFinite(effectiveLongBreakInterval)
+                ? effectiveLongBreakInterval
+                : settings.longBreakInterval,
+            ),
+          );
+          const completed = Math.min(
+            goal,
+            Math.max(0, activeTask && activeTask.pomodoroEstimate > 0 ? activeTask.pomodoroCompleted : sessionCount),
+          );
+          return Array.from({ length: goal }).map((_, i) => {
+            const isActive = i === completed && completed < goal;
+            const isCompleted = i < completed;
+            return (
+              <div
+                key={i}
+                className="rounded-full transition-all"
+                style={{
+                  width: isActive ? '12px' : '8px',
+                  height: isActive ? '12px' : '8px',
+                  background: isCompleted ? 'var(--t3)' : isActive ? phaseColor : 'var(--brd2)',
+                }}
+              />
+            );
+          });
+        })()}
       </div>
 
       {/* Task name */}

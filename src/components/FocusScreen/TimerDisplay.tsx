@@ -5,8 +5,10 @@ import { TimerPhase } from '../../types';
 interface TimerDisplayProps {
   timeString: string;
   phase: TimerPhase;
-  sessionCount: number;
-  longBreakInterval: number;
+  /** Sessions completed toward the active task's goal (or toward the long-break cycle if no task). */
+  sessionsCompleted: number;
+  /** The active task's pomodoro estimate (or longBreakInterval if no task). */
+  sessionsGoal: number;
 }
 
 const phaseLabels: Record<TimerPhase, string> = {
@@ -36,9 +38,11 @@ const phaseBorderColors: Record<TimerPhase, string> = {
 export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   timeString,
   phase,
-  sessionCount,
-  longBreakInterval,
+  sessionsCompleted,
+  sessionsGoal,
 }) => {
+  const goal = Math.max(1, Math.min(12, sessionsGoal));
+  const completed = Math.min(goal, Math.max(0, sessionsCompleted));
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Phase pill badge */}
@@ -98,21 +102,22 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
 
       {/* Session pills */}
       <div className="flex items-center gap-1.5 mt-1">
-        {Array.from({ length: longBreakInterval }).map((_, i) => {
-          const isActive = i === sessionCount;
-          const isCompleted = i < sessionCount;
+        {Array.from({ length: goal }).map((_, i) => {
+          const isActive = i === completed && completed < goal;
+          const isCompleted = i < completed;
           return (
             <motion.div
               key={i}
               className={`rounded-full transition-all duration-400 ${isActive ? 'session-dot-active' : ''}`}
               style={{
-                width: isActive ? '20px' : isCompleted ? '7px' : '7px',
+                width: isActive ? '20px' : '7px',
                 height: '7px',
                 background: isCompleted
-                  ? 'rgba(255,255,255,0.2)'
+                  ? 'var(--accent)'
                   : isActive
                   ? 'var(--accent)'
                   : 'rgba(255,255,255,0.08)',
+                opacity: isCompleted ? 0.85 : 1,
                 boxShadow: isActive ? '0 0 8px var(--accent-g)' : 'none',
               }}
               animate={isActive ? { scaleX: [1, 1.1, 1] } : {}}
@@ -124,7 +129,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
           className="text-[10px] ml-1 tabular-nums"
           style={{ color: 'var(--t3)' }}
         >
-          {sessionCount}/{longBreakInterval}
+          {completed}/{goal}
         </span>
       </div>
     </div>

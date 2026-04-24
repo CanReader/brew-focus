@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRight, Sliders } from 'lucide-react';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useTaskStore } from '../../store/taskStore';
 import { useTimer } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
@@ -36,6 +37,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     rateMood,
   } = useTimerStore();
   const { settings } = useSettingsStore();
+  const { tasks, activeTaskId } = useTaskStore();
+  const activeTask = tasks.find((t) => t.id === activeTaskId);
   const {
     formatTime,
     progress,
@@ -122,8 +125,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     <div
       className="flex w-full h-full overflow-hidden"
       style={{
-        background: bgImageUrl ? undefined : 'var(--bg)',
-        backgroundImage: bgImageUrl ? `url("${bgImageUrl}")` : undefined,
+        backgroundColor: 'var(--bg)',
+        backgroundImage: bgImageUrl ? `url("${bgImageUrl}")` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         transition: 'background-image 0.4s ease',
@@ -254,8 +257,18 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           <TimerDisplay
             timeString={timeString}
             phase={phase}
-            sessionCount={sessionCount}
-            longBreakInterval={settings.longBreakInterval}
+            sessionsCompleted={
+              activeTask && activeTask.pomodoroEstimate > 0
+                ? activeTask.pomodoroCompleted
+                : sessionCount
+            }
+            sessionsGoal={
+              activeTask && activeTask.pomodoroEstimate > 0
+                ? activeTask.pomodoroEstimate
+                : Number.isFinite(effectiveLongBreakInterval)
+                ? effectiveLongBreakInterval
+                : settings.longBreakInterval
+            }
           />
 
           <TimerControls

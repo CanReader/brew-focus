@@ -226,9 +226,19 @@ export const THEMES: AppTheme[] = [
     brd: 'rgba(0,240,255,0.07)', brd2: 'rgba(0,240,255,0.13)',
     t: '#e0f8ff', t2: '#6ab8c8', t3: '#326878',
   },
+  {
+    id: 'blossom',
+    name: 'Blossom',
+    category: 'colorful',
+    bg: '#fff5f9', bg2: '#ffe9f2', card: '#ffffff', cardH: '#ffdfeb',
+    brd: 'rgba(210,80,130,0.13)', brd2: 'rgba(210,80,130,0.22)',
+    t: '#3a0e22', t2: '#8a4868', t3: '#c488a4',
+  },
 ];
 
 export const DEFAULT_THEME_ID = 'obsidian';
+
+export const FREE_THEME_IDS: string[] = ['obsidian', 'charcoal', 'slate'];
 
 export function getTheme(id: string): AppTheme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useTimerStore } from '../store/timerStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTaskStore } from '../store/taskStore';
@@ -42,9 +42,6 @@ export function useTimer() {
 
   const { settings } = useSettingsStore();
   const { tasks, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
-  const sessionStartRef = useRef<number>(Date.now());
-  const accumulatedRef = useRef<number>(0);
-  const prevRunningRef = useRef<boolean>(false);
 
   // Derive effective durations: use task's custom values when set, otherwise global settings
   const activeTask = tasks.find((t) => t.id === activeTaskId);
@@ -78,17 +75,6 @@ export function useTimer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTaskId, tasksLoaded]);
 
-  // Track when running starts/stops to accumulate focus time
-  useEffect(() => {
-    if (isRunning && !prevRunningRef.current) {
-      sessionStartRef.current = Date.now();
-    } else if (!isRunning && prevRunningRef.current && phase === 'work') {
-      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
-      accumulatedRef.current += elapsed;
-    }
-    prevRunningRef.current = isRunning;
-  }, [isRunning, phase]);
-
   useEffect(() => {
     if (!isRunning) return;
 
@@ -101,8 +87,7 @@ export function useTimer() {
         recordSession(completedPhase, elapsed, activeTaskId || undefined, currentActiveTask?.title);
 
         if (completedPhase === 'work') {
-          addFocusSeconds(elapsed + accumulatedRef.current);
-          accumulatedRef.current = 0;
+          addFocusSeconds(elapsed);
           if (activeTaskId) {
             incrementPomodoroCompleted(activeTaskId);
           }
