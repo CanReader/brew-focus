@@ -233,15 +233,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                           {proj.name}
                         </span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteProject(proj.id); }}
-                            className="w-4 h-4 flex items-center justify-center rounded"
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete project "${proj.name}"? Tasks in this project will be moved to Inbox.`)) {
+                                deleteProject(proj.id);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation();
+                                if (confirm(`Delete project "${proj.name}"? Tasks in this project will be moved to Inbox.`)) {
+                                  deleteProject(proj.id);
+                                }
+                              }
+                            }}
+                            className="w-4 h-4 flex items-center justify-center rounded cursor-pointer"
                             style={{ color: 'var(--t3)' }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
                           >
                             <X size={10} />
-                          </button>
+                          </span>
                         </div>
                         {projActiveTasks.length > 0 && (
                           <span
