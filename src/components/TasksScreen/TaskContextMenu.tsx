@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Trash2, ChevronRight, Minus, Plus } from 'lucide-react';
+import { Trash2, ChevronRight, Minus, Plus, Flag } from 'lucide-react';
 import { Task, Project, Priority, DueDate } from '../../types';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -39,22 +39,29 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    // Small delay so the triggering right-click doesn't immediately close
-    setTimeout(() => {
+    // Small delay so the triggering right-click doesn't immediately close.
+    // Track the pending timer and whether listeners actually got attached,
+    // otherwise rapid mount/unmount can leak a listener or run the add after unmount.
+    let attached = false;
+    const t = window.setTimeout(() => {
+      attached = true;
       document.addEventListener('mousedown', handle);
       document.addEventListener('keydown', handleKey);
     }, 50);
     return () => {
-      document.removeEventListener('mousedown', handle);
-      document.removeEventListener('keydown', handleKey);
+      clearTimeout(t);
+      if (attached) {
+        document.removeEventListener('mousedown', handle);
+        document.removeEventListener('keydown', handleKey);
+      }
     };
   }, [onClose]);
 
-  // Clamp position so menu doesn't go off screen
+  // Clamp position so menu doesn't go off screen (both axes, and never negative).
   const menuWidth = 240;
   const menuHeight = 340;
-  const x = Math.min(position.x, window.innerWidth - menuWidth - 8);
-  const y = Math.min(position.y, window.innerHeight - menuHeight - 8);
+  const x = Math.max(8, Math.min(position.x, window.innerWidth - menuWidth - 8));
+  const y = Math.max(8, Math.min(position.y, window.innerHeight - menuHeight - 8));
 
   const workDur = task.customWorkDuration;
   const shortDur = task.customShortBreakDuration;
@@ -180,20 +187,23 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--brd)' }}>
         <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--t3)' }}>PRIORITY</div>
         <div className="flex items-center gap-2">
-          {PRIORITIES.map((p) => (
-            <button
-              key={p.value}
-              onClick={() => onUpdate({ priority: p.value })}
-              title={p.label}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-              style={{
-                background: task.priority === p.value ? p.color + '30' : 'var(--brd)',
-                border: `2px solid ${task.priority === p.value ? p.color : 'transparent'}`,
-              }}
-            >
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: p.color }} />
-            </button>
-          ))}
+          {PRIORITIES.map((p) => {
+            const isSelected = task.priority === p.value;
+            return (
+              <button
+                key={p.value}
+                onClick={() => onUpdate({ priority: p.value })}
+                title={p.label}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                style={{
+                  background: isSelected ? p.color + '25' : 'var(--brd)',
+                  border: `2px solid ${isSelected ? p.color : 'transparent'}`,
+                }}
+              >
+                <Flag size={13} color={p.color} fill={isSelected ? p.color : 'transparent'} strokeWidth={2} />
+              </button>
+            );
+          })}
         </div>
       </div>
 
