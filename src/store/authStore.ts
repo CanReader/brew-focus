@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../utils/supabase';
+import { supabase, verifyPasswordWithoutSessionSwap } from '../utils/supabase';
 
 function mapError(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'Incorrect username/email or password.';
@@ -31,6 +31,9 @@ interface AuthStore {
   deleteAccount: () => Promise<boolean>;
 }
 
+let _authInitialized = false;
+let _authSubscription: { unsubscribe: () => void } | null = null;
+
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
   session: null,
@@ -39,6 +42,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
   resetEmailSent: false,
 
   initialize: async () => {
+    if (_authInitialized) return;
+    _authInitialized = true;
+
     set({ isLoading: true });
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -47,9 +53,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ isLoading: false });
     }
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    _authSubscription?.unsubscribe();
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user ?? null, session });
     });
+    _authSubscription = data.subscription;
   },
 
   signIn: async (usernameOrEmail, password) => {
@@ -106,13 +114,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
       return { success: false, needsConfirmation: false };
     }
 
-    // Insert profile row (trigger may also do this — upsert to be safe)
+    // Supabase's anti-enumeration: signUp for an already-registered, confirmed
+    // email returns `{user: {identities: []}, session: null}` with no error.
+    // Surface this so the user isn't told to check their inbox for nothing.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      set({ error: 'An account with this email already exists. Try signing in.', isLoading: false });
+      return { success: false, needsConfirmation: false };
+    }
+
+    // Insert profile row (trigger may also do this — upsert to be safe).
+    // If RLS rejects this (e.g. email confirmation required so no session yet),
+    // the trigger is authoritative. Log the error so it isn't invisible.
     if (data.user) {
-      await supabase.from('profiles').upsert({
+      const { error: profileErr } = await supabase.from('profiles').upsert({
         id: data.user.id,
         username: username.toLowerCase().trim(),
         email,
       }, { onConflict: 'id' });
+      if (profileErr) console.warn('Profile upsert after signup failed:', profileErr.message);
     }
 
     // If session exists, email confirmation is disabled — signed in immediately
@@ -133,7 +152,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   resetPassword: async (email) => {
     set({ isLoading: true, error: null, resetEmailSent: false });
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'brewfocus://auth/callback',
+    });
     if (error) {
       set({ error: mapError(error.message), isLoading: false });
       return false;
@@ -176,11 +197,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser?.email) return { success: false, error: 'Not authenticated.' };
 
-    const { error: verifyErr } = await supabase.auth.signInWithPassword({
-      email: currentUser.email,
-      password: currentPassword,
-    });
-    if (verifyErr) return { success: false, error: 'Current password is incorrect.' };
+    const verified = await verifyPasswordWithoutSessionSwap(currentUser.email, currentPassword);
+    if (!verified) return { success: false, error: 'Current password is incorrect.' };
 
     const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
     if (updateErr) return { success: false, error: mapError(updateErr.message) };
@@ -205,7 +223,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { error: authErr } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
     if (authErr) return { success: false, error: mapError(authErr.message) };
 
-    await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+    const { error: profErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+    if (profErr) console.warn('Failed to update avatar on profiles row:', profErr.message);
 
     const { data: { user } } = await supabase.auth.getUser();
     set({ user });
