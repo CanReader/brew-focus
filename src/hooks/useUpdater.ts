@@ -28,8 +28,10 @@ export function useUpdater() {
       try {
         const update = await check();
         setState((s) => ({ ...s, checking: false, update: update ?? null }));
-      } catch {
-        // Silently ignore — update server might not exist yet
+      } catch (e) {
+        // Don't surface to the user — the update server may not exist yet — but
+        // log so we can diagnose a broken release pipeline in the console.
+        console.warn('Update check failed:', e);
         setState((s) => ({ ...s, checking: false }));
       }
     }, 4000);

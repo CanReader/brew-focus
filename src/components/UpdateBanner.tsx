@@ -72,13 +72,19 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
                   )}
                 </span>
               ) : (
-                <span style={{ color: 'var(--t2)' }}>
-                  <span style={{ color: 'var(--t)', fontWeight: 600 }}>
+                <span style={{ color: 'var(--t2)' }} className="flex items-center gap-1.5 min-w-0">
+                  <span style={{ color: 'var(--t)', fontWeight: 600 }} className="shrink-0">
                     v{update?.version}
                   </span>
-                  {' '}is available
+                  <span className="shrink-0">is available</span>
                   {update?.body && (
-                    <span style={{ color: 'var(--t3)', marginLeft: 6 }}>— {update.body}</span>
+                    <span
+                      className="truncate"
+                      style={{ color: 'var(--t3)' }}
+                      title={update.body}
+                    >
+                      — {update.body}
+                    </span>
                   )}
                 </span>
               )}

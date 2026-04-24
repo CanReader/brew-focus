@@ -8,7 +8,8 @@ export const FocusTimeWidget: React.FC = () => {
   const { todayFocusSeconds } = useTimerStore();
   const { settings } = useSettingsStore();
 
-  const goalSeconds = settings.dailyFocusGoal * 3600;
+  // Guard against goalSeconds = 0 (corrupted stored setting) — would yield Infinity / NaN.
+  const goalSeconds = Math.max(1, settings.dailyFocusGoal) * 3600;
   const hours = Math.floor(todayFocusSeconds / 3600);
   const minutes = Math.floor((todayFocusSeconds % 3600) / 60);
   const progress = Math.min(todayFocusSeconds / goalSeconds, 1);
