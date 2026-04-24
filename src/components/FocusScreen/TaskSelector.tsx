@@ -29,64 +29,60 @@ export const TaskSelector: React.FC = () => {
   };
 
   return (
-    <div ref={ref} className="relative w-full max-w-xs">
-      {/* Trigger */}
+    <div
+      ref={ref}
+      className="relative w-full max-w-xs flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-150"
+      style={{
+        background: activeTask ? 'var(--accent-d)' : 'rgba(255,255,255,0.04)',
+        border: `1px solid ${activeTask ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
+        color: activeTask ? 'var(--t)' : 'var(--t3)',
+        boxShadow: activeTask ? '0 0 16px rgba(255,77,77,0.08)' : 'none',
+      }}
+    >
+      {/* Trigger — covers the whole row except the X */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-150 text-left"
-        style={{
-          background: activeTask ? 'var(--accent-d)' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${activeTask ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
-          color: activeTask ? 'var(--t)' : 'var(--t3)',
-          boxShadow: activeTask ? '0 0 16px rgba(255,77,77,0.08)' : 'none',
-        }}
-        onMouseEnter={(e) => {
-          if (!activeTask) {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!activeTask) {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-          }
-        }}
-      >
-        {/* Coffee cup dot */}
-        <span style={{ color: activeTask ? 'var(--accent)' : 'var(--t3)', fontSize: '13px', lineHeight: 1, flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M2 5h10v.8H2V5z" opacity="0.9"/>
-            <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" opacity="0.9"/>
-            <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" fill="none"/>
-            <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none"/>
-          </svg>
-        </span>
+        className="absolute inset-0 rounded-xl"
+        aria-label="Select task"
+        style={{ background: 'transparent', border: 'none' }}
+      />
 
-        <span className="flex-1 text-[13px] truncate font-medium">
-          {activeTask ? activeTask.title : 'Select a task to focus on…'}
-        </span>
+      {/* Coffee cup dot */}
+      <span style={{ color: activeTask ? 'var(--accent)' : 'var(--t3)', fontSize: '13px', lineHeight: 1, flexShrink: 0, position: 'relative', pointerEvents: 'none' }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 5h10v.8H2V5z" opacity="0.9"/>
+          <path d="M2 6.5h9c0 2.5-1.2 5-4.5 5S2 9 2 6.5z" opacity="0.9"/>
+          <path d="M11 7.5h1a1.5 1.5 0 000-3h-1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" fill="none"/>
+          <path d="M3.5 12c.8.4 6.4.4 7.2 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none"/>
+        </svg>
+      </span>
 
-        <div className="flex items-center gap-1 shrink-0">
-          {activeTask && (
-            <span
-              className="w-5 h-5 flex items-center justify-center rounded-md hover:opacity-100 opacity-60 transition-opacity"
-              style={{ color: 'var(--t3)' }}
-              onClick={(e) => { e.stopPropagation(); handleSelect(null); }}
-            >
-              <X size={11} />
-            </span>
-          )}
-          <ChevronDown
-            size={12}
-            style={{
-              color: 'var(--t3)',
-              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s',
-            }}
-          />
-        </div>
-      </button>
+      <span className="flex-1 text-[13px] truncate font-medium text-left" style={{ position: 'relative', pointerEvents: 'none' }}>
+        {activeTask ? activeTask.title : 'Select a task to focus on…'}
+      </span>
+
+      <div className="flex items-center gap-1 shrink-0" style={{ position: 'relative' }}>
+        {activeTask && (
+          <button
+            type="button"
+            className="w-5 h-5 flex items-center justify-center rounded-md hover:opacity-100 opacity-60 transition-opacity"
+            style={{ color: 'var(--t3)', background: 'transparent', border: 'none' }}
+            onClick={(e) => { e.stopPropagation(); handleSelect(null); }}
+            aria-label="Clear active task"
+          >
+            <X size={11} />
+          </button>
+        )}
+        <ChevronDown
+          size={12}
+          style={{
+            color: 'var(--t3)',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
 
       {/* Dropdown */}
       <AnimatePresence>
