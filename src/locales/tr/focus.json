@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "Odak",
+    "shortBreak": "Kısa Mola",
+    "longBreak": "Uzun Mola"
+  },
+  "tabs": {
+    "focus": "Odak",
+    "tasks": "Görevler",
+    "projects": "Projeler",
+    "reports": "Raporlar"
+  },
+  "controls": {
+    "play": "Başlat",
+    "pause": "Duraklat",
+    "skip": "Atla",
+    "reset": "Sıfırla",
+    "fullscreen": "Tam ekran",
+    "widget": "Mini pencere"
+  },
+  "togglePanel": "Yan paneli aç/kapat",
+  "customize": {
+    "title": "Özelleştir",
+    "subtitle": "Odak ekranı için sesler ve arka plan",
+    "tabs": {
+      "sounds": "Sesler",
+      "noise": "Gürültü",
+      "background": "Arka Plan"
+    },
+    "soundEvents": {
+      "sessionStart": "Seans Başlangıcı",
+      "sessionStartDesc": "Odak seansı başladığında",
+      "breakStart": "Mola Başlangıcı",
+      "breakStartDesc": "Mola başladığında",
+      "sessionComplete": "Seans Bitişi",
+      "sessionCompleteDesc": "Odak seansı sona erdiğinde",
+      "breakComplete": "Mola Bitişi",
+      "breakCompleteDesc": "Mola sona erdiğinde"
+    },
+    "upload": "Yükle",
+    "uploadHint": "Bir ses dosyası yükle (MP3, WAV, OGG)",
+    "myFile": "Dosyam",
+    "noiseVolume": "Gürültü Seviyesi",
+    "noiseVolumeDesc": "Bildirim seslerinden bağımsız",
+    "noiseOn": "AÇIK",
+    "browse": "Gözat",
+    "customLabel": "Özel",
+    "applyHint": "Uygulamak için herhangi bir görsele tıkla · Özel: JPG, PNG, WebP"
+  },
+  "changeCup": "Fincanı değiştir",
+  "changeCupAria": "Kahve fincanını değiştir",
+  "selectTask": "Odaklanacağın görevi seç…",
+  "selectTaskAria": "Görev seç",
+  "noTask": "Görev yok",
+  "noTasksYet": "Henüz görev yok — Görevler sekmesinden ekleyebilirsin",
+  "clearActiveTask": "Aktif görevi temizle",
+  "customTimerHint": "Özel zamanlayıcı: {minutes} dk çalışma",
+  "moodPrompt": "Enerjin nasıldı?",
+  "queue": {
+    "title": "Bugün",
+    "addTooltip": "Bugüne görev ekle",
+    "empty": "Henüz sıra yok. Bugünü planlamak için + tuşuna bas.",
+    "searchPlaceholder": "Görev ara…",
+    "noMatches": "Eşleşme yok",
+    "noTasksToAdd": "Eklenecek görev yok",
+    "makeActive": "Aktif yap",
+    "removeFromToday": "Bugünden çıkar"
+  },
+  "strictMode": {
+    "title": "Sıkı Mod",
+    "lockPhoneName": "Telefonu Kilitle",
+    "lockPhoneDesc": "Odak sırasında kilidi açmayı caydır",
+    "blockAppsName": "Uygulamaları Engelle",
+    "blockAppsDesc": "Uygulamadan çıkarken uyar",
+    "note": "Not: iOS/Android uygulamaların cihazı gerçekten kilitlemesine izin vermez. Bu seçenekler niyetini hatırlatır ve aksadığında nazikçe uyarır."
+  },
+  "timerMode": {
+    "title": "Zamanlayıcı Modu",
+    "pomodoroName": "Pomodoro",
+    "pomodoroDesc": "Sabit çalışma/mola aralıkları",
+    "infiniteName": "Sınırsız",
+    "infiniteDesc": "Serbestçe yukarı say — görev veya aşama yok"
+  },
+  "noise": {
+    "title": "Arka plan sesi",
+    "shortLabel": "Ses"
+  },
+  "exitFullscreen": "Tam ekrandan çık",
+  "continue": "Devam et",
+  "startToFocus": "Odaklanmaya Başla",
+  "selectTaskShort": "Görev seç",
+  "widget": {
+    "expand": "Genişlet",
+    "close": "Mini pencereyi kapat",
+    "noTaskSelected": "Görev seçili değil",
+    "exitHint": "Çıkmak için Esc'e bas"
+  },
+  "cupPicker": {
+    "title": "Fincanını seç",
+    "subtitle": "Yeni fincanları Storage kovasına yükle — burada otomatik görünür.",
+    "tap": "Geçmek için herhangi bir fincana dokun.",
+    "escClose": "kapatmak için",
+    "defaultsBanner": "Varsayılanlar — özel fincanlarını eşitlemek için giriş yap.",
+    "premiumLabel": "Premium",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (premium)",
+    "escPrefix": "Kapatmak için",
+    "close": "Kapat"
+  },
+  "history": {
+    "title": "Odak Geçmişi",
+    "noSessions": "Bugün henüz oturum yok"
+  },
+  "dashboard": "Pano",
+  "timeToday": {
+    "title": "Bugünkü Odak Süresi",
+    "goal": "Hedef!",
+    "goalSuffix": "/ {hours}sa hedef",
+    "percent": "Günlük hedefin %{percent}'i",
+    "timeLeft": "{minutes}d kaldı"
+  },
+  "scratchpad": {
+    "title": "Oturum Notları",
+    "placeholder": "Bir şeyler yaz…"
+  }
+}

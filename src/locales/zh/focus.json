@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "专注",
+    "shortBreak": "短休息",
+    "longBreak": "长休息"
+  },
+  "tabs": {
+    "focus": "专注",
+    "tasks": "任务",
+    "projects": "项目",
+    "reports": "报告"
+  },
+  "controls": {
+    "play": "开始",
+    "pause": "暂停",
+    "skip": "跳过",
+    "reset": "重置",
+    "fullscreen": "全屏",
+    "widget": "小窗模式"
+  },
+  "togglePanel": "切换侧边栏",
+  "customize": {
+    "title": "自定义",
+    "subtitle": "专注界面的声音与背景",
+    "tabs": {
+      "sounds": "声音",
+      "noise": "白噪",
+      "background": "背景"
+    },
+    "soundEvents": {
+      "sessionStart": "时段开始",
+      "sessionStartDesc": "当专注时段开始时",
+      "breakStart": "休息开始",
+      "breakStartDesc": "当休息开始时",
+      "sessionComplete": "时段结束",
+      "sessionCompleteDesc": "当专注时段结束时",
+      "breakComplete": "休息结束",
+      "breakCompleteDesc": "当休息结束时"
+    },
+    "upload": "上传",
+    "uploadHint": "上传声音文件 (MP3、WAV、OGG)",
+    "myFile": "我的文件",
+    "noiseVolume": "白噪音量",
+    "noiseVolumeDesc": "与提示音独立",
+    "noiseOn": "开",
+    "browse": "浏览",
+    "customLabel": "自定义",
+    "applyHint": "点击任意图片即可应用 · 自定义支持 JPG、PNG、WebP"
+  },
+  "changeCup": "更换杯子",
+  "changeCupAria": "更换咖啡杯",
+  "selectTask": "选择一个要专注的任务…",
+  "selectTaskAria": "选择任务",
+  "noTask": "无任务",
+  "noTasksYet": "还没有任务 — 在“任务”标签页添加",
+  "clearActiveTask": "清除当前任务",
+  "customTimerHint": "自定义计时:{minutes} 分钟工作",
+  "moodPrompt": "刚才状态如何?",
+  "queue": {
+    "title": "今日",
+    "addTooltip": "为今天添加任务",
+    "empty": "今日队列为空,点击 + 安排一下吧。",
+    "searchPlaceholder": "搜索任务…",
+    "noMatches": "没有匹配项",
+    "noTasksToAdd": "暂无可添加的任务",
+    "makeActive": "设为当前",
+    "removeFromToday": "从今日移除"
+  },
+  "strictMode": {
+    "title": "严格模式",
+    "lockPhoneName": "锁定手机",
+    "lockPhoneDesc": "专注期间避免解锁",
+    "blockAppsName": "屏蔽应用",
+    "blockAppsDesc": "离开应用时发出警告",
+    "note": "注意：iOS/Android 不允许应用真正锁定设备。这些开关用于提醒你的意图,中断时会轻轻提示。"
+  },
+  "timerMode": {
+    "title": "计时模式",
+    "pomodoroName": "番茄钟",
+    "pomodoroDesc": "固定的工作/休息间隔",
+    "infiniteName": "无限",
+    "infiniteDesc": "自由计时 — 无任务,无阶段"
+  },
+  "noise": {
+    "title": "背景音",
+    "shortLabel": "声音"
+  },
+  "exitFullscreen": "退出全屏",
+  "continue": "继续",
+  "startToFocus": "开始专注",
+  "selectTaskShort": "选择任务",
+  "widget": {
+    "expand": "展开",
+    "close": "关闭小窗",
+    "noTaskSelected": "未选择任务",
+    "exitHint": "按 Esc 退出"
+  },
+  "cupPicker": {
+    "title": "挑选你的杯子",
+    "subtitle": "把新杯子上传到你的 Storage 存储桶 — 它们会自动出现在这里。",
+    "tap": "点击任意杯子即可切换。",
+    "escClose": "关闭",
+    "defaultsBanner": "默认杯子 — 登录后可同步你的自定义杯子。",
+    "premiumLabel": "高级",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label}(高级)",
+    "escPrefix": "按",
+    "close": "关闭"
+  },
+  "history": {
+    "title": "专注历史",
+    "noSessions": "今天暂无会话"
+  },
+  "dashboard": "仪表盘",
+  "timeToday": {
+    "title": "今日专注时长",
+    "goal": "达成！",
+    "goalSuffix": "/ 目标 {hours} 小时",
+    "percent": "已完成今日目标 {percent}%",
+    "timeLeft": "还剩 {minutes} 分钟"
+  },
+  "scratchpad": {
+    "title": "本次记事",
+    "placeholder": "随手记一下…"
+  }
+}

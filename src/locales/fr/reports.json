@@ -1,0 +1,100 @@
+{
+  "title": "Rapports",
+  "subtitle": "Ton parcours de concentration en un coup d'œil",
+  "exportCsv": "Exporter CSV",
+  "noData": "Pas encore de données",
+  "noTask": "Aucune tâche",
+  "ranges": {
+    "daily": "Jour",
+    "weekly": "Semaine",
+    "monthly": "Mois",
+    "yearly": "Année"
+  },
+  "cards": {
+    "totalFocusTime": "Temps de concentration total",
+    "thisWeek": "Cette semaine",
+    "today": "Aujourd'hui",
+    "totalTasksDone": "Tâches terminées",
+    "doneThisWeek": "Terminées cette semaine",
+    "doneToday": "Terminées aujourd'hui"
+  },
+  "records": {
+    "currentStreak": "Série en cours",
+    "longestStreak": "Plus longue série",
+    "bestDayEver": "Meilleure journée",
+    "avgSession": "Session moy.",
+    "days": "jours"
+  },
+  "sections": {
+    "bestFocusHours": "Meilleures heures de concentration",
+    "focusVsBreakRatio": "Ratio concentration/pause",
+    "pomodoroHeatmap": "Carte thermique des pomodoros",
+    "projectBreakdown": "Répartition par projet",
+    "focusTime": "Temps de concentration",
+    "focusGoalCalendar": "Calendrier d'objectifs",
+    "taskCompletionRate": "Taux d'achèvement",
+    "perTaskHistory": "Historique par tâche",
+    "energyLog": "Journal d'énergie",
+    "focusTimeChart": "Graphique de concentration",
+    "taskCompletions": "Tâches achevées"
+  },
+  "ratio": {
+    "focus": "Concentration",
+    "breaks": "Pauses",
+    "yourRatioIs": "Ton ratio est de",
+    "ideal": "(idéal : 4:1)"
+  },
+  "focusHours": {
+    "peak": "Pic :",
+    "totalSuffix": "({minutes} min au total)"
+  },
+  "calendar": {
+    "goalSuffix": "Objectif {hours}h",
+    "focusDays": "Jours actifs",
+    "goalDays": "Jours atteints",
+    "goalRate": "Taux d'objectif",
+    "weekdays": {
+      "mo": "Lu",
+      "tu": "Ma",
+      "we": "Me",
+      "th": "Je",
+      "fr": "Ve",
+      "sa": "Sa",
+      "su": "Di"
+    }
+  },
+  "completion": {
+    "overall": "Total"
+  },
+  "charts": {
+    "top": "Max :",
+    "avg": "Moy. :",
+    "now": "Maintenant",
+    "tasks": "{count} tâches"
+  },
+  "mood": {
+    "ratings": "{count} évaluations"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} sessions de plus"
+  },
+  "tooltip": {
+    "yesterday": "Hier"
+  },
+  "mobile": {
+    "rangeWeek": "Semaine",
+    "rangeMonth": "Mois",
+    "rangeLabelWeek": "cette semaine",
+    "rangeLabelMonth": "4 dernières semaines",
+    "heroLabel": "TEMPS DE FOCUS · {range}",
+    "todaySummary": "Aujourd'hui : {time} · {pct}% de l'objectif de {goal}h",
+    "tileSessions": "Sessions",
+    "tileTasksDone": "Tâches terminées",
+    "tileDayStreak": "Série de jours",
+    "chartFocusByDay": "Focus par jour",
+    "chartFocusByWeek": "Focus par semaine",
+    "chartEmpty": "Aucune session de focus",
+    "topTasks": "Tâches principales",
+    "untitled": "Sans titre"
+  }
+}

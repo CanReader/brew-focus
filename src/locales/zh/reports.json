@@ -1,0 +1,100 @@
+{
+  "title": "报告",
+  "subtitle": "一览你的专注历程",
+  "exportCsv": "导出 CSV",
+  "noData": "暂无数据",
+  "noTask": "无任务",
+  "ranges": {
+    "daily": "每日",
+    "weekly": "每周",
+    "monthly": "每月",
+    "yearly": "每年"
+  },
+  "cards": {
+    "totalFocusTime": "总专注时间",
+    "thisWeek": "本周",
+    "today": "今天",
+    "totalTasksDone": "总完成任务",
+    "doneThisWeek": "本周完成",
+    "doneToday": "今日完成"
+  },
+  "records": {
+    "currentStreak": "当前连续",
+    "longestStreak": "最长连续",
+    "bestDayEver": "最佳一天",
+    "avgSession": "平均时段",
+    "days": "天"
+  },
+  "sections": {
+    "bestFocusHours": "最佳专注时段",
+    "focusVsBreakRatio": "专注与休息比",
+    "pomodoroHeatmap": "番茄钟热力图",
+    "projectBreakdown": "项目分布",
+    "focusTime": "专注时间",
+    "focusGoalCalendar": "专注目标日历",
+    "taskCompletionRate": "任务完成率",
+    "perTaskHistory": "任务历史",
+    "energyLog": "精力日志",
+    "focusTimeChart": "专注时间图表",
+    "taskCompletions": "任务完成数"
+  },
+  "ratio": {
+    "focus": "专注",
+    "breaks": "休息",
+    "yourRatioIs": "你的比例是",
+    "ideal": "(理想:4:1)"
+  },
+  "focusHours": {
+    "peak": "高峰:",
+    "totalSuffix": "(共 {minutes} 分钟)"
+  },
+  "calendar": {
+    "goalSuffix": "{hours}小时目标",
+    "focusDays": "专注天数",
+    "goalDays": "达标天数",
+    "goalRate": "达标率",
+    "weekdays": {
+      "mo": "一",
+      "tu": "二",
+      "we": "三",
+      "th": "四",
+      "fr": "五",
+      "sa": "六",
+      "su": "日"
+    }
+  },
+  "completion": {
+    "overall": "总计"
+  },
+  "charts": {
+    "top": "最高:",
+    "avg": "平均:",
+    "now": "现在",
+    "tasks": "{count} 个任务"
+  },
+  "mood": {
+    "ratings": "{count} 次评分"
+  },
+  "taskHistory": {
+    "moreSessions": "还有 {count} 个时段"
+  },
+  "tooltip": {
+    "yesterday": "昨天"
+  },
+  "mobile": {
+    "rangeWeek": "周",
+    "rangeMonth": "月",
+    "rangeLabelWeek": "本周",
+    "rangeLabelMonth": "最近 4 周",
+    "heroLabel": "专注时间 · {range}",
+    "todaySummary": "今天：{time} · 已完成目标 {pct}%（{goal} 小时）",
+    "tileSessions": "时段",
+    "tileTasksDone": "完成任务",
+    "tileDayStreak": "连续天数",
+    "chartFocusByDay": "按日专注",
+    "chartFocusByWeek": "按周专注",
+    "chartEmpty": "还没有专注时段",
+    "topTasks": "热门任务",
+    "untitled": "未命名"
+  }
+}

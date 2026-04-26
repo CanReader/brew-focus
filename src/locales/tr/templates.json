@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "Yazılım Projesi",
+    "description": "Spec, kilometre taşı, MVP — geliştirme yolculuğu.",
+    "milestones": {
+      "specLocked": "Tasarım dökümanı sabit",
+      "prototype": "Prototip",
+      "mvpShippable": "Yayına hazır MVP",
+      "v1Release": "v1.0 sürümü"
+    },
+    "tasks": {
+      "writeOnePager": "Tek sayfa özet yaz",
+      "setupRepo": "Depo kur",
+      "defineMVP": "MVP kapsamını belirle"
+    }
+  },
+  "writing": {
+    "name": "Yazı Projesi",
+    "description": "Taslak çıkar, yaz, gözden geçir, yayınla.",
+    "milestones": {
+      "outline": "Taslak hazır",
+      "firstDraft": "İlk müsvedde",
+      "revision": "Düzenleme turu",
+      "final": "Son sürüm"
+    },
+    "tasks": {
+      "brainstorm": "Yapıyı düşün",
+      "draftOpening": "Açılışı yaz"
+    }
+  },
+  "habit": {
+    "name": "Alışkanlık / Hedef",
+    "description": "Haftalarına yeni bir şey yerleştir.",
+    "milestones": {
+      "week1": "1. Hafta",
+      "week2": "2. Hafta",
+      "week4": "4. Hafta",
+      "week8": "8. Hafta"
+    },
+    "tasks": {
+      "dailyMin": "Günlük minimumu belirle",
+      "weeklyReview": "Haftalık değerlendirme zamanı ayarla"
+    }
+  },
+  "blank": {
+    "name": "Boş",
+    "description": "Sıfırdan başla. İçini sen doldur."
+  },
+  "finalExamPrep": {
+    "name": "Final Sınavı Hazırlığı",
+    "description": "Yaklaşan tek bir sınav için sıkı çalışma.",
+    "milestones": {
+      "reviewNotes": "Tüm ders notlarını gözden geçir",
+      "summarySheet": "Özet kâğıdı hazırla",
+      "pastPapers": "Geçmiş sınavları çöz",
+      "mockExam": "Süreli son deneme sınavı"
+    },
+    "tasks": {
+      "rereadChapters": "Sınav konularını yeniden oku",
+      "buildFlashcards": "Anahtar kavramlar için kart hazırla",
+      "fullPastExam": "En az bir tam geçmiş sınav çöz"
+    }
+  },
+  "semesterCourse": {
+    "name": "Dönemlik Ders",
+    "description": "Tek bir dersi tüm dönem boyunca takip et.",
+    "milestones": {
+      "foundations": "1–4. Hafta: Temeller",
+      "midtermPrep": "Vize hazırlığı",
+      "advanced": "8–12. Hafta: İleri konular",
+      "finalPrep": "Final hazırlığı"
+    },
+    "tasks": {
+      "readSyllabus": "Ders programını oku, sınav tarihlerini işaretle",
+      "noteSystem": "Not alma sistemini kur",
+      "weeklyReview": "Haftalık tekrar oturumu planla"
+    }
+  },
+  "thesisDissertation": {
+    "name": "Tez / Doktora Tezi",
+    "description": "Aylar süren akademik yazım.",
+    "milestones": {
+      "litReview": "Literatür taraması",
+      "methodology": "Metodoloji / araştırma tasarımı",
+      "data": "Veri toplama / analiz",
+      "writing": "Yazım ve revizyonlar",
+      "defense": "Savunma hazırlığı"
+    },
+    "tasks": {
+      "referenceLibrary": "Kaynakça oluştur",
+      "outlineChapters": "Bölüm yapısını planla",
+      "advisorCheckin": "Haftalık danışman görüşmesi planla"
+    }
+  },
+  "researchPaper": {
+    "name": "Araştırma Makalesi",
+    "description": "Tek bir araştırma makalesi veya uzun bir denemeyi yönet.",
+    "milestones": {
+      "topicResearch": "Konu araştırması ve kaynaklar",
+      "outline": "Taslak ve tez cümlesi",
+      "firstDraft": "İlk müsvedde",
+      "revisions": "Revizyonlar ve atıflar"
+    },
+    "tasks": {
+      "findSources": "En az 10 akademik kaynak bul",
+      "writeOutline": "Taslak yaz",
+      "draftIntro": "Giriş bölümünü yaz"
+    }
+  },
+  "labReport": {
+    "name": "Laboratuvar Raporu",
+    "description": "Kısa süreli laboratuvar raporu.",
+    "milestones": {
+      "methods": "Yöntem ve prosedür",
+      "results": "Sonuçlar ve veriler",
+      "discussion": "Tartışma",
+      "submit": "Biçimlendir ve gönder"
+    },
+    "tasks": {
+      "gatherData": "Laboratuvar verisi ve gözlemleri topla",
+      "draftMethods": "Yöntem bölümünü yaz",
+      "createFigures": "Şekil ve tabloları oluştur"
+    }
+  },
+  "mathProblemSet": {
+    "name": "Matematik / Problem Seti",
+    "description": "Matematik, fizik veya CS için ödev problemi çalışması.",
+    "milestones": {
+      "readChapter": "İlgili bölümü oku",
+      "exampleProblems": "Örnek soruları çöz",
+      "completeSet": "Verilen seti tamamla",
+      "reviewMistakes": "Hataları gözden geçir"
+    },
+    "tasks": {
+      "skimChapter": "Anahtar formüller için bölümü tara",
+      "solvePractice": "Alıştırma soruları çöz",
+      "checkAnswers": "Cevapları kontrol et"
+    }
+  },
+  "readingAssignment": {
+    "name": "Okuma Ödevi",
+    "description": "Notlar ve özetlerle zorunlu okuma.",
+    "milestones": {
+      "skim": "Hızlı tarama",
+      "activeReading": "Notlar alarak aktif okuma",
+      "summarize": "Ana fikirleri özetle",
+      "discussion": "Tartışma / sınav hazırlığı"
+    },
+    "tasks": {
+      "readFirstQuarter": "İlk %25'i oku",
+      "takeNotes": "Ana argümanlar için not al",
+      "writeSummary": "Tek paragraflık özet yaz"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "Üniversite Giriş Sınavı",
+    "description": "YKS, ÖSYS ve diğer üniversite giriş sınavları için uzun soluklu hazırlık.",
+    "milestones": {
+      "diagnostic": "Deneme sınavı ve hedef puan",
+      "phase1": "Konu hakimiyeti: 1. aşama",
+      "phase2": "Konu hakimiyeti: 2. aşama",
+      "timed": "Süreli deneme sınavları",
+      "finalReview": "Son hafta tekrarı"
+    },
+    "tasks": {
+      "fullDiagnostic": "Tam bir deneme sınavı çöz",
+      "studySchedule": "Derslere göre çalışma programı hazırla",
+      "weakTopics": "Zayıf konuları haftalık tekrar et"
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "Projet logiciel",
+    "description": "Specs, jalons, MVP — l'arc de développement.",
+    "milestones": {
+      "specLocked": "Specs verrouillées",
+      "prototype": "Prototype",
+      "mvpShippable": "MVP livrable",
+      "v1Release": "Version 1.0"
+    },
+    "tasks": {
+      "writeOnePager": "Rédiger une fiche d'une page",
+      "setupRepo": "Mettre en place le dépôt",
+      "defineMVP": "Définir le périmètre du MVP"
+    }
+  },
+  "writing": {
+    "name": "Projet d'écriture",
+    "description": "Plan, brouillon, révision, publication.",
+    "milestones": {
+      "outline": "Plan terminé",
+      "firstDraft": "Premier jet",
+      "revision": "Passe de relecture",
+      "final": "Version finale"
+    },
+    "tasks": {
+      "brainstorm": "Réfléchir à la structure",
+      "draftOpening": "Écrire l'ouverture"
+    }
+  },
+  "habit": {
+    "name": "Habitude / Objectif",
+    "description": "Installe quelque chose de neuf dans tes semaines.",
+    "milestones": {
+      "week1": "Semaine 1",
+      "week2": "Semaine 2",
+      "week4": "Semaine 4",
+      "week8": "Semaine 8"
+    },
+    "tasks": {
+      "dailyMin": "Définir un minimum quotidien",
+      "weeklyReview": "Bloquer un créneau de bilan hebdomadaire"
+    }
+  },
+  "blank": {
+    "name": "Vide",
+    "description": "Pars d'une page blanche."
+  },
+  "finalExamPrep": {
+    "name": "Révisions d'examen final",
+    "description": "Révisions intensives pour un examen à venir.",
+    "milestones": {
+      "reviewNotes": "Revoir tous les cours",
+      "summarySheet": "Faire une fiche de synthèse",
+      "pastPapers": "Faire des annales",
+      "mockExam": "Examen blanc chronométré"
+    },
+    "tasks": {
+      "rereadChapters": "Relire les chapitres au programme",
+      "buildFlashcards": "Créer des cartes pour les notions clés",
+      "fullPastExam": "Faire au moins une annale complète"
+    }
+  },
+  "semesterCourse": {
+    "name": "Cours du semestre",
+    "description": "Une matière suivie sur tout le semestre.",
+    "milestones": {
+      "foundations": "Semaines 1–4 : Fondamentaux",
+      "midtermPrep": "Préparation du partiel",
+      "advanced": "Semaines 8–12 : Sujets avancés",
+      "finalPrep": "Préparation de l'examen final"
+    },
+    "tasks": {
+      "readSyllabus": "Lire le programme et noter les dates d'examen",
+      "noteSystem": "Mettre en place ta prise de notes",
+      "weeklyReview": "Programmer une révision hebdomadaire"
+    }
+  },
+  "thesisDissertation": {
+    "name": "Thèse / Mémoire",
+    "description": "Écriture académique sur plusieurs mois.",
+    "milestones": {
+      "litReview": "Revue de la littérature",
+      "methodology": "Méthodologie / plan de recherche",
+      "data": "Collecte / analyse des données",
+      "writing": "Rédaction et révisions",
+      "defense": "Préparation de la soutenance"
+    },
+    "tasks": {
+      "referenceLibrary": "Construire la bibliothèque de références",
+      "outlineChapters": "Structurer les chapitres",
+      "advisorCheckin": "Programmer un point hebdomadaire avec ton directeur"
+    }
+  },
+  "researchPaper": {
+    "name": "Article de recherche",
+    "description": "Un article unique ou un long essai.",
+    "milestones": {
+      "topicResearch": "Recherche du sujet et sources",
+      "outline": "Plan et thèse",
+      "firstDraft": "Premier jet",
+      "revisions": "Révisions et citations"
+    },
+    "tasks": {
+      "findSources": "Trouver au moins 10 sources académiques",
+      "writeOutline": "Rédiger le plan",
+      "draftIntro": "Écrire l'introduction"
+    }
+  },
+  "labReport": {
+    "name": "Rapport de TP",
+    "description": "Rédaction de TP avec délai court.",
+    "milestones": {
+      "methods": "Méthodes et protocole",
+      "results": "Résultats et données",
+      "discussion": "Discussion",
+      "submit": "Mise en forme et envoi"
+    },
+    "tasks": {
+      "gatherData": "Collecter les données et observations",
+      "draftMethods": "Rédiger la section méthodes",
+      "createFigures": "Créer figures et tableaux"
+    }
+  },
+  "mathProblemSet": {
+    "name": "Maths / Série d'exercices",
+    "description": "Exercices intensifs en maths, physique ou informatique.",
+    "milestones": {
+      "readChapter": "Lire le chapitre demandé",
+      "exampleProblems": "Faire les exemples du cours",
+      "completeSet": "Terminer la série d'exercices",
+      "reviewMistakes": "Revoir les erreurs"
+    },
+    "tasks": {
+      "skimChapter": "Survoler le chapitre pour repérer les formules clés",
+      "solvePractice": "Faire des exercices d'entraînement",
+      "checkAnswers": "Vérifier les réponses"
+    }
+  },
+  "readingAssignment": {
+    "name": "Lecture obligatoire",
+    "description": "Lecture imposée avec notes et résumés.",
+    "milestones": {
+      "skim": "Survol et aperçu",
+      "activeReading": "Lecture active avec prise de notes",
+      "summarize": "Résumer les idées principales",
+      "discussion": "Discussion / révision"
+    },
+    "tasks": {
+      "readFirstQuarter": "Lire le premier quart",
+      "takeNotes": "Prendre des notes sur les arguments clés",
+      "writeSummary": "Écrire un résumé d'un paragraphe"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "Concours d'entrée à l'université",
+    "description": "Préparation au long cours pour le Bac, le SAT, le GRE et d'autres concours d'entrée à l'université.",
+    "milestones": {
+      "diagnostic": "Test diagnostic et score visé",
+      "phase1": "Maîtrise des matières : phase 1",
+      "phase2": "Maîtrise des matières : phase 2",
+      "timed": "Examens blancs chronométrés",
+      "finalReview": "Révision de la dernière semaine"
+    },
+    "tasks": {
+      "fullDiagnostic": "Faire un examen blanc complet",
+      "studySchedule": "Construire ton planning par matière",
+      "weakTopics": "Revoir chaque semaine les points faibles"
+    }
+  }
+}

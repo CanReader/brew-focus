@@ -1,0 +1,100 @@
+{
+  "title": "Reports",
+  "subtitle": "Your focus journey at a glance",
+  "exportCsv": "Export CSV",
+  "noData": "No data yet",
+  "noTask": "No task",
+  "ranges": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "cards": {
+    "totalFocusTime": "Total Focus Time",
+    "thisWeek": "This Week",
+    "today": "Today",
+    "totalTasksDone": "Total Tasks Done",
+    "doneThisWeek": "Done This Week",
+    "doneToday": "Done Today"
+  },
+  "records": {
+    "currentStreak": "Current Streak",
+    "longestStreak": "Longest Streak",
+    "bestDayEver": "Best Day Ever",
+    "avgSession": "Avg Session",
+    "days": "days"
+  },
+  "sections": {
+    "bestFocusHours": "Best Focus Hours",
+    "focusVsBreakRatio": "Focus vs Break Ratio",
+    "pomodoroHeatmap": "Pomodoro Heatmap",
+    "projectBreakdown": "Project Breakdown",
+    "focusTime": "Focus Time",
+    "focusGoalCalendar": "Focus Goal Calendar",
+    "taskCompletionRate": "Task Completion Rate",
+    "perTaskHistory": "Per-Task History",
+    "energyLog": "Energy Log",
+    "focusTimeChart": "Focus Time Chart",
+    "taskCompletions": "Task Completions"
+  },
+  "ratio": {
+    "focus": "Focus",
+    "breaks": "Breaks",
+    "yourRatioIs": "Your ratio is",
+    "ideal": "(ideal: 4:1)"
+  },
+  "focusHours": {
+    "peak": "Peak:",
+    "totalSuffix": "({minutes}m total)"
+  },
+  "calendar": {
+    "goalSuffix": "{hours}h goal",
+    "focusDays": "Focus Days",
+    "goalDays": "Goal Days",
+    "goalRate": "Goal Rate",
+    "weekdays": {
+      "mo": "Mo",
+      "tu": "Tu",
+      "we": "We",
+      "th": "Th",
+      "fr": "Fr",
+      "sa": "Sa",
+      "su": "Su"
+    }
+  },
+  "completion": {
+    "overall": "Overall"
+  },
+  "charts": {
+    "top": "Top:",
+    "avg": "Avg:",
+    "now": "Now",
+    "tasks": "{count} tasks"
+  },
+  "mood": {
+    "ratings": "{count} ratings"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} more sessions"
+  },
+  "tooltip": {
+    "yesterday": "Yesterday"
+  },
+  "mobile": {
+    "rangeWeek": "Week",
+    "rangeMonth": "Month",
+    "rangeLabelWeek": "this week",
+    "rangeLabelMonth": "last 4 weeks",
+    "heroLabel": "FOCUS TIME · {range}",
+    "todaySummary": "Today: {time} · {pct}% of {goal}h goal",
+    "tileSessions": "Sessions",
+    "tileTasksDone": "Tasks done",
+    "tileDayStreak": "Day streak",
+    "chartFocusByDay": "Focus by day",
+    "chartFocusByWeek": "Focus by week",
+    "chartEmpty": "No focus sessions yet",
+    "topTasks": "Top tasks",
+    "untitled": "Untitled"
+  }
+}

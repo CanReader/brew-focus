@@ -1,0 +1,100 @@
+{
+  "title": "التقارير",
+  "subtitle": "رحلتك في التركيز بنظرة واحدة",
+  "exportCsv": "تصدير CSV",
+  "noData": "لا توجد بيانات بعد",
+  "noTask": "بدون مهمة",
+  "ranges": {
+    "daily": "يومي",
+    "weekly": "أسبوعي",
+    "monthly": "شهري",
+    "yearly": "سنوي"
+  },
+  "cards": {
+    "totalFocusTime": "إجمالي وقت التركيز",
+    "thisWeek": "هذا الأسبوع",
+    "today": "اليوم",
+    "totalTasksDone": "إجمالي المهام المنجزة",
+    "doneThisWeek": "أنجزت هذا الأسبوع",
+    "doneToday": "أنجزت اليوم"
+  },
+  "records": {
+    "currentStreak": "السلسلة الحالية",
+    "longestStreak": "أطول سلسلة",
+    "bestDayEver": "أفضل يوم",
+    "avgSession": "متوسط الجلسة",
+    "days": "أيام"
+  },
+  "sections": {
+    "bestFocusHours": "أفضل ساعات للتركيز",
+    "focusVsBreakRatio": "نسبة التركيز إلى الاستراحة",
+    "pomodoroHeatmap": "خريطة حرارية للبومودورو",
+    "projectBreakdown": "تفصيل المشاريع",
+    "focusTime": "وقت التركيز",
+    "focusGoalCalendar": "تقويم هدف التركيز",
+    "taskCompletionRate": "معدل إنجاز المهام",
+    "perTaskHistory": "سجل لكل مهمة",
+    "energyLog": "سجل الطاقة",
+    "focusTimeChart": "مخطط وقت التركيز",
+    "taskCompletions": "المهام المنجزة"
+  },
+  "ratio": {
+    "focus": "تركيز",
+    "breaks": "استراحات",
+    "yourRatioIs": "نسبتك",
+    "ideal": "(المثالي: 4:1)"
+  },
+  "focusHours": {
+    "peak": "الذروة:",
+    "totalSuffix": "({minutes} د إجمالاً)"
+  },
+  "calendar": {
+    "goalSuffix": "هدف {hours} س",
+    "focusDays": "أيام التركيز",
+    "goalDays": "أيام الهدف",
+    "goalRate": "نسبة الهدف",
+    "weekdays": {
+      "mo": "إث",
+      "tu": "ثل",
+      "we": "أر",
+      "th": "خم",
+      "fr": "جم",
+      "sa": "سب",
+      "su": "أح"
+    }
+  },
+  "completion": {
+    "overall": "الإجمالي"
+  },
+  "charts": {
+    "top": "الأعلى:",
+    "avg": "المتوسط:",
+    "now": "الآن",
+    "tasks": "{count} مهام"
+  },
+  "mood": {
+    "ratings": "{count} تقييمات"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} جلسات أخرى"
+  },
+  "tooltip": {
+    "yesterday": "أمس"
+  },
+  "mobile": {
+    "rangeWeek": "أسبوع",
+    "rangeMonth": "شهر",
+    "rangeLabelWeek": "هذا الأسبوع",
+    "rangeLabelMonth": "آخر 4 أسابيع",
+    "heroLabel": "وقت التركيز · {range}",
+    "todaySummary": "اليوم: {time} · {pct}% من هدف {goal} ساعة",
+    "tileSessions": "الجلسات",
+    "tileTasksDone": "المهام المنجزة",
+    "tileDayStreak": "أيام متتالية",
+    "chartFocusByDay": "التركيز حسب اليوم",
+    "chartFocusByWeek": "التركيز حسب الأسبوع",
+    "chartEmpty": "لا توجد جلسات تركيز بعد",
+    "topTasks": "أهم المهام",
+    "untitled": "بدون عنوان"
+  }
+}

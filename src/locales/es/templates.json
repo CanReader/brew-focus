@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "Proyecto de software",
+    "description": "Especificaciones, hitos, MVP — el ciclo de desarrollo.",
+    "milestones": {
+      "specLocked": "Especificación cerrada",
+      "prototype": "Prototipo",
+      "mvpShippable": "MVP entregable",
+      "v1Release": "Versión 1.0"
+    },
+    "tasks": {
+      "writeOnePager": "Redactar una página",
+      "setupRepo": "Configurar el repositorio",
+      "defineMVP": "Definir el alcance del MVP"
+    }
+  },
+  "writing": {
+    "name": "Proyecto de escritura",
+    "description": "Esquema, borrador, revisión, publicación.",
+    "milestones": {
+      "outline": "Esquema listo",
+      "firstDraft": "Primer borrador",
+      "revision": "Pasada de revisión",
+      "final": "Versión final"
+    },
+    "tasks": {
+      "brainstorm": "Plantear la estructura",
+      "draftOpening": "Escribir la apertura"
+    }
+  },
+  "habit": {
+    "name": "Hábito / Meta",
+    "description": "Integra algo nuevo en tu semana.",
+    "milestones": {
+      "week1": "Semana 1",
+      "week2": "Semana 2",
+      "week4": "Semana 4",
+      "week8": "Semana 8"
+    },
+    "tasks": {
+      "dailyMin": "Definir un mínimo diario",
+      "weeklyReview": "Fijar una revisión semanal"
+    }
+  },
+  "blank": {
+    "name": "En blanco",
+    "description": "Empieza de cero. Tú lo armas."
+  },
+  "finalExamPrep": {
+    "name": "Preparación de examen final",
+    "description": "Estudio intensivo para un examen próximo.",
+    "milestones": {
+      "reviewNotes": "Repasar todos los apuntes",
+      "summarySheet": "Hacer una hoja resumen",
+      "pastPapers": "Practicar exámenes anteriores",
+      "mockExam": "Simulacro cronometrado"
+    },
+    "tasks": {
+      "rereadChapters": "Releer los capítulos del examen",
+      "buildFlashcards": "Crear tarjetas de los conceptos clave",
+      "fullPastExam": "Resolver al menos un examen anterior completo"
+    }
+  },
+  "semesterCourse": {
+    "name": "Asignatura semestral",
+    "description": "Una asignatura seguida durante todo el semestre.",
+    "milestones": {
+      "foundations": "Semanas 1–4: Fundamentos",
+      "midtermPrep": "Preparación del parcial",
+      "advanced": "Semanas 8–12: Material avanzado",
+      "finalPrep": "Preparación del examen final"
+    },
+    "tasks": {
+      "readSyllabus": "Leer el programa y marcar fechas de exámenes",
+      "noteSystem": "Configurar tu sistema de apuntes",
+      "weeklyReview": "Programar una sesión de repaso semanal"
+    }
+  },
+  "thesisDissertation": {
+    "name": "Tesis / Disertación",
+    "description": "Escritura académica de largo aliento durante meses.",
+    "milestones": {
+      "litReview": "Revisión bibliográfica",
+      "methodology": "Metodología / diseño de la investigación",
+      "data": "Recolección y análisis de datos",
+      "writing": "Redacción y revisiones",
+      "defense": "Preparación de la defensa"
+    },
+    "tasks": {
+      "referenceLibrary": "Crear la biblioteca de referencias",
+      "outlineChapters": "Esquematizar los capítulos",
+      "advisorCheckin": "Programar reunión semanal con tu director"
+    }
+  },
+  "researchPaper": {
+    "name": "Trabajo de investigación",
+    "description": "Un solo artículo de investigación o ensayo extenso.",
+    "milestones": {
+      "topicResearch": "Investigación del tema y fuentes",
+      "outline": "Esquema y tesis",
+      "firstDraft": "Primer borrador",
+      "revisions": "Revisiones y citas"
+    },
+    "tasks": {
+      "findSources": "Encontrar al menos 10 fuentes académicas",
+      "writeOutline": "Escribir el esquema",
+      "draftIntro": "Redactar la introducción"
+    }
+  },
+  "labReport": {
+    "name": "Informe de laboratorio",
+    "description": "Informe de laboratorio con plazo corto.",
+    "milestones": {
+      "methods": "Métodos y procedimiento",
+      "results": "Resultados y datos",
+      "discussion": "Discusión",
+      "submit": "Dar formato y entregar"
+    },
+    "tasks": {
+      "gatherData": "Reunir datos y observaciones del laboratorio",
+      "draftMethods": "Redactar la sección de métodos",
+      "createFigures": "Crear figuras y tablas"
+    }
+  },
+  "mathProblemSet": {
+    "name": "Matemáticas / Tarea de problemas",
+    "description": "Resolución intensiva de problemas de mate, física o informática.",
+    "milestones": {
+      "readChapter": "Leer el capítulo asignado",
+      "exampleProblems": "Resolver los problemas de ejemplo",
+      "completeSet": "Completar la tarea asignada",
+      "reviewMistakes": "Revisar los errores"
+    },
+    "tasks": {
+      "skimChapter": "Hojear el capítulo en busca de fórmulas clave",
+      "solvePractice": "Resolver problemas de práctica",
+      "checkAnswers": "Verificar respuestas"
+    }
+  },
+  "readingAssignment": {
+    "name": "Tarea de lectura",
+    "description": "Lectura obligatoria con notas y resúmenes.",
+    "milestones": {
+      "skim": "Lectura rápida y vista previa",
+      "activeReading": "Lectura activa con notas",
+      "summarize": "Resumir las ideas principales",
+      "discussion": "Discusión / repaso para examen"
+    },
+    "tasks": {
+      "readFirstQuarter": "Leer el primer 25%",
+      "takeNotes": "Tomar notas de los argumentos clave",
+      "writeSummary": "Escribir un resumen de un párrafo"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "Examen de admisión universitaria",
+    "description": "Preparación a largo plazo para Selectividad/EBAU, SAT, GRE y otros exámenes de admisión universitaria.",
+    "milestones": {
+      "diagnostic": "Examen diagnóstico y nota objetivo",
+      "phase1": "Dominio de materias: fase 1",
+      "phase2": "Dominio de materias: fase 2",
+      "timed": "Simulacros cronometrados",
+      "finalReview": "Repaso de la última semana"
+    },
+    "tasks": {
+      "fullDiagnostic": "Hacer un simulacro completo",
+      "studySchedule": "Armar un plan de estudio por sección",
+      "weakTopics": "Repasar semanalmente los temas débiles"
+    }
+  }
+}

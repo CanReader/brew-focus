@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "مشروع برمجي",
+    "description": "المواصفات والمحطات وMVP — قوس التطوير.",
+    "milestones": {
+      "specLocked": "اعتماد المواصفات",
+      "prototype": "النموذج الأولي",
+      "mvpShippable": "MVP جاهز للإصدار",
+      "v1Release": "إصدار 1.0"
+    },
+    "tasks": {
+      "writeOnePager": "كتابة ورقة من صفحة واحدة",
+      "setupRepo": "إعداد المستودع",
+      "defineMVP": "تحديد نطاق MVP"
+    }
+  },
+  "writing": {
+    "name": "مشروع كتابة",
+    "description": "هيكل، مسوّدة، مراجعة، نشر.",
+    "milestones": {
+      "outline": "اكتمال الهيكل",
+      "firstDraft": "المسوّدة الأولى",
+      "revision": "جولة مراجعة",
+      "final": "النسخة النهائية"
+    },
+    "tasks": {
+      "brainstorm": "العصف الذهني للهيكل",
+      "draftOpening": "كتابة الافتتاحية"
+    }
+  },
+  "habit": {
+    "name": "عادة / هدف",
+    "description": "ثبّت شيئًا جديدًا في أسابيعك.",
+    "milestones": {
+      "week1": "الأسبوع 1",
+      "week2": "الأسبوع 2",
+      "week4": "الأسبوع 4",
+      "week8": "الأسبوع 8"
+    },
+    "tasks": {
+      "dailyMin": "حدّد الحد الأدنى اليومي",
+      "weeklyReview": "اجعل وقتًا للمراجعة الأسبوعية"
+    }
+  },
+  "blank": {
+    "name": "فارغ",
+    "description": "ابدأ من الصفر واملأه بنفسك."
+  },
+  "finalExamPrep": {
+    "name": "تحضير الامتحان النهائي",
+    "description": "مراجعة مكثّفة لامتحان قادم.",
+    "milestones": {
+      "reviewNotes": "مراجعة كل المحاضرات",
+      "summarySheet": "إعداد ورقة ملخّص",
+      "pastPapers": "حلّ امتحانات سابقة",
+      "mockExam": "امتحان تجريبي مؤقّت"
+    },
+    "tasks": {
+      "rereadChapters": "إعادة قراءة الفصول الواردة في الامتحان",
+      "buildFlashcards": "إعداد بطاقات لأهم المفاهيم",
+      "fullPastExam": "حلّ امتحان سابق كامل على الأقل"
+    }
+  },
+  "semesterCourse": {
+    "name": "مادة فصل دراسي",
+    "description": "متابعة مادة واحدة على مدى الفصل بأكمله.",
+    "milestones": {
+      "foundations": "الأسابيع 1–4: الأساسيات",
+      "midtermPrep": "تحضير الامتحان النصفي",
+      "advanced": "الأسابيع 8–12: مواد متقدّمة",
+      "finalPrep": "تحضير الامتحان النهائي"
+    },
+    "tasks": {
+      "readSyllabus": "قراءة الخطة الدراسية وتحديد مواعيد الامتحانات",
+      "noteSystem": "إعداد نظام تدوين الملاحظات",
+      "weeklyReview": "تحديد جلسة مراجعة أسبوعية"
+    }
+  },
+  "thesisDissertation": {
+    "name": "أطروحة / رسالة",
+    "description": "كتابة أكاديمية طويلة على مدى أشهر.",
+    "milestones": {
+      "litReview": "مراجعة الأدبيات",
+      "methodology": "المنهجية / تصميم البحث",
+      "data": "جمع البيانات وتحليلها",
+      "writing": "الكتابة والتنقيح",
+      "defense": "تحضير المناقشة"
+    },
+    "tasks": {
+      "referenceLibrary": "بناء مكتبة المراجع",
+      "outlineChapters": "تخطيط هيكل الفصول",
+      "advisorCheckin": "تحديد لقاء أسبوعي مع المشرف"
+    }
+  },
+  "researchPaper": {
+    "name": "ورقة بحثية",
+    "description": "ورقة بحثية واحدة أو مقال مطوّل.",
+    "milestones": {
+      "topicResearch": "البحث في الموضوع والمصادر",
+      "outline": "الهيكل وعبارة الأطروحة",
+      "firstDraft": "المسوّدة الأولى",
+      "revisions": "المراجعات والاقتباسات"
+    },
+    "tasks": {
+      "findSources": "إيجاد 10 مصادر أكاديمية على الأقل",
+      "writeOutline": "كتابة الهيكل",
+      "draftIntro": "كتابة المقدّمة"
+    }
+  },
+  "labReport": {
+    "name": "تقرير مختبر",
+    "description": "تقرير مختبر بمهلة قصيرة.",
+    "milestones": {
+      "methods": "الأساليب والإجراءات",
+      "results": "النتائج والبيانات",
+      "discussion": "النقاش",
+      "submit": "التنسيق والتسليم"
+    },
+    "tasks": {
+      "gatherData": "جمع بيانات وملاحظات المختبر",
+      "draftMethods": "كتابة قسم الأساليب",
+      "createFigures": "إعداد الأشكال والجداول"
+    }
+  },
+  "mathProblemSet": {
+    "name": "رياضيات / مجموعة تمارين",
+    "description": "حلّ تمارين الرياضيات أو الفيزياء أو علوم الحاسوب.",
+    "milestones": {
+      "readChapter": "قراءة الفصل المطلوب",
+      "exampleProblems": "حلّ الأمثلة",
+      "completeSet": "إكمال مجموعة التمارين",
+      "reviewMistakes": "مراجعة الأخطاء"
+    },
+    "tasks": {
+      "skimChapter": "تصفّح الفصل لاستخراج القوانين الأساسية",
+      "solvePractice": "حلّ تمارين تطبيقية",
+      "checkAnswers": "التحقّق من الإجابات"
+    }
+  },
+  "readingAssignment": {
+    "name": "واجب قراءة",
+    "description": "قراءة مطلوبة مع ملاحظات وملخّصات.",
+    "milestones": {
+      "skim": "تصفّح ومراجعة سريعة",
+      "activeReading": "قراءة نشطة مع تدوين الملاحظات",
+      "summarize": "تلخيص الأفكار الرئيسية",
+      "discussion": "نقاش / تحضير اختبار"
+    },
+    "tasks": {
+      "readFirstQuarter": "قراءة أوّل 25%",
+      "takeNotes": "تدوين ملاحظات حول الحجج الأساسية",
+      "writeSummary": "كتابة ملخّص في فقرة واحدة"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "اختبار قبول جامعي",
+    "description": "تحضير طويل الأمد لاختبارات القبول الجامعي مثل القدرات والتوجيهي وSAT وGRE.",
+    "milestones": {
+      "diagnostic": "اختبار تشخيصي ودرجة مستهدفة",
+      "phase1": "إتقان المواد: المرحلة 1",
+      "phase2": "إتقان المواد: المرحلة 2",
+      "timed": "اختبارات تجريبية مؤقّتة",
+      "finalReview": "مراجعة الأسبوع الأخير"
+    },
+    "tasks": {
+      "fullDiagnostic": "إجراء اختبار تجريبي كامل",
+      "studySchedule": "بناء جدول دراسي حسب المواد",
+      "weakTopics": "مراجعة المواضيع الضعيفة أسبوعيًا"
+    }
+  }
+}

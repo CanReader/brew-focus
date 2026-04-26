@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "Software Project",
+    "description": "Specs, milestones, MVP — the dev arc.",
+    "milestones": {
+      "specLocked": "Spec locked",
+      "prototype": "Prototype",
+      "mvpShippable": "MVP shippable",
+      "v1Release": "v1.0 release"
+    },
+    "tasks": {
+      "writeOnePager": "Write one-pager",
+      "setupRepo": "Set up repository",
+      "defineMVP": "Define MVP scope"
+    }
+  },
+  "writing": {
+    "name": "Writing Project",
+    "description": "Outline, draft, revise, ship.",
+    "milestones": {
+      "outline": "Outline done",
+      "firstDraft": "First draft",
+      "revision": "Revision pass",
+      "final": "Final"
+    },
+    "tasks": {
+      "brainstorm": "Brainstorm structure",
+      "draftOpening": "Draft opening"
+    }
+  },
+  "habit": {
+    "name": "Habit / Goal",
+    "description": "Build something into your weeks.",
+    "milestones": {
+      "week1": "Week 1",
+      "week2": "Week 2",
+      "week4": "Week 4",
+      "week8": "Week 8"
+    },
+    "tasks": {
+      "dailyMin": "Define daily minimum",
+      "weeklyReview": "Set weekly review time"
+    }
+  },
+  "blank": {
+    "name": "Blank",
+    "description": "Start clean. Fill it yourself."
+  },
+  "finalExamPrep": {
+    "name": "Final Exam Prep",
+    "description": "Crunch-time studying for one upcoming exam.",
+    "milestones": {
+      "reviewNotes": "Review all lecture notes",
+      "summarySheet": "Make summary sheet",
+      "pastPapers": "Practice past exam papers",
+      "mockExam": "Final timed mock exam"
+    },
+    "tasks": {
+      "rereadChapters": "Re-read chapters covered on the exam",
+      "buildFlashcards": "Build flashcards for key concepts",
+      "fullPastExam": "Solve at least one full past exam"
+    }
+  },
+  "semesterCourse": {
+    "name": "Semester Course",
+    "description": "A single class tracked across the whole semester.",
+    "milestones": {
+      "foundations": "Weeks 1–4: Foundations",
+      "midtermPrep": "Midterm prep",
+      "advanced": "Weeks 8–12: Advanced material",
+      "finalPrep": "Final exam prep"
+    },
+    "tasks": {
+      "readSyllabus": "Read syllabus and mark exam dates",
+      "noteSystem": "Set up note-taking system",
+      "weeklyReview": "Schedule weekly review session"
+    }
+  },
+  "thesisDissertation": {
+    "name": "Thesis / Dissertation",
+    "description": "Long-form academic writing across many months.",
+    "milestones": {
+      "litReview": "Literature review",
+      "methodology": "Methodology / research design",
+      "data": "Data collection / analysis",
+      "writing": "Writing and revisions",
+      "defense": "Defense preparation"
+    },
+    "tasks": {
+      "referenceLibrary": "Build reference library",
+      "outlineChapters": "Outline chapter structure",
+      "advisorCheckin": "Schedule weekly advisor check-in"
+    }
+  },
+  "researchPaper": {
+    "name": "Research Paper",
+    "description": "Single research paper or long essay.",
+    "milestones": {
+      "topicResearch": "Topic research and sources",
+      "outline": "Outline and thesis statement",
+      "firstDraft": "First draft",
+      "revisions": "Revisions and citations"
+    },
+    "tasks": {
+      "findSources": "Find at least 10 academic sources",
+      "writeOutline": "Write outline",
+      "draftIntro": "Draft introduction"
+    }
+  },
+  "labReport": {
+    "name": "Lab Report",
+    "description": "Short-deadline lab write-up.",
+    "milestones": {
+      "methods": "Methods and procedure",
+      "results": "Results and data",
+      "discussion": "Discussion",
+      "submit": "Format and submit"
+    },
+    "tasks": {
+      "gatherData": "Gather lab data and observations",
+      "draftMethods": "Draft methods section",
+      "createFigures": "Create figures and tables"
+    }
+  },
+  "mathProblemSet": {
+    "name": "Math / Problem Set",
+    "description": "Homework problem grinding for math, physics, or CS.",
+    "milestones": {
+      "readChapter": "Read assigned chapter",
+      "exampleProblems": "Work through example problems",
+      "completeSet": "Complete assigned set",
+      "reviewMistakes": "Review mistakes"
+    },
+    "tasks": {
+      "skimChapter": "Skim chapter for key formulas",
+      "solvePractice": "Solve practice problems",
+      "checkAnswers": "Check answers"
+    }
+  },
+  "readingAssignment": {
+    "name": "Reading Assignment",
+    "description": "Required reading with notes and summaries.",
+    "milestones": {
+      "skim": "Skim and preview",
+      "activeReading": "Active reading with notes",
+      "summarize": "Summarize main ideas",
+      "discussion": "Discussion / quiz prep"
+    },
+    "tasks": {
+      "readFirstQuarter": "Read first 25%",
+      "takeNotes": "Take notes on key arguments",
+      "writeSummary": "Write one-paragraph summary"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "University Entrance Exam",
+    "description": "Long-haul prep for SAT, GRE, JEE, GAOKAO, and other university entrance exams.",
+    "milestones": {
+      "diagnostic": "Diagnostic test and target score",
+      "phase1": "Subject mastery: phase 1",
+      "phase2": "Subject mastery: phase 2",
+      "timed": "Timed practice tests",
+      "finalReview": "Final week review"
+    },
+    "tasks": {
+      "fullDiagnostic": "Take a full diagnostic / mock test",
+      "studySchedule": "Build study schedule by section",
+      "weakTopics": "Review weak topics weekly"
+    }
+  }
+}

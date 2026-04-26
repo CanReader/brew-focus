@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "Concentración",
+    "shortBreak": "Pausa corta",
+    "longBreak": "Pausa larga"
+  },
+  "tabs": {
+    "focus": "Enfoque",
+    "tasks": "Tareas",
+    "projects": "Proyectos",
+    "reports": "Informes"
+  },
+  "controls": {
+    "play": "Iniciar",
+    "pause": "Pausar",
+    "skip": "Saltar",
+    "reset": "Reiniciar",
+    "fullscreen": "Pantalla completa",
+    "widget": "Modo widget"
+  },
+  "togglePanel": "Mostrar u ocultar panel lateral",
+  "customize": {
+    "title": "Personalizar",
+    "subtitle": "Sonidos y fondo de la pantalla de enfoque",
+    "tabs": {
+      "sounds": "Sonidos",
+      "noise": "Ruido",
+      "background": "Fondo"
+    },
+    "soundEvents": {
+      "sessionStart": "Inicio de sesión",
+      "sessionStartDesc": "Cuando empieza un enfoque",
+      "breakStart": "Inicio de descanso",
+      "breakStartDesc": "Cuando empieza un descanso",
+      "sessionComplete": "Fin de sesión",
+      "sessionCompleteDesc": "Cuando termina un enfoque",
+      "breakComplete": "Fin de descanso",
+      "breakCompleteDesc": "Cuando termina un descanso"
+    },
+    "upload": "Subir",
+    "uploadHint": "Sube un archivo de audio (MP3, WAV, OGG)",
+    "myFile": "Mi archivo",
+    "noiseVolume": "Volumen del ruido",
+    "noiseVolumeDesc": "Independiente de los sonidos de notificación",
+    "noiseOn": "ON",
+    "browse": "Explorar",
+    "customLabel": "Personalizado",
+    "applyHint": "Pulsa cualquier imagen para aplicarla · Personalizado admite JPG, PNG, WebP"
+  },
+  "changeCup": "Cambiar taza",
+  "changeCupAria": "Cambiar taza de café",
+  "selectTask": "Elige una tarea para concentrarte…",
+  "selectTaskAria": "Seleccionar tarea",
+  "noTask": "Sin tarea",
+  "noTasksYet": "Aún no hay tareas — añade alguna desde la pestaña Tareas",
+  "clearActiveTask": "Quitar tarea activa",
+  "customTimerHint": "Temporizador personalizado: {minutes}m de trabajo",
+  "moodPrompt": "¿Cómo estuvo tu energía?",
+  "queue": {
+    "title": "Hoy",
+    "addTooltip": "Añadir una tarea para hoy",
+    "empty": "Aún no hay nada. Toca + para planear el día.",
+    "searchPlaceholder": "Buscar tareas…",
+    "noMatches": "Sin coincidencias",
+    "noTasksToAdd": "No hay tareas para añadir",
+    "makeActive": "Activar",
+    "removeFromToday": "Quitar de hoy"
+  },
+  "strictMode": {
+    "title": "Modo estricto",
+    "lockPhoneName": "Bloquear teléfono",
+    "lockPhoneDesc": "Desalienta desbloquear durante la sesión",
+    "blockAppsName": "Bloquear apps",
+    "blockAppsDesc": "Avisa al salir de la app",
+    "note": "Nota: iOS/Android no permiten que las apps bloqueen el dispositivo. Estos ajustes te recuerdan tu intención y te avisan suavemente al romperla."
+  },
+  "timerMode": {
+    "title": "Modo del temporizador",
+    "pomodoroName": "Pomodoro",
+    "pomodoroDesc": "Intervalos fijos de trabajo y descanso",
+    "infiniteName": "Infinito",
+    "infiniteDesc": "Cuenta hacia arriba libremente, sin tarea ni fases"
+  },
+  "noise": {
+    "title": "Sonido de fondo",
+    "shortLabel": "Sonido"
+  },
+  "exitFullscreen": "Salir de pantalla completa",
+  "continue": "Continuar",
+  "startToFocus": "Empezar a enfocarte",
+  "selectTaskShort": "Elegir tarea",
+  "widget": {
+    "expand": "Expandir",
+    "close": "Cerrar widget",
+    "noTaskSelected": "Sin tarea seleccionada",
+    "exitHint": "Pulsa Esc para salir"
+  },
+  "cupPicker": {
+    "title": "Elige tu taza",
+    "subtitle": "Sube nuevas tazas a tu bucket de Storage; aparecerán aquí solas.",
+    "tap": "Toca cualquier taza para cambiar.",
+    "escClose": "para cerrar",
+    "defaultsBanner": "Predeterminadas — inicia sesión para sincronizar tus tazas.",
+    "premiumLabel": "Premium",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (premium)",
+    "escPrefix": "Pulsa",
+    "close": "Cerrar"
+  },
+  "history": {
+    "title": "Historial de enfoque",
+    "noSessions": "Aún no hay sesiones hoy"
+  },
+  "dashboard": "Panel",
+  "timeToday": {
+    "title": "Tiempo de enfoque hoy",
+    "goal": "¡Meta!",
+    "goalSuffix": "/ meta de {hours} h",
+    "percent": "{percent}% de la meta diaria",
+    "timeLeft": "Faltan {minutes} min"
+  },
+  "scratchpad": {
+    "title": "Notas de la sesión",
+    "placeholder": "Anota algo…"
+  }
+}

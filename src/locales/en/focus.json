@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "Focus",
+    "shortBreak": "Short Break",
+    "longBreak": "Long Break"
+  },
+  "tabs": {
+    "focus": "Focus",
+    "tasks": "Tasks",
+    "projects": "Projects",
+    "reports": "Reports"
+  },
+  "controls": {
+    "play": "Start",
+    "pause": "Pause",
+    "skip": "Skip",
+    "reset": "Reset",
+    "fullscreen": "Fullscreen",
+    "widget": "Widget mode"
+  },
+  "togglePanel": "Toggle side panel",
+  "customize": {
+    "title": "Customize",
+    "subtitle": "Sounds & background for Focus screen",
+    "tabs": {
+      "sounds": "Sounds",
+      "noise": "Noise",
+      "background": "Background"
+    },
+    "soundEvents": {
+      "sessionStart": "Session Start",
+      "sessionStartDesc": "When a focus session begins",
+      "breakStart": "Break Start",
+      "breakStartDesc": "When a break begins",
+      "sessionComplete": "Session Complete",
+      "sessionCompleteDesc": "When a focus session ends",
+      "breakComplete": "Break Complete",
+      "breakCompleteDesc": "When a break ends"
+    },
+    "upload": "Upload",
+    "uploadHint": "Upload a sound file (MP3, WAV, OGG)",
+    "myFile": "My File",
+    "noiseVolume": "Noise Volume",
+    "noiseVolumeDesc": "Independent from notification sounds",
+    "noiseOn": "ON",
+    "browse": "Browse",
+    "customLabel": "Custom",
+    "applyHint": "Click any image to apply · Custom supports JPG, PNG, WebP"
+  },
+  "changeCup": "Change cup",
+  "changeCupAria": "Change coffee cup",
+  "selectTask": "Select a task to focus on…",
+  "selectTaskAria": "Select task",
+  "noTask": "No task",
+  "noTasksYet": "No tasks yet — add some in Tasks tab",
+  "clearActiveTask": "Clear active task",
+  "customTimerHint": "Custom timer: {minutes}m work",
+  "moodPrompt": "How was your energy?",
+  "queue": {
+    "title": "Today",
+    "addTooltip": "Add a task to today",
+    "empty": "No queue yet. Tap + to plan today.",
+    "searchPlaceholder": "Search tasks…",
+    "noMatches": "No matches",
+    "noTasksToAdd": "No tasks to add",
+    "makeActive": "Make active",
+    "removeFromToday": "Remove from today"
+  },
+  "strictMode": {
+    "title": "Strict Mode",
+    "lockPhoneName": "Lock Phone",
+    "lockPhoneDesc": "Discourage unlocking during focus",
+    "blockAppsName": "Block Apps",
+    "blockAppsDesc": "Warn when leaving the app",
+    "note": "Note: iOS/Android don't let apps truly lock the device. These toggles remind you of your intent and will gently nudge when broken."
+  },
+  "timerMode": {
+    "title": "Timer Mode",
+    "pomodoroName": "Pomodoro",
+    "pomodoroDesc": "Fixed work/break intervals",
+    "infiniteName": "Infinite",
+    "infiniteDesc": "Count up freely — no task, no phases"
+  },
+  "noise": {
+    "title": "Background noise",
+    "shortLabel": "Noise"
+  },
+  "exitFullscreen": "Exit fullscreen",
+  "continue": "Continue",
+  "startToFocus": "Start to Focus",
+  "selectTaskShort": "Select task",
+  "widget": {
+    "expand": "Expand",
+    "close": "Close widget",
+    "noTaskSelected": "No task selected",
+    "exitHint": "Press Esc to exit"
+  },
+  "cupPicker": {
+    "title": "Pick your cup",
+    "subtitle": "Add new cups by uploading to your Storage bucket — they appear here automatically.",
+    "tap": "Tap any cup to switch.",
+    "escClose": "to close",
+    "defaultsBanner": "Defaults — sign in to sync your custom cups.",
+    "premiumLabel": "Premium",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (premium)",
+    "escPrefix": "Press",
+    "close": "Close"
+  },
+  "history": {
+    "title": "Focus History",
+    "noSessions": "No sessions yet today"
+  },
+  "dashboard": "Dashboard",
+  "timeToday": {
+    "title": "Focus Time Today",
+    "goal": "Goal!",
+    "goalSuffix": "/ {hours}h goal",
+    "percent": "{percent}% of daily goal",
+    "timeLeft": "{minutes}m left"
+  },
+  "scratchpad": {
+    "title": "Session Notes",
+    "placeholder": "Jot things down…"
+  }
+}

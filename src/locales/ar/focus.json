@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "تركيز",
+    "shortBreak": "استراحة قصيرة",
+    "longBreak": "استراحة طويلة"
+  },
+  "tabs": {
+    "focus": "التركيز",
+    "tasks": "المهام",
+    "projects": "المشاريع",
+    "reports": "التقارير"
+  },
+  "controls": {
+    "play": "ابدأ",
+    "pause": "إيقاف مؤقت",
+    "skip": "تخطي",
+    "reset": "إعادة الضبط",
+    "fullscreen": "ملء الشاشة",
+    "widget": "وضع الأداة"
+  },
+  "togglePanel": "إظهار / إخفاء اللوحة الجانبية",
+  "changeCup": "تغيير الفنجان",
+  "changeCupAria": "تغيير فنجان القهوة",
+  "selectTask": "اختر مهمة للتركيز عليها…",
+  "selectTaskAria": "اختر مهمة",
+  "noTask": "بدون مهمة",
+  "noTasksYet": "لا توجد مهام بعد — أضف بعضها من تبويب المهام",
+  "clearActiveTask": "إزالة المهمة النشطة",
+  "customTimerHint": "مؤقّت مخصّص: {minutes} دقيقة عمل",
+  "moodPrompt": "كيف كانت طاقتك؟",
+  "queue": {
+    "title": "اليوم",
+    "addTooltip": "أضف مهمة لليوم",
+    "empty": "لا توجد قائمة لليوم بعد. اضغط + لتخطيط يومك.",
+    "searchPlaceholder": "بحث في المهام…",
+    "noMatches": "لا توجد نتائج",
+    "noTasksToAdd": "لا توجد مهام للإضافة",
+    "makeActive": "اجعلها نشطة",
+    "removeFromToday": "إزالة من قائمة اليوم"
+  },
+  "strictMode": {
+    "title": "الوضع الصارم",
+    "lockPhoneName": "قفل الهاتف",
+    "lockPhoneDesc": "ثبّط فتح القفل أثناء التركيز",
+    "blockAppsName": "حظر التطبيقات",
+    "blockAppsDesc": "نبّه عند الخروج من التطبيق",
+    "note": "ملاحظة: لا يسمح iOS/Android للتطبيقات بقفل الجهاز فعلياً. هذه الخيارات تذكّرك بنيتك وتنبّهك بلطف عند الخروج عنها."
+  },
+  "timerMode": {
+    "title": "وضع المؤقّت",
+    "pomodoroName": "بومودورو",
+    "pomodoroDesc": "فترات عمل/استراحة ثابتة",
+    "infiniteName": "غير محدود",
+    "infiniteDesc": "عدّ تصاعدي حر — بدون مهمة أو مراحل"
+  },
+  "noise": {
+    "title": "صوت الخلفية",
+    "shortLabel": "الصوت"
+  },
+  "exitFullscreen": "الخروج من الشاشة الكاملة",
+  "continue": "متابعة",
+  "startToFocus": "ابدأ التركيز",
+  "selectTaskShort": "اختر مهمة",
+  "history": {
+    "title": "سجل التركيز",
+    "noSessions": "لا توجد جلسات اليوم بعد"
+  },
+  "dashboard": "لوحة التحكم",
+  "timeToday": {
+    "title": "وقت التركيز اليوم",
+    "goal": "تم!",
+    "goalSuffix": "/ هدف {hours} س",
+    "percent": "{percent}٪ من الهدف اليومي",
+    "timeLeft": "بقي {minutes} د"
+  },
+  "scratchpad": {
+    "title": "ملاحظات الجلسة",
+    "placeholder": "اكتب شيئًا…"
+  },
+  "customize": {
+    "title": "تخصيص",
+    "subtitle": "الأصوات والخلفية لشاشة التركيز",
+    "tabs": {
+      "sounds": "الأصوات",
+      "noise": "الضوضاء",
+      "background": "الخلفية"
+    },
+    "soundEvents": {
+      "sessionStart": "بدء الجلسة",
+      "sessionStartDesc": "عند بدء جلسة تركيز",
+      "breakStart": "بدء الاستراحة",
+      "breakStartDesc": "عند بدء الاستراحة",
+      "sessionComplete": "انتهاء الجلسة",
+      "sessionCompleteDesc": "عند انتهاء جلسة التركيز",
+      "breakComplete": "انتهاء الاستراحة",
+      "breakCompleteDesc": "عند انتهاء الاستراحة"
+    },
+    "upload": "رفع",
+    "uploadHint": "ارفع ملف صوت (MP3 أو WAV أو OGG)",
+    "myFile": "ملفي",
+    "noiseVolume": "مستوى الضوضاء",
+    "noiseVolumeDesc": "مستقل عن أصوات الإشعارات",
+    "noiseOn": "مفعّل",
+    "browse": "تصفّح",
+    "customLabel": "مخصّص",
+    "applyHint": "اضغط على أي صورة للتطبيق · المخصّص يدعم JPG وPNG وWebP"
+  },
+  "widget": {
+    "expand": "توسيع",
+    "close": "إغلاق الأداة",
+    "noTaskSelected": "لم تُحدّد مهمة",
+    "exitHint": "اضغط Esc للخروج"
+  },
+  "cupPicker": {
+    "title": "اختر فنجانك",
+    "subtitle": "أضف فناجين جديدة عبر رفعها إلى مساحتك التخزينية — تظهر هنا تلقائيًا.",
+    "tap": "اضغط على أي فنجان للتبديل.",
+    "escPrefix": "اضغط",
+    "escClose": "للإغلاق",
+    "defaultsBanner": "الافتراضي — سجّل الدخول لمزامنة فناجينك المخصّصة.",
+    "premiumLabel": "مميّز",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (مميّز)",
+    "close": "إغلاق"
+  }
+}

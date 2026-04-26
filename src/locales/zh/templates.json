@@ -1,0 +1,171 @@
+{
+  "software": {
+    "name": "软件项目",
+    "description": "需求、里程碑、MVP — 完整的开发流程。",
+    "milestones": {
+      "specLocked": "需求定稿",
+      "prototype": "原型",
+      "mvpShippable": "MVP 可发布",
+      "v1Release": "v1.0 发布"
+    },
+    "tasks": {
+      "writeOnePager": "撰写一页纸概要",
+      "setupRepo": "搭建代码仓库",
+      "defineMVP": "确定 MVP 范围"
+    }
+  },
+  "writing": {
+    "name": "写作项目",
+    "description": "提纲、初稿、修改、发布。",
+    "milestones": {
+      "outline": "提纲完成",
+      "firstDraft": "初稿",
+      "revision": "修订",
+      "final": "终稿"
+    },
+    "tasks": {
+      "brainstorm": "构思整体结构",
+      "draftOpening": "撰写开篇"
+    }
+  },
+  "habit": {
+    "name": "习惯 / 目标",
+    "description": "把一件事坚持到每周。",
+    "milestones": {
+      "week1": "第 1 周",
+      "week2": "第 2 周",
+      "week4": "第 4 周",
+      "week8": "第 8 周"
+    },
+    "tasks": {
+      "dailyMin": "设定每日最低标准",
+      "weeklyReview": "安排每周复盘时间"
+    }
+  },
+  "blank": {
+    "name": "空白",
+    "description": "从空白开始,自己安排内容。"
+  },
+  "finalExamPrep": {
+    "name": "期末考试备考",
+    "description": "为即将到来的考试集中冲刺。",
+    "milestones": {
+      "reviewNotes": "复习全部课堂笔记",
+      "summarySheet": "整理一份总结单",
+      "pastPapers": "刷历年真题",
+      "mockExam": "完成限时模拟考试"
+    },
+    "tasks": {
+      "rereadChapters": "重读考试范围内的章节",
+      "buildFlashcards": "为关键概念制作卡片",
+      "fullPastExam": "至少完整做一套历年真题"
+    }
+  },
+  "semesterCourse": {
+    "name": "整学期课程",
+    "description": "贯穿整个学期的一门课。",
+    "milestones": {
+      "foundations": "第 1–4 周:基础",
+      "midtermPrep": "期中复习",
+      "advanced": "第 8–12 周:进阶内容",
+      "finalPrep": "期末复习"
+    },
+    "tasks": {
+      "readSyllabus": "阅读教学大纲并标记考试日期",
+      "noteSystem": "搭建笔记体系",
+      "weeklyReview": "安排每周复习时段"
+    }
+  },
+  "thesisDissertation": {
+    "name": "毕业论文 / 学位论文",
+    "description": "持续数月的学术写作。",
+    "milestones": {
+      "litReview": "文献综述",
+      "methodology": "研究方法 / 设计",
+      "data": "数据收集与分析",
+      "writing": "撰写与修订",
+      "defense": "答辩准备"
+    },
+    "tasks": {
+      "referenceLibrary": "建立参考文献库",
+      "outlineChapters": "搭建章节框架",
+      "advisorCheckin": "安排每周与导师沟通"
+    }
+  },
+  "researchPaper": {
+    "name": "研究论文",
+    "description": "单篇研究论文或长论文。",
+    "milestones": {
+      "topicResearch": "选题与文献检索",
+      "outline": "提纲与论点",
+      "firstDraft": "初稿",
+      "revisions": "修订与引用"
+    },
+    "tasks": {
+      "findSources": "查找至少 10 篇学术文献",
+      "writeOutline": "撰写提纲",
+      "draftIntro": "撰写引言"
+    }
+  },
+  "labReport": {
+    "name": "实验报告",
+    "description": "短周期的实验报告写作。",
+    "milestones": {
+      "methods": "方法与步骤",
+      "results": "结果与数据",
+      "discussion": "讨论",
+      "submit": "排版并提交"
+    },
+    "tasks": {
+      "gatherData": "整理实验数据与观察记录",
+      "draftMethods": "撰写方法部分",
+      "createFigures": "制作图表"
+    }
+  },
+  "mathProblemSet": {
+    "name": "数学 / 习题集",
+    "description": "数学、物理或计算机科学的习题练习。",
+    "milestones": {
+      "readChapter": "阅读相关章节",
+      "exampleProblems": "练习例题",
+      "completeSet": "完成布置的习题",
+      "reviewMistakes": "复盘错题"
+    },
+    "tasks": {
+      "skimChapter": "速读章节,找出关键公式",
+      "solvePractice": "刷练习题",
+      "checkAnswers": "核对答案"
+    }
+  },
+  "readingAssignment": {
+    "name": "阅读任务",
+    "description": "需做笔记和总结的阅读作业。",
+    "milestones": {
+      "skim": "速读与预览",
+      "activeReading": "做笔记的精读",
+      "summarize": "总结主要观点",
+      "discussion": "讨论 / 测验准备"
+    },
+    "tasks": {
+      "readFirstQuarter": "读完前 25%",
+      "takeNotes": "记录关键论点",
+      "writeSummary": "写一段总结"
+    }
+  },
+  "universityEntranceExam": {
+    "name": "大学入学考试",
+    "description": "为高考、SAT、GRE 等大学入学考试进行的长期备考。",
+    "milestones": {
+      "diagnostic": "诊断测试与目标分数",
+      "phase1": "学科精进:第一阶段",
+      "phase2": "学科精进:第二阶段",
+      "timed": "限时模拟考试",
+      "finalReview": "考前一周复习"
+    },
+    "tasks": {
+      "fullDiagnostic": "完成一次完整的模拟考",
+      "studySchedule": "按科目制定学习计划",
+      "weakTopics": "每周复习薄弱知识点"
+    }
+  }
+}

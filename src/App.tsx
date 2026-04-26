@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { TitleBar } from './components/TitleBar';
 import { FocusScreen } from './components/FocusScreen';
 import { TasksScreen } from './components/TasksScreen';
@@ -15,6 +16,7 @@ import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
 import { useActivityStore } from './store/activityStore';
 import { useCoffeeCupCatalogStore } from './store/coffeeCupCatalogStore';
+import { useLocaleStore } from './store/localeStore';
 import { useClickSound } from './hooks/useClickSound';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
@@ -24,7 +26,9 @@ import { supabase } from './utils/supabase';
 
 type Tab = 'focus' | 'tasks' | 'projects' | 'reports';
 
-function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: string }) {
+function LoadingScreen({ message }: { message?: string }) {
+  const { t } = useTranslation('common');
+  const text = message ?? t('loadingMessage');
   return (
     <div
       className="w-full h-full flex items-center justify-center relative overflow-hidden"
@@ -53,7 +57,7 @@ function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: st
           >
             Brew Focus
           </div>
-          <div className="text-[12px] mt-1" style={{ color: 'var(--t3)' }}>{message}</div>
+          <div className="text-[12px] mt-1" style={{ color: 'var(--t3)' }}>{text}</div>
         </div>
         <div className="w-36 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
           <motion.div
@@ -80,6 +84,7 @@ function MainApp() {
   const { loadState, setActiveTask, isRunning: timerIsRunning, phase: timerPhase } = useTimerStore();
   const { loadEvents } = useActivityStore();
   const loadCatalog = useCoffeeCupCatalogStore((s) => s.loadCatalog);
+  const loadLocale = useLocaleStore((s) => s.loadFromSettings);
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
@@ -102,7 +107,7 @@ function MainApp() {
   useEffect(() => {
     const init = async () => {
       try {
-        await Promise.all([loadSettings(), loadTasks(), loadEvents(), loadCatalog()]);
+        await Promise.all([loadSettings(), loadTasks(), loadEvents(), loadCatalog(), loadLocale()]);
         const currentSettings = useSettingsStore.getState().settings;
         const { tasks: loadedTasks, projects: loadedProjects, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
         setActiveTask(loadedActiveTaskId);

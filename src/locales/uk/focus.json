@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "Фокус",
+    "shortBreak": "Коротка перерва",
+    "longBreak": "Довга перерва"
+  },
+  "tabs": {
+    "focus": "Фокус",
+    "tasks": "Задачі",
+    "projects": "Проєкти",
+    "reports": "Звіти"
+  },
+  "controls": {
+    "play": "Почати",
+    "pause": "Пауза",
+    "skip": "Пропустити",
+    "reset": "Скинути",
+    "fullscreen": "Повний екран",
+    "widget": "Режим віджета"
+  },
+  "togglePanel": "Показати/сховати бічну панель",
+  "changeCup": "Змінити горнятко",
+  "changeCupAria": "Змінити горнятко кави",
+  "selectTask": "Обери задачу для зосередження…",
+  "selectTaskAria": "Обрати задачу",
+  "noTask": "Без задачі",
+  "noTasksYet": "Задач ще немає — додай їх на вкладці «Задачі»",
+  "clearActiveTask": "Прибрати активну задачу",
+  "customTimerHint": "Власний таймер: {minutes} хв роботи",
+  "moodPrompt": "Як твоя енергія?",
+  "queue": {
+    "title": "Сьогодні",
+    "addTooltip": "Додати задачу на сьогодні",
+    "empty": "Черга порожня. Натисни +, щоб спланувати день.",
+    "searchPlaceholder": "Пошук задач…",
+    "noMatches": "Збігів немає",
+    "noTasksToAdd": "Немає задач для додавання",
+    "makeActive": "Зробити активною",
+    "removeFromToday": "Прибрати з сьогодні"
+  },
+  "strictMode": {
+    "title": "Суворий режим",
+    "lockPhoneName": "Заблокувати телефон",
+    "lockPhoneDesc": "Відмовляє від розблокування під час фокусу",
+    "blockAppsName": "Блокувати додатки",
+    "blockAppsDesc": "Попереджає при виході з додатка",
+    "note": "Зауваження: iOS/Android не дозволяють додаткам реально блокувати пристрій. Ці перемикачі нагадують про твій намір і м'яко попереджають."
+  },
+  "timerMode": {
+    "title": "Режим таймера",
+    "pomodoroName": "Помодоро",
+    "pomodoroDesc": "Фіксовані інтервали роботи та відпочинку",
+    "infiniteName": "Безмежний",
+    "infiniteDesc": "Вільний підрахунок — без задачі та фаз"
+  },
+  "noise": {
+    "title": "Фоновий звук",
+    "shortLabel": "Звук"
+  },
+  "exitFullscreen": "Вийти з повноекранного режиму",
+  "continue": "Продовжити",
+  "startToFocus": "Почати фокусуватися",
+  "selectTaskShort": "Обрати задачу",
+  "history": {
+    "title": "Історія фокусу",
+    "noSessions": "Сьогодні ще немає сесій"
+  },
+  "dashboard": "Панель",
+  "timeToday": {
+    "title": "Час фокусу сьогодні",
+    "goal": "Ціль!",
+    "goalSuffix": "/ ціль {hours} год",
+    "percent": "{percent}% денної цілі",
+    "timeLeft": "Залишилось {minutes} хв"
+  },
+  "scratchpad": {
+    "title": "Нотатки сесії",
+    "placeholder": "Запиши щось…"
+  },
+  "customize": {
+    "title": "Налаштувати",
+    "subtitle": "Звуки та фон для екрана фокусу",
+    "tabs": {
+      "sounds": "Звуки",
+      "noise": "Шум",
+      "background": "Фон"
+    },
+    "soundEvents": {
+      "sessionStart": "Початок сесії",
+      "sessionStartDesc": "Коли починається сесія фокусу",
+      "breakStart": "Початок перерви",
+      "breakStartDesc": "Коли починається перерва",
+      "sessionComplete": "Кінець сесії",
+      "sessionCompleteDesc": "Коли сесія фокусу завершується",
+      "breakComplete": "Кінець перерви",
+      "breakCompleteDesc": "Коли перерва завершується"
+    },
+    "upload": "Завантажити",
+    "uploadHint": "Завантаж аудіофайл (MP3, WAV, OGG)",
+    "myFile": "Мій файл",
+    "noiseVolume": "Гучність шуму",
+    "noiseVolumeDesc": "Незалежно від звуків сповіщень",
+    "noiseOn": "УВІМК",
+    "browse": "Огляд",
+    "customLabel": "Власний",
+    "applyHint": "Клацни будь-яке зображення, щоб застосувати · Власний підтримує JPG, PNG, WebP"
+  },
+  "widget": {
+    "expand": "Розгорнути",
+    "close": "Закрити віджет",
+    "noTaskSelected": "Задачу не обрано",
+    "exitHint": "Натисни Esc, щоб вийти"
+  },
+  "cupPicker": {
+    "title": "Обери своє горнятко",
+    "subtitle": "Додавай нові горнятка, завантажуючи їх у своє сховище — вони з'являться тут автоматично.",
+    "tap": "Клацни будь-яке горнятко, щоб перемкнутися.",
+    "escPrefix": "Натисни",
+    "escClose": "щоб закрити",
+    "defaultsBanner": "Стандартні — увійди, щоб синхронізувати власні горнятка.",
+    "premiumLabel": "Преміум",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (преміум)",
+    "close": "Закрити"
+  }
+}

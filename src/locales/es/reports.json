@@ -1,0 +1,100 @@
+{
+  "title": "Informes",
+  "subtitle": "Tu trayectoria de enfoque de un vistazo",
+  "exportCsv": "Exportar CSV",
+  "noData": "Aún sin datos",
+  "noTask": "Sin tarea",
+  "ranges": {
+    "daily": "Diario",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "yearly": "Anual"
+  },
+  "cards": {
+    "totalFocusTime": "Tiempo total de enfoque",
+    "thisWeek": "Esta semana",
+    "today": "Hoy",
+    "totalTasksDone": "Tareas completadas",
+    "doneThisWeek": "Hechas esta semana",
+    "doneToday": "Hechas hoy"
+  },
+  "records": {
+    "currentStreak": "Racha actual",
+    "longestStreak": "Racha más larga",
+    "bestDayEver": "Mejor día",
+    "avgSession": "Sesión media",
+    "days": "días"
+  },
+  "sections": {
+    "bestFocusHours": "Mejores horas de enfoque",
+    "focusVsBreakRatio": "Relación enfoque/descanso",
+    "pomodoroHeatmap": "Mapa de calor de pomodoros",
+    "projectBreakdown": "Desglose por proyecto",
+    "focusTime": "Tiempo de enfoque",
+    "focusGoalCalendar": "Calendario de objetivos",
+    "taskCompletionRate": "Tasa de finalización",
+    "perTaskHistory": "Historial por tarea",
+    "energyLog": "Registro de energía",
+    "focusTimeChart": "Gráfico de tiempo de enfoque",
+    "taskCompletions": "Tareas completadas"
+  },
+  "ratio": {
+    "focus": "Enfoque",
+    "breaks": "Descansos",
+    "yourRatioIs": "Tu relación es",
+    "ideal": "(ideal: 4:1)"
+  },
+  "focusHours": {
+    "peak": "Pico:",
+    "totalSuffix": "({minutes}m en total)"
+  },
+  "calendar": {
+    "goalSuffix": "Meta de {hours}h",
+    "focusDays": "Días con enfoque",
+    "goalDays": "Días cumplidos",
+    "goalRate": "Tasa de meta",
+    "weekdays": {
+      "mo": "Lu",
+      "tu": "Ma",
+      "we": "Mi",
+      "th": "Ju",
+      "fr": "Vi",
+      "sa": "Sá",
+      "su": "Do"
+    }
+  },
+  "completion": {
+    "overall": "Total"
+  },
+  "charts": {
+    "top": "Máx:",
+    "avg": "Media:",
+    "now": "Ahora",
+    "tasks": "{count} tareas"
+  },
+  "mood": {
+    "ratings": "{count} valoraciones"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} sesiones más"
+  },
+  "tooltip": {
+    "yesterday": "Ayer"
+  },
+  "mobile": {
+    "rangeWeek": "Semana",
+    "rangeMonth": "Mes",
+    "rangeLabelWeek": "esta semana",
+    "rangeLabelMonth": "últimas 4 semanas",
+    "heroLabel": "TIEMPO DE FOCO · {range}",
+    "todaySummary": "Hoy: {time} · {pct}% de la meta de {goal}h",
+    "tileSessions": "Sesiones",
+    "tileTasksDone": "Tareas hechas",
+    "tileDayStreak": "Racha de días",
+    "chartFocusByDay": "Foco por día",
+    "chartFocusByWeek": "Foco por semana",
+    "chartEmpty": "Aún no hay sesiones de foco",
+    "topTasks": "Tareas principales",
+    "untitled": "Sin título"
+  }
+}

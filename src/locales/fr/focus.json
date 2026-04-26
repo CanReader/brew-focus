@@ -1,0 +1,126 @@
+{
+  "phase": {
+    "work": "Concentration",
+    "shortBreak": "Pause courte",
+    "longBreak": "Pause longue"
+  },
+  "tabs": {
+    "focus": "Focus",
+    "tasks": "Tâches",
+    "projects": "Projets",
+    "reports": "Rapports"
+  },
+  "controls": {
+    "play": "Démarrer",
+    "pause": "Pause",
+    "skip": "Passer",
+    "reset": "Réinitialiser",
+    "fullscreen": "Plein écran",
+    "widget": "Mode widget"
+  },
+  "togglePanel": "Afficher / masquer le panneau",
+  "customize": {
+    "title": "Personnaliser",
+    "subtitle": "Sons et fond pour l'écran Focus",
+    "tabs": {
+      "sounds": "Sons",
+      "noise": "Bruit",
+      "background": "Fond"
+    },
+    "soundEvents": {
+      "sessionStart": "Début de session",
+      "sessionStartDesc": "Quand une session de focus commence",
+      "breakStart": "Début de pause",
+      "breakStartDesc": "Quand une pause commence",
+      "sessionComplete": "Fin de session",
+      "sessionCompleteDesc": "Quand une session de focus se termine",
+      "breakComplete": "Fin de pause",
+      "breakCompleteDesc": "Quand une pause se termine"
+    },
+    "upload": "Téléverser",
+    "uploadHint": "Téléverse un fichier audio (MP3, WAV, OGG)",
+    "myFile": "Mon fichier",
+    "noiseVolume": "Volume du bruit",
+    "noiseVolumeDesc": "Indépendant des sons de notification",
+    "noiseOn": "ACT.",
+    "browse": "Parcourir",
+    "customLabel": "Personnalisé",
+    "applyHint": "Clique sur une image pour l'appliquer · Personnalisé : JPG, PNG, WebP"
+  },
+  "changeCup": "Changer la tasse",
+  "changeCupAria": "Changer la tasse de café",
+  "selectTask": "Choisis une tâche pour te concentrer…",
+  "selectTaskAria": "Choisir une tâche",
+  "noTask": "Aucune tâche",
+  "noTasksYet": "Aucune tâche pour l'instant — ajoute-en dans l'onglet Tâches",
+  "clearActiveTask": "Retirer la tâche active",
+  "customTimerHint": "Minuteur personnalisé : {minutes} min de travail",
+  "moodPrompt": "Comment était ton énergie ?",
+  "queue": {
+    "title": "Aujourd'hui",
+    "addTooltip": "Ajouter une tâche pour aujourd'hui",
+    "empty": "Pas encore de file. Touche + pour planifier la journée.",
+    "searchPlaceholder": "Rechercher des tâches…",
+    "noMatches": "Aucun résultat",
+    "noTasksToAdd": "Aucune tâche à ajouter",
+    "makeActive": "Activer",
+    "removeFromToday": "Retirer d'aujourd'hui"
+  },
+  "strictMode": {
+    "title": "Mode strict",
+    "lockPhoneName": "Verrouiller le téléphone",
+    "lockPhoneDesc": "Décourage le déverrouillage pendant la session",
+    "blockAppsName": "Bloquer les apps",
+    "blockAppsDesc": "Avertit lorsque tu quittes l'app",
+    "note": "Remarque : iOS/Android ne permettent pas aux apps de verrouiller réellement l'appareil. Ces options rappellent ton intention et préviennent doucement."
+  },
+  "timerMode": {
+    "title": "Mode du minuteur",
+    "pomodoroName": "Pomodoro",
+    "pomodoroDesc": "Intervalles fixes travail/pause",
+    "infiniteName": "Infini",
+    "infiniteDesc": "Compte librement — pas de tâche, pas de phases"
+  },
+  "noise": {
+    "title": "Son de fond",
+    "shortLabel": "Son"
+  },
+  "exitFullscreen": "Quitter le plein écran",
+  "continue": "Continuer",
+  "startToFocus": "Commencer à se concentrer",
+  "selectTaskShort": "Choisir une tâche",
+  "widget": {
+    "expand": "Agrandir",
+    "close": "Fermer le widget",
+    "noTaskSelected": "Aucune tâche sélectionnée",
+    "exitHint": "Appuie sur Échap pour quitter"
+  },
+  "cupPicker": {
+    "title": "Choisis ta tasse",
+    "subtitle": "Ajoute de nouvelles tasses en les téléchargeant dans ton bucket Storage — elles apparaissent ici automatiquement.",
+    "tap": "Touche n'importe quelle tasse pour basculer.",
+    "escClose": "pour fermer",
+    "defaultsBanner": "Tasses par défaut — connecte-toi pour synchroniser tes tasses personnalisées.",
+    "premiumLabel": "Premium",
+    "ariaItem": "{label}",
+    "ariaPremium": "{label} (premium)",
+    "escPrefix": "Appuie sur",
+    "close": "Fermer"
+  },
+  "history": {
+    "title": "Historique de focus",
+    "noSessions": "Aucune session aujourd'hui"
+  },
+  "dashboard": "Tableau de bord",
+  "timeToday": {
+    "title": "Temps de focus aujourd'hui",
+    "goal": "Objectif !",
+    "goalSuffix": "/ objectif de {hours} h",
+    "percent": "{percent}% de l'objectif quotidien",
+    "timeLeft": "{minutes} min restantes"
+  },
+  "scratchpad": {
+    "title": "Notes de session",
+    "placeholder": "Note quelque chose…"
+  }
+}

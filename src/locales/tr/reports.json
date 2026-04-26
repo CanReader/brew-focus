@@ -1,0 +1,100 @@
+{
+  "title": "Raporlar",
+  "subtitle": "Odak yolculuğun bir bakışta",
+  "exportCsv": "CSV olarak dışa aktar",
+  "noData": "Henüz veri yok",
+  "noTask": "Görev yok",
+  "ranges": {
+    "daily": "Günlük",
+    "weekly": "Haftalık",
+    "monthly": "Aylık",
+    "yearly": "Yıllık"
+  },
+  "cards": {
+    "totalFocusTime": "Toplam Odak Süresi",
+    "thisWeek": "Bu Hafta",
+    "today": "Bugün",
+    "totalTasksDone": "Tamamlanan Görevler",
+    "doneThisWeek": "Bu Hafta Yapılan",
+    "doneToday": "Bugün Yapılan"
+  },
+  "records": {
+    "currentStreak": "Mevcut Seri",
+    "longestStreak": "En Uzun Seri",
+    "bestDayEver": "En İyi Gün",
+    "avgSession": "Ort. Seans",
+    "days": "gün"
+  },
+  "sections": {
+    "bestFocusHours": "En Verimli Saatler",
+    "focusVsBreakRatio": "Odak/Mola Oranı",
+    "pomodoroHeatmap": "Pomodoro Isı Haritası",
+    "projectBreakdown": "Proje Dağılımı",
+    "focusTime": "Odak Süresi",
+    "focusGoalCalendar": "Odak Hedefi Takvimi",
+    "taskCompletionRate": "Görev Tamamlama Oranı",
+    "perTaskHistory": "Görev Bazında Geçmiş",
+    "energyLog": "Enerji Günlüğü",
+    "focusTimeChart": "Odak Süresi Grafiği",
+    "taskCompletions": "Görev Tamamlamaları"
+  },
+  "ratio": {
+    "focus": "Odak",
+    "breaks": "Molalar",
+    "yourRatioIs": "Oranın",
+    "ideal": "(ideal: 4:1)"
+  },
+  "focusHours": {
+    "peak": "Tepe:",
+    "totalSuffix": "({minutes}dk toplam)"
+  },
+  "calendar": {
+    "goalSuffix": "{hours}sa hedef",
+    "focusDays": "Odak Günleri",
+    "goalDays": "Hedef Günleri",
+    "goalRate": "Hedef Oranı",
+    "weekdays": {
+      "mo": "Pt",
+      "tu": "Sa",
+      "we": "Ça",
+      "th": "Pe",
+      "fr": "Cu",
+      "sa": "Ct",
+      "su": "Pz"
+    }
+  },
+  "completion": {
+    "overall": "Genel"
+  },
+  "charts": {
+    "top": "En yüksek:",
+    "avg": "Ort.:",
+    "now": "Şimdi",
+    "tasks": "{count} görev"
+  },
+  "mood": {
+    "ratings": "{count} değerlendirme"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} seans daha"
+  },
+  "tooltip": {
+    "yesterday": "Dün"
+  },
+  "mobile": {
+    "rangeWeek": "Hafta",
+    "rangeMonth": "Ay",
+    "rangeLabelWeek": "bu hafta",
+    "rangeLabelMonth": "son 4 hafta",
+    "heroLabel": "ODAK SÜRESİ · {range}",
+    "todaySummary": "Bugün: {time} · Hedefin %{pct}'i ({goal}s)",
+    "tileSessions": "Seans",
+    "tileTasksDone": "Tamamlanan görev",
+    "tileDayStreak": "Gün serisi",
+    "chartFocusByDay": "Güne göre odak",
+    "chartFocusByWeek": "Haftaya göre odak",
+    "chartEmpty": "Henüz odak seansı yok",
+    "topTasks": "En çok yapılan görevler",
+    "untitled": "Başlıksız"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "title": "Звіти",
+  "subtitle": "Твій шлях концентрації — на одному екрані",
+  "exportCsv": "Експорт CSV",
+  "noData": "Поки даних немає",
+  "noTask": "Без задачі",
+  "ranges": {
+    "daily": "День",
+    "weekly": "Тиждень",
+    "monthly": "Місяць",
+    "yearly": "Рік"
+  },
+  "cards": {
+    "totalFocusTime": "Загальний час концентрації",
+    "thisWeek": "Цей тиждень",
+    "today": "Сьогодні",
+    "totalTasksDone": "Усього задач виконано",
+    "doneThisWeek": "Виконано цього тижня",
+    "doneToday": "Виконано сьогодні"
+  },
+  "records": {
+    "currentStreak": "Поточна серія",
+    "longestStreak": "Найдовша серія",
+    "bestDayEver": "Найкращий день",
+    "avgSession": "Середня сесія",
+    "days": "днів"
+  },
+  "sections": {
+    "bestFocusHours": "Найкращі години концентрації",
+    "focusVsBreakRatio": "Співвідношення фокус/перерва",
+    "pomodoroHeatmap": "Теплова карта помідорів",
+    "projectBreakdown": "Розподіл за проєктами",
+    "focusTime": "Час концентрації",
+    "focusGoalCalendar": "Календар цілі концентрації",
+    "taskCompletionRate": "Рівень виконання задач",
+    "perTaskHistory": "Історія по задачах",
+    "energyLog": "Журнал енергії",
+    "focusTimeChart": "Графік часу концентрації",
+    "taskCompletions": "Виконані задачі"
+  },
+  "ratio": {
+    "focus": "Фокус",
+    "breaks": "Перерви",
+    "yourRatioIs": "Твоє співвідношення",
+    "ideal": "(ідеал: 4:1)"
+  },
+  "focusHours": {
+    "peak": "Пік:",
+    "totalSuffix": "({minutes} хв загалом)"
+  },
+  "calendar": {
+    "goalSuffix": "Ціль {hours} год",
+    "focusDays": "Дні фокусу",
+    "goalDays": "Дні цілі",
+    "goalRate": "Відсоток цілі",
+    "weekdays": {
+      "mo": "Пн",
+      "tu": "Вт",
+      "we": "Ср",
+      "th": "Чт",
+      "fr": "Пт",
+      "sa": "Сб",
+      "su": "Нд"
+    }
+  },
+  "completion": {
+    "overall": "Загалом"
+  },
+  "charts": {
+    "top": "Макс.:",
+    "avg": "Сер.:",
+    "now": "Зараз",
+    "tasks": "{count} задач"
+  },
+  "mood": {
+    "ratings": "{count} оцінок"
+  },
+  "taskHistory": {
+    "moreSessions": "+{count} сесій ще"
+  },
+  "tooltip": {
+    "yesterday": "Учора"
+  },
+  "mobile": {
+    "rangeWeek": "Тиждень",
+    "rangeMonth": "Місяць",
+    "rangeLabelWeek": "цього тижня",
+    "rangeLabelMonth": "останні 4 тижні",
+    "heroLabel": "ЧАС ФОКУСУ · {range}",
+    "todaySummary": "Сьогодні: {time} · {pct}% від цілі {goal} год",
+    "tileSessions": "Сесії",
+    "tileTasksDone": "Завдань виконано",
+    "tileDayStreak": "Серія днів",
+    "chartFocusByDay": "Фокус по днях",
+    "chartFocusByWeek": "Фокус по тижнях",
+    "chartEmpty": "Ще немає сесій фокусу",
+    "topTasks": "Топ завдань",
+    "untitled": "Без назви"
+  }
+}
