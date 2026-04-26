@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Music, Image, Play, Plus, Upload, Waves } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
@@ -16,14 +17,15 @@ type Tab = 'sounds' | 'noise' | 'background';
 
 type SoundEventKey = 'sessionStartSound' | 'breakStartSound' | 'sessionCompleteSound' | 'breakCompleteSound';
 
-const SOUND_EVENTS: { key: SoundEventKey; label: string; description: string }[] = [
-  { key: 'sessionStartSound',    label: 'Session Start',    description: 'When a focus session begins' },
-  { key: 'breakStartSound',      label: 'Break Start',      description: 'When a break begins' },
-  { key: 'sessionCompleteSound', label: 'Session Complete', description: 'When a focus session ends' },
-  { key: 'breakCompleteSound',   label: 'Break Complete',   description: 'When a break ends' },
+const SOUND_EVENTS: { key: SoundEventKey; labelKey: string; descKey: string }[] = [
+  { key: 'sessionStartSound',    labelKey: 'sessionStart',    descKey: 'sessionStartDesc' },
+  { key: 'breakStartSound',      labelKey: 'breakStart',      descKey: 'breakStartDesc' },
+  { key: 'sessionCompleteSound', labelKey: 'sessionComplete', descKey: 'sessionCompleteDesc' },
+  { key: 'breakCompleteSound',   labelKey: 'breakComplete',   descKey: 'breakCompleteDesc' },
 ];
 
 export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
+  const { t } = useTranslation('focus');
   const { settings, updateSettings } = useSettingsStore();
   const [tab, setTab] = useState<Tab>('sounds');
   const bgFileRef = useRef<HTMLInputElement>(null);
@@ -102,8 +104,8 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
               style={{ borderBottom: '1px solid var(--brd)' }}
             >
               <div>
-                <h2 className="text-[14px] font-bold" style={{ color: 'var(--t)' }}>Customize</h2>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>Sounds & background for Focus screen</p>
+                <h2 className="text-[14px] font-bold" style={{ color: 'var(--t)' }}>{t('customize.title')}</h2>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>{t('customize.subtitle')}</p>
               </div>
               <button
                 onClick={onClose}
@@ -122,15 +124,15 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
               style={{ borderBottom: '1px solid var(--brd)' }}
             >
               {([
-                { key: 'sounds' as Tab,     label: 'Sounds',     icon: <Music size={13} /> },
-                { key: 'noise' as Tab,      label: 'Noise',      icon: <Waves size={13} /> },
-                { key: 'background' as Tab, label: 'Background', icon: <Image size={13} /> },
-              ]).map((t) => {
-                const isActive = tab === t.key;
+                { key: 'sounds' as Tab,     label: t('customize.tabs.sounds'),     icon: <Music size={13} /> },
+                { key: 'noise' as Tab,      label: t('customize.tabs.noise'),      icon: <Waves size={13} /> },
+                { key: 'background' as Tab, label: t('customize.tabs.background'), icon: <Image size={13} /> },
+              ]).map((tabDef) => {
+                const isActive = tab === tabDef.key;
                 return (
                   <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
+                    key={tabDef.key}
+                    onClick={() => setTab(tabDef.key)}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                     style={{
                       background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
@@ -140,8 +142,8 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                     onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--t2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; } }}
                     onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'transparent'; } }}
                   >
-                    {t.icon}
-                    {t.label}
+                    {tabDef.icon}
+                    {tabDef.label}
                   </button>
                 );
               })}
@@ -171,8 +173,8 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                           {/* Row header */}
                           <div className="flex items-start justify-between mb-2.5">
                             <div>
-                              <div className="text-[13px] font-semibold" style={{ color: 'var(--t)' }}>{event.label}</div>
-                              <div className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>{event.description}</div>
+                              <div className="text-[13px] font-semibold" style={{ color: 'var(--t)' }}>{t(`customize.soundEvents.${event.labelKey}`)}</div>
+                              <div className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>{t(`customize.soundEvents.${event.descKey}`)}</div>
                             </div>
                             {/* Upload button */}
                             <button
@@ -188,12 +190,12 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                                 e.currentTarget.style.color = currentId === 'custom' ? 'var(--t)' : 'var(--t3)';
                                 e.currentTarget.style.background = currentId === 'custom' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)';
                               }}
-                              title="Upload a sound file (MP3, WAV, OGG)"
+                              title={t('customize.uploadHint')}
                             >
                               <Upload size={10} />
                               {currentId === 'custom' && customFile
                                 ? <span className="max-w-[90px] truncate">{customFile.name}</span>
-                                : 'Upload'}
+                                : t('customize.upload')}
                             </button>
                             <input
                               ref={(el) => { soundFileRefs.current[event.key] = el; }}
@@ -247,7 +249,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                                 onMouseLeave={(e) => { if (currentId !== 'custom') { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; } }}
                               >
                                 <Play size={9} style={{ opacity: 0.6 }} />
-                                My File
+                                {t('customize.myFile')}
                               </button>
                             )}
                           </div>
@@ -266,7 +268,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
                     >
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[13px] font-semibold" style={{ color: 'var(--t)' }}>Noise Volume</span>
+                        <span className="text-[13px] font-semibold" style={{ color: 'var(--t)' }}>{t('customize.noiseVolume')}</span>
                         <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--t3)' }}>
                           {settings.noiseVolume ?? 50}%
                         </span>
@@ -285,7 +287,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                         style={{ accentColor: 'var(--accent)' }}
                       />
                       <p className="text-[11px] mt-2" style={{ color: 'var(--t3)' }}>
-                        Independent from notification sounds
+                        {t('customize.noiseVolumeDesc')}
                       </p>
                     </div>
 
@@ -332,7 +334,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                                 className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                                 style={{ background: 'var(--accent-d)', color: 'var(--accent)' }}
                               >
-                                ON
+                                {t('customize.noiseOn')}
                               </span>
                             )}
                           </button>
@@ -414,7 +416,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                           ) : (
                             <div className="flex flex-col items-center gap-1 opacity-40">
                               <Plus size={20} color="var(--t2)" />
-                              <span className="text-[10px]" style={{ color: 'var(--t3)' }}>Browse</span>
+                              <span className="text-[10px]" style={{ color: 'var(--t3)' }}>{t('customize.browse')}</span>
                             </div>
                           )}
                         </div>
@@ -424,7 +426,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                         >
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px]">🖼️</span>
-                            <span className="text-[11px] font-medium" style={{ color: 'var(--t2)' }}>Custom</span>
+                            <span className="text-[11px] font-medium" style={{ color: 'var(--t2)' }}>{t('customize.customLabel')}</span>
                           </div>
                           {settings.backgroundId === 'custom' && (
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
@@ -433,7 +435,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                       </button>
                     </div>
                     <p className="text-[11px] text-center" style={{ color: 'var(--t3)' }}>
-                      Click any image to apply · Custom supports JPG, PNG, WebP
+                      {t('customize.applyHint')}
                     </p>
                   </div>
                 )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Tag as TagIcon, Folder, Flag, AlertCircle, X } from 'lucide-react';
 import { ParsedTask, ParsedChip } from '../utils/quickCapture';
@@ -42,20 +43,20 @@ const chipIcon = (chip: ParsedChip) => {
   }
 };
 
-const chipLabel = (chip: ParsedChip): string => {
-  switch (chip.kind) {
-    case 'date': return chip.label;
-    case 'type': return chip.value;
-    case 'project': return chip.name;
-    case 'project-new': return `${chip.name} (new)`;
-    case 'priority': return chip.value.toUpperCase();
-    case 'pomodoros': return `${chip.value} pomos`;
-  }
-};
-
 export const QuickCapturePreview: React.FC<Props> = ({
   parsed, rawText, onRemoveToken, onApplySuggestion, onCreateProject, showLegend,
 }) => {
+  const { t } = useTranslation('tasks');
+  const chipLabel = (chip: ParsedChip): string => {
+    switch (chip.kind) {
+      case 'date': return chip.label;
+      case 'type': return chip.value;
+      case 'project': return chip.name;
+      case 'project-new': return t('quickCapture.newSuffix', { name: chip.name });
+      case 'priority': return chip.value.toUpperCase();
+      case 'pomodoros': return t('quickCapture.pomos', { count: chip.value });
+    }
+  };
   const hasContent = parsed.chips.length > 0 || parsed.unknownTokens.length > 0;
   const hasNewProject = parsed.chips.some((c) => c.kind === 'project-new');
 
@@ -102,7 +103,7 @@ export const QuickCapturePreview: React.FC<Props> = ({
                     className="ml-0.5 px-1 py-0.5 rounded text-[9.5px] font-semibold transition-colors"
                     style={{ background: 'var(--card-h)', color: 'var(--grn)' }}
                   >
-                    Create
+                    {t('quickCapture.create')}
                   </button>
                 )}
                 <button
@@ -130,7 +131,7 @@ export const QuickCapturePreview: React.FC<Props> = ({
                 color: 'var(--amb)',
                 height: 22,
               }}
-              title={u.suggestion ? `Did you mean ${u.suggestion}?` : 'Unknown token'}
+              title={u.suggestion ? t('quickCapture.didYouMean', { suggestion: u.suggestion }) : t('quickCapture.unknownToken')}
             >
               <AlertCircle size={9} />
               {u.token}
@@ -149,7 +150,7 @@ export const QuickCapturePreview: React.FC<Props> = ({
 
         {hasNewProject && (
           <div className="px-3 pb-1 text-[10.5px]" style={{ color: 'var(--t3)' }}>
-            Tip: click <span style={{ color: 'var(--grn)' }}>Create</span> on the project chip to make it real before saving.
+            {t('quickCapture.tipBefore')}<span style={{ color: 'var(--grn)' }}>{t('quickCapture.create')}</span>{t('quickCapture.tipAfter')}
           </div>
         )}
       </motion.div>
@@ -157,12 +158,15 @@ export const QuickCapturePreview: React.FC<Props> = ({
   );
 };
 
-export const QuickCaptureLegend: React.FC = () => (
-  <div className="flex items-center gap-3 px-3 pt-1 text-[10px]" style={{ color: 'var(--t3)' }}>
-    <span><span style={{ color: 'var(--accent)' }}>!</span>date</span>
-    <span><span style={{ color: 'var(--blu)' }}>#</span>type</span>
-    <span><span style={{ color: 'var(--grn)' }}>@</span>project</span>
-    <span><span style={{ color: 'var(--amb)' }}>+</span>p1</span>
-    <span><span style={{ color: 'var(--blu)' }}>*</span>3</span>
-  </div>
-);
+export const QuickCaptureLegend: React.FC = () => {
+  const { t } = useTranslation('tasks');
+  return (
+    <div className="flex items-center gap-3 px-3 pt-1 text-[10px]" style={{ color: 'var(--t3)' }}>
+      <span><span style={{ color: 'var(--accent)' }}>!</span>{t('quickCapture.legendDate')}</span>
+      <span><span style={{ color: 'var(--blu)' }}>#</span>{t('quickCapture.legendType')}</span>
+      <span><span style={{ color: 'var(--grn)' }}>@</span>{t('quickCapture.legendProject')}</span>
+      <span><span style={{ color: 'var(--amb)' }}>+</span>p1</span>
+      <span><span style={{ color: 'var(--blu)' }}>*</span>3</span>
+    </div>
+  );
+};

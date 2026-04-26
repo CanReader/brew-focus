@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Trash2, ChevronRight, Minus, Plus, Flag } from 'lucide-react';
@@ -14,11 +15,11 @@ interface TaskContextMenuProps {
   onDelete: () => void;
 }
 
-const PRIORITIES: { value: Priority; label: string; color: string }[] = [
-  { value: 'p4', label: 'None', color: '#55556a' },
-  { value: 'p3', label: 'P3', color: '#5b8dee' },
-  { value: 'p2', label: 'P2', color: '#f5a623' },
-  { value: 'p1', label: 'P1', color: '#ff4d4d' },
+const PRIORITIES: { value: Priority; color: string }[] = [
+  { value: 'p4', color: '#55556a' },
+  { value: 'p3', color: '#5b8dee' },
+  { value: 'p2', color: '#f5a623' },
+  { value: 'p1', color: '#ff4d4d' },
 ];
 
 export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
@@ -29,6 +30,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const { t } = useTranslation('tasks');
   const ref = useRef<HTMLDivElement>(null);
   const { settings } = useSettingsStore();
 
@@ -87,7 +89,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       {/* Estimated Pomodoros */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--brd)' }}>
         <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--t3)' }}>
-          ESTIMATED POMODOROS
+          {t('contextMenu.estimatedPomodoros')}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -122,11 +124,11 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       {/* Custom Timer */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--brd)' }}>
         <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--t3)' }}>
-          CUSTOM TIMER (MIN)
+          {t('contextMenu.customTimer')}
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Work</div>
+            <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>{t('contextMenu.work')}</div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onUpdate({ customWorkDuration: Math.max(1, (workDur ?? settings.workDuration) - 1) })}
@@ -144,7 +146,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
             </div>
           </div>
           <div className="flex-1">
-            <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>Break</div>
+            <div className="text-[10px] mb-1" style={{ color: 'var(--t3)' }}>{t('contextMenu.break')}</div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onUpdate({ customShortBreakDuration: Math.max(1, (shortDur ?? settings.shortBreakDuration) - 1) })}
@@ -166,7 +168,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
               onClick={() => onUpdate({ customWorkDuration: undefined, customShortBreakDuration: undefined })}
               className="text-[10px] self-end mb-1"
               style={{ color: 'var(--t3)' }}
-            >reset</button>
+            >{t('contextMenu.reset')}</button>
           )}
         </div>
       </div>
@@ -176,7 +178,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
         {(['today', 'tomorrow', 'someday'] as DueDate[]).map((due) => (
           <MenuItem
             key={due}
-            label={due === 'today' ? 'Due Today' : due === 'tomorrow' ? 'Due Tomorrow' : 'Someday'}
+            label={due === 'today' ? t('contextMenu.dueToday') : due === 'tomorrow' ? t('contextMenu.dueTomorrow') : t('contextMenu.someday')}
             active={task.dueDate === due}
             onClick={() => onUpdate({ dueDate: task.dueDate === due ? null : due })}
           />
@@ -185,15 +187,16 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
 
       {/* Priority */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--brd)' }}>
-        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--t3)' }}>PRIORITY</div>
+        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--t3)' }}>{t('contextMenu.priority')}</div>
         <div className="flex items-center gap-2">
           {PRIORITIES.map((p) => {
             const isSelected = task.priority === p.value;
+            const priorityLabel = p.value === 'p4' ? t('commandPalette.none') : p.value.toUpperCase();
             return (
               <button
                 key={p.value}
                 onClick={() => onUpdate({ priority: p.value })}
-                title={p.label}
+                title={priorityLabel}
                 className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
                 style={{
                   background: isSelected ? p.color + '25' : 'var(--brd)',
@@ -214,7 +217,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
             className="flex items-center justify-between px-3 py-2"
             style={{ color: 'var(--t2)' }}
           >
-            <span className="text-[13px]">Move to Project</span>
+            <span className="text-[13px]">{t('contextMenu.moveToProject')}</span>
             <ChevronRight size={13} style={{ color: 'var(--t3)' }} />
           </div>
           {projects.map((proj) => (
@@ -243,7 +246,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Trash2 size={13} />
-          <span className="text-[13px]">Delete Task</span>
+          <span className="text-[13px]">{t('contextMenu.deleteTask')}</span>
         </button>
       </div>
     </motion.div>

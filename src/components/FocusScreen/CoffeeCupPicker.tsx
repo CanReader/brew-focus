@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Lock } from 'lucide-react';
 import { CoffeeCup } from './CoffeeCup';
@@ -14,6 +15,7 @@ interface Props {
 const SKELETON_KEYS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
 export const CoffeeCupPicker: React.FC<Props> = ({ open, onClose }) => {
+  const { t } = useTranslation('focus');
   const { settings, updateSettings } = useSettingsStore();
   const { catalog, isLoaded, isFromFallback } = useCoffeeCupCatalogStore();
   const current = settings.coffeeCupVariant ?? 'classic';
@@ -83,10 +85,10 @@ export const CoffeeCupPicker: React.FC<Props> = ({ open, onClose }) => {
                     letterSpacing: '-0.5px',
                   }}
                 >
-                  Pick your cup
+                  {t('cupPicker.title')}
                 </h2>
                 <p className="text-[12px] mt-1 max-w-[460px]" style={{ color: 'var(--t3)' }}>
-                  Add new cups by uploading to your Storage bucket — they appear here automatically.
+                  {t('cupPicker.subtitle')}
                 </p>
               </div>
               <button
@@ -95,7 +97,7 @@ export const CoffeeCupPicker: React.FC<Props> = ({ open, onClose }) => {
                 style={{ color: 'var(--t3)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-                aria-label="Close"
+                aria-label={t('cupPicker.close')}
               >
                 <X size={16} />
               </button>
@@ -129,7 +131,7 @@ export const CoffeeCupPicker: React.FC<Props> = ({ open, onClose }) => {
                   className="inline-block w-1.5 h-1.5 rounded-full"
                   style={{ background: 'var(--t3)' }}
                 />
-                Defaults — sign in to sync your custom cups.
+                {t('cupPicker.defaultsBanner')}
               </div>
             )}
 
@@ -138,11 +140,11 @@ export const CoffeeCupPicker: React.FC<Props> = ({ open, onClose }) => {
               className="px-7 py-3 flex items-center justify-between text-[11px]"
               style={{ borderTop: '1px solid var(--brd)', color: 'var(--t3)', background: 'rgba(0,0,0,0.18)' }}
             >
-              <span>Tap any cup to switch.</span>
+              <span>{t('cupPicker.tap')}</span>
               <span>
-                Press{' '}
+                {t('cupPicker.escPrefix')}{' '}
                 <kbd className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: 'var(--card-h)' }}>Esc</kbd>{' '}
-                to close
+                {t('cupPicker.escClose')}
               </span>
             </div>
           </motion.div>
@@ -161,6 +163,7 @@ interface TileProps {
 }
 
 const CupTile: React.FC<TileProps> = ({ variant, selected, onPick }) => {
+  const { t } = useTranslation('focus');
   return (
     <motion.button
       onClick={onPick}
@@ -177,7 +180,9 @@ const CupTile: React.FC<TileProps> = ({ variant, selected, onPick }) => {
         transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
       }}
       aria-pressed={selected}
-      aria-label={`${variant.label}${variant.isPremium ? ' (premium)' : ''}`}
+      aria-label={variant.isPremium
+        ? t('cupPicker.ariaPremium', { label: variant.label })
+        : t('cupPicker.ariaItem', { label: variant.label })}
     >
       {selected && (
         <span
@@ -195,7 +200,7 @@ const CupTile: React.FC<TileProps> = ({ variant, selected, onPick }) => {
             border: '1px solid var(--brd2)',
             color: 'var(--t2)',
           }}
-          title="Premium"
+          title={t('cupPicker.premiumLabel')}
         >
           <Lock size={10} strokeWidth={2.5} />
         </span>

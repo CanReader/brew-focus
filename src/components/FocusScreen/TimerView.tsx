@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipForward, Minimize2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
@@ -9,12 +10,6 @@ import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
 import { TimerPhase } from '../../types';
 import { getBackground } from '../../utils/backgrounds';
-
-const phaseLabels: Record<TimerPhase, string> = {
-  work: 'Focus',
-  shortBreak: 'Short Break',
-  longBreak: 'Long Break',
-};
 
 const phaseColors: Record<TimerPhase, string> = {
   work: 'var(--accent)',
@@ -27,6 +22,12 @@ interface TimerViewProps {
 }
 
 export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
+  const { t } = useTranslation('focus');
+  const phaseLabels: Record<TimerPhase, string> = {
+    work: t('phase.work'),
+    shortBreak: t('phase.shortBreak'),
+    longBreak: t('phase.longBreak'),
+  };
   const { isRunning, phase, sessionCount, start, pause, skip, secondsLeft } = useTimerStore();
   const { settings } = useSettingsStore();
 

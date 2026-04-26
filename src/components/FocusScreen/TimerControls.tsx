@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipForward, RotateCcw, Maximize2, PictureInPicture2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -53,10 +54,11 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
   onFullscreen,
   onWidget,
 }) => {
+  const { t } = useTranslation('focus');
   return (
     <div className="flex items-center gap-3">
       {/* Reset */}
-      <GlassIconButton onClick={onReset} title="Reset">
+      <GlassIconButton onClick={onReset} title={t('controls.reset')}>
         <RotateCcw size={16} />
       </GlassIconButton>
 
@@ -95,7 +97,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
       </motion.button>
 
       {/* Skip */}
-      <GlassIconButton onClick={onSkip} title="Skip">
+      <GlassIconButton onClick={onSkip} title={t('controls.skip')}>
         <SkipForward size={16} />
       </GlassIconButton>
 
@@ -106,12 +108,12 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
       />
 
       {/* Fullscreen */}
-      <GlassIconButton onClick={onFullscreen} title="Fullscreen">
+      <GlassIconButton onClick={onFullscreen} title={t('controls.fullscreen')}>
         <Maximize2 size={14} />
       </GlassIconButton>
 
       {/* Widget / PiP */}
-      <GlassIconButton onClick={onWidget} title="Widget mode">
+      <GlassIconButton onClick={onWidget} title={t('controls.widget')}>
         <PictureInPicture2 size={14} />
       </GlassIconButton>
     </div>

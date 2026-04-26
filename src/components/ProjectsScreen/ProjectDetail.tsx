@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Play, MoreHorizontal, Edit3, Archive, Trash2, ExternalLink,
@@ -34,10 +35,15 @@ interface Props {
   onSwitchToFocus: () => void;
 }
 
-const STATUS_PILL: Record<ProjectStatus, { label: string; color: string }> = {
-  active:    { label: 'Active',  color: 'var(--grn)' },
-  on_hold:   { label: 'On Hold', color: 'var(--amb)' },
-  completed: { label: 'Done',    color: 'var(--t3)' },
+const STATUS_PILL_COLORS: Record<ProjectStatus, string> = {
+  active:    'var(--grn)',
+  on_hold:   'var(--amb)',
+  completed: 'var(--t3)',
+};
+const STATUS_PILL_KEY: Record<ProjectStatus, 'statusActive' | 'statusOnHold' | 'statusDone'> = {
+  active:    'statusActive',
+  on_hold:   'statusOnHold',
+  completed: 'statusDone',
 };
 
 function parseLocalDateInput(val: string): number | undefined {
@@ -116,6 +122,7 @@ function WeeklyFocusTile({
   accent: string;
   onChangeGoal: (hrs: number | undefined) => void;
 }) {
+  const { t } = useTranslation('projects');
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(goalHrs ? String(goalHrs) : '');
   const goalSec = (goalHrs ?? 0) * 3600;
@@ -142,13 +149,13 @@ function WeeklyFocusTile({
       <div className="flex items-center gap-1.5">
         <Clock size={11} style={{ color: met ? 'var(--grn)' : 'var(--accent)' }} />
         <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-          This Week
+          {t('detail.tileThisWeek')}
         </span>
         <button
           onClick={() => { setDraft(goalHrs ? String(goalHrs) : ''); setEditing(true); }}
           className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ color: 'var(--t3)' }}
-          title="Set weekly focus goal"
+          title={t('detail.weeklyGoalEdit')}
         >
           <Edit3 size={10} />
         </button>
@@ -161,11 +168,11 @@ function WeeklyFocusTile({
             onChange={(e) => setDraft(e.target.value)}
             onBlur={submit}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setEditing(false); }}
-            placeholder="5"
+            placeholder={t('detail.weeklyGoalInputPlaceholder')}
             className="font-fraunces text-[22px] leading-none tabular-nums bg-transparent focus:outline-none w-12"
             style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}
           />
-          <span className="text-[12px]" style={{ color: 'var(--t3)' }}>h / week</span>
+          <span className="text-[12px]" style={{ color: 'var(--t3)' }}>{t('detail.weeklyHourSuffix')}</span>
         </div>
       ) : (
         <span
@@ -181,9 +188,9 @@ function WeeklyFocusTile({
       <span className="text-[10.5px]" style={{ color: 'var(--t3)' }}>
         {goalHrs
           ? met
-            ? 'Goal met'
-            : `${formatHrs(remaining)} to go`
-          : 'No goal — click pencil to set one'}
+            ? t('detail.goalMet')
+            : t('detail.goalRemaining', { remaining: formatHrs(remaining) })
+          : t('detail.noGoalHint')}
       </span>
       {goalHrs && (
         <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: 'var(--brd)' }}>
@@ -213,6 +220,7 @@ function MilestoneCard({
   isFiltered: boolean;
   onFilter: () => void;
 }) {
+  const { t } = useTranslation('projects');
   const pct = milestoneTaskStats.total === 0 ? (milestone.completed ? 1 : 0) : milestoneTaskStats.done / milestoneTaskStats.total;
   const overdue = milestone.targetDate && milestone.targetDate < Date.now() && !milestone.completed;
 
@@ -279,9 +287,9 @@ function MilestoneCard({
 
       <div className="flex items-center justify-between text-[10.5px]" style={{ color: 'var(--t3)' }}>
         {milestoneTaskStats.total > 0 ? (
-          <span className="tabular-nums">{milestoneTaskStats.done}/{milestoneTaskStats.total} tasks</span>
+          <span className="tabular-nums">{t('detail.milestoneTaskCount', { done: milestoneTaskStats.done, total: milestoneTaskStats.total })}</span>
         ) : (
-          <span>No tasks yet</span>
+          <span>{t('detail.milestoneNoTasks')}</span>
         )}
         {milestone.targetDate && (
           <span className="tabular-nums" style={{ color: overdue ? 'var(--accent)' : 'var(--t3)' }}>
@@ -298,19 +306,19 @@ function MilestoneCard({
 type DueFilter = 'overdue' | 'today' | 'week' | 'none';
 type SortBy = 'manual' | 'priority' | 'due' | 'created' | 'alpha';
 
-const DUE_FILTER_LABEL: Record<DueFilter, string> = {
-  overdue: 'Overdue',
-  today: 'Due today',
-  week: 'Due this week',
-  none: 'No due date',
+const DUE_FILTER_KEY: Record<DueFilter, string> = {
+  overdue: 'detail.dueOverdue',
+  today: 'detail.dueTodayLabel',
+  week: 'detail.dueWeek',
+  none: 'detail.dueNoneLabel',
 };
 
-const SORT_LABEL: Record<SortBy, string> = {
-  manual: 'Manual',
-  priority: 'Priority',
-  due: 'Due date',
-  created: 'Newest',
-  alpha: 'A → Z',
+const SORT_KEY: Record<SortBy, string> = {
+  manual: 'detail.sortManual',
+  priority: 'detail.sortPriority',
+  due: 'detail.sortDueDate',
+  created: 'detail.sortNewest',
+  alpha: 'detail.sortAlpha',
 };
 
 const PRIORITY_RANK: Record<Priority, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
@@ -499,6 +507,7 @@ function sortTasks(tasks: Task[], by: SortBy): Task[] {
 // ── Main detail page ────────────────────────────────────────────────────────
 
 export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocus }) => {
+  const { t } = useTranslation('projects');
   const {
     tasks, projects, updateProject, deleteProject, archiveProject,
     addMilestone, toggleMilestone, deleteMilestone,
@@ -681,8 +690,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     setSelectedTaskIds(new Set());
   };
   const bulkDelete = async () => {
-    if (!confirm(`Delete ${selectedTasksArr.length} task${selectedTasksArr.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
-    await Promise.all(selectedTasksArr.map((t) => deleteTask(t.id)));
+    if (!confirm(t('detail.bulkDeleteConfirm', { count: selectedTasksArr.length }))) return;
+    await Promise.all(selectedTasksArr.map((task) => deleteTask(task.id)));
     setSelectedTaskIds(new Set());
     setBulkPopover(null);
   };
@@ -721,7 +730,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Delete project "${project.name}"? Tasks will lose their project tag but remain.`)) return;
+    if (!confirm(t('detail.deleteProjectConfirmAlt', { name: project.name }))) return;
     await deleteProject(project.id);
     onBack();
   };
@@ -759,7 +768,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     setLinkLabel(''); setLinkUrl(''); setShowLinkForm(false);
   };
 
-  const pill = STATUS_PILL[project.status];
+  const pillColor = STATUS_PILL_COLORS[project.status];
+  const pillLabel = t(`detail.${STATUS_PILL_KEY[project.status]}`);
   const overdue = dToDeadline !== null && dToDeadline < 0;
 
   return (
@@ -785,7 +795,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
             >
               <ArrowLeft size={12} />
-              All Projects
+              {t('detail.allProjects')}
             </button>
 
             <div className="flex items-center gap-2">
@@ -803,7 +813,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 }}
               >
                 <Play size={11} fill="currentColor" />
-                Start Focus
+                {t('detail.startFocus')}
               </button>
 
               {/* Overflow */}
@@ -838,12 +848,12 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                           key={s}
                           onClick={() => { updateProject(project.id, { status: s }); setOverflowOpen(false); }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left transition-colors"
-                          style={{ color: project.status === s ? STATUS_PILL[s].color : 'var(--t2)', background: project.status === s ? 'var(--card-h)' : 'transparent' }}
+                          style={{ color: project.status === s ? STATUS_PILL_COLORS[s] : 'var(--t2)', background: project.status === s ? 'var(--card-h)' : 'transparent' }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = project.status === s ? 'var(--card-h)' : 'transparent')}
                         >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_PILL[s].color }} />
-                          Mark {STATUS_PILL[s].label}
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_PILL_COLORS[s] }} />
+                          {t('detail.markStatus', { label: t(`detail.${STATUS_PILL_KEY[s]}`) })}
                         </button>
                       ))}
                       <div className="h-px mx-2 my-1" style={{ background: 'var(--brd)' }} />
@@ -855,7 +865,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <Archive size={11} />
-                        {project.archived ? 'Unarchive' : 'Archive'}
+                        {project.archived ? t('detail.unarchive') : t('detail.archive')}
                       </button>
                       <button
                         onClick={handleDelete}
@@ -865,7 +875,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <Trash2 size={11} />
-                        Delete project
+                        {t('detail.deleteProject')}
                       </button>
                     </motion.div>
                   )}
@@ -929,10 +939,10 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span
                   className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium uppercase tracking-wider"
-                  style={{ color: pill.color, background: pill.color + '18', border: `1px solid ${pill.color}40` }}
+                  style={{ color: pillColor, background: pillColor + '18', border: `1px solid ${pillColor}40` }}
                 >
-                  <span className="w-1 h-1 rounded-full" style={{ background: pill.color }} />
-                  {pill.label}
+                  <span className="w-1 h-1 rounded-full" style={{ background: pillColor }} />
+                  {pillLabel}
                 </span>
 
                 {project.archived && (
@@ -941,7 +951,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     style={{ color: 'var(--t3)', background: 'var(--card-h)', border: '1px solid var(--brd)' }}
                   >
                     <Archive size={9} />
-                    Archived
+                    {t('detail.archivedTag')}
                   </span>
                 )}
 
@@ -966,7 +976,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   onChange={(e) => setEditDesc(e.target.value)}
                   onBlur={() => { updateProject(project.id, { description: editDesc }); setEditingDesc(false); }}
                   onKeyDown={(e) => { if (e.key === 'Escape') { setEditDesc(project.description); setEditingDesc(false); } }}
-                  placeholder="One-liner about this project…"
+                  placeholder={t('detail.descTextarea')}
                   className="mt-2 w-full text-[12px] bg-transparent resize-none focus:outline-none"
                   style={{ color: 'var(--t2)' }}
                 />
@@ -976,7 +986,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   style={{ color: project.description ? 'var(--t2)' : 'var(--t3)' }}
                   onClick={() => { setEditDesc(project.description); setEditingDesc(true); }}
                 >
-                  {project.description || 'Add a one-line description…'}
+                  {project.description || t('detail.addDescription')}
                 </p>
               )}
             </div>
@@ -995,27 +1005,27 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
             />
             <StatTile
               icon={<Clock size={11} />}
-              label="Total Focus"
+              label={t('detail.totalFocus')}
               value={formatHrs(totalFocus)}
               accent={project.color}
             />
             <StatTile
               icon={<ListTodo size={11} />}
-              label="Tasks"
+              label={t('detail.tileTasks')}
               value={`${doneCount}/${allProjectTasks.length}`}
               accent="var(--grn)"
             />
             <StatTile
               icon={<Calendar size={11} />}
-              label="Deadline"
+              label={t('detail.tileDeadline')}
               value={
                 dToDeadline === null
                   ? '—'
                   : overdue
-                    ? `${Math.abs(dToDeadline)}d over`
+                    ? t('detail.deadlineOver', { days: Math.abs(dToDeadline) })
                     : dToDeadline === 0
-                      ? 'Today'
-                      : `${dToDeadline}d`
+                      ? t('detail.deadlineToday')
+                      : t('detail.deadlineDays', { days: dToDeadline })
               }
               accent={overdue ? 'var(--accent)' : 'var(--blu)'}
             />
@@ -1029,7 +1039,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
             >
               {showLinks ? <ChevronDown size={11} style={{ color: 'var(--t3)' }} /> : <ChevronRight size={11} style={{ color: 'var(--t3)' }} />}
               <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-                Links
+                {t('detail.linksLabel')}
               </span>
               <span className="text-[10.5px]" style={{ color: 'var(--t3)' }}>
                 {project.links.length}
@@ -1069,21 +1079,21 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     <LinkIcon size={10} style={{ color: project.color }} />
                     <input
                       autoFocus
-                      placeholder="Label"
+                      placeholder={t('detail.linkLabelPlaceholder')}
                       value={linkLabel}
                       onChange={(e) => setLinkLabel(e.target.value)}
                       className="text-[11.5px] bg-transparent focus:outline-none"
                       style={{ color: 'var(--t)', width: 70 }}
                     />
                     <input
-                      placeholder="https://…"
+                      placeholder={t('detail.linkUrlPlaceholder')}
                       value={linkUrl}
                       onChange={(e) => setLinkUrl(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') submitLink(); if (e.key === 'Escape') { setShowLinkForm(false); setLinkLabel(''); setLinkUrl(''); } }}
                       className="text-[11.5px] bg-transparent focus:outline-none"
                       style={{ color: 'var(--t2)', width: 140 }}
                     />
-                    <button onClick={submitLink} style={{ color: 'var(--grn)' }} className="text-[11px]">Add</button>
+                    <button onClick={submitLink} style={{ color: 'var(--grn)' }} className="text-[11px]">{t('detail.linkAddBtn')}</button>
                   </div>
                 ) : (
                   <button
@@ -1098,7 +1108,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--brd2)'; e.currentTarget.style.color = 'var(--t3)'; }}
                   >
                     <Plus size={10} />
-                    Add link
+                    {t('detail.addLink')}
                   </button>
                 )}
               </div>
@@ -1110,7 +1120,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-                  Milestones
+                  {t('detail.milestonesLabel')}
                 </span>
                 {project.milestones.length > 0 && (
                   <span className="text-[10.5px] tabular-nums" style={{ color: 'var(--t3)' }}>
@@ -1123,7 +1133,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px]"
                     style={{ background: project.color + '20', color: project.color }}
                   >
-                    Clear filter
+                    {t('detail.clearFilter')}
                     <X size={9} />
                   </button>
                 )}
@@ -1172,7 +1182,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       setNewMilestone(''); setNewMilestoneDate('');
                     }
                   }}
-                  placeholder="+ New milestone…"
+                  placeholder={t('detail.newMilestoneShort')}
                   className="text-[12px] bg-transparent focus:outline-none"
                   style={{ color: 'var(--t3)' }}
                 />
@@ -1197,7 +1207,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               {showActivity ? <ChevronDown size={11} style={{ color: 'var(--t3)' }} /> : <ChevronRight size={11} style={{ color: 'var(--t3)' }} />}
               <Activity size={11} style={{ color: 'var(--t3)' }} />
               <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-                Activity
+                {t('detail.activity')}
               </span>
             </button>
             {showActivity && (
@@ -1213,13 +1223,13 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-                Tasks
+                {t('detail.tasksHeader')}
               </span>
               <span className="text-[10.5px] tabular-nums" style={{ color: 'var(--t3)' }}>
                 {view === 'list' && filtersActive
-                  ? `${projectTasksListFiltered.length} of ${projectTasksMilestoneFiltered.length}`
+                  ? t('detail.countOfTotal', { count: projectTasksListFiltered.length, total: projectTasksMilestoneFiltered.length })
                   : `${projectTasksMilestoneFiltered.length}`}
-                {milestoneFilter && ` (filtered)`}
+                {milestoneFilter && ` ${t('detail.filteredParen')}`}
               </span>
               {view === 'list' && projectTasksMilestoneFiltered.length > 0 && (
                 <button
@@ -1235,7 +1245,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   }}
                 >
                   <CheckSquare size={10} />
-                  {selectionMode ? 'Done' : 'Select'}
+                  {selectionMode ? t('detail.doneBtn') : t('detail.selectBtn')}
                 </button>
               )}
               {view === 'list' && selectionMode && (
@@ -1250,10 +1260,10 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     {selectedTaskIds.size === projectTasksListFiltered.length && projectTasksListFiltered.length > 0
                       ? <CheckSquare size={10} />
                       : <Square size={10} />}
-                    Select all
+                    {t('detail.selectAll')}
                   </button>
                   <span className="text-[10.5px] tabular-nums" style={{ color: 'var(--t3)' }}>
-                    {selectedTaskIds.size} selected
+                    {t('detail.selectedCount', { count: selectedTaskIds.size })}
                   </span>
                 </>
               )}
@@ -1262,7 +1272,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               className="flex items-center rounded-lg p-0.5"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brd)' }}
             >
-              {([['list', List], ['board', LayoutGrid], ['calendar', CalendarDays], ['plan', MapIcon]] as const).map(([v, Icon]) => {
+              {([['list', List, 'detail.viewList'], ['board', LayoutGrid, 'detail.viewBoard'], ['calendar', CalendarDays, 'detail.viewCalendar'], ['plan', MapIcon, 'detail.viewPlan']] as const).map(([v, Icon, key]) => {
                 const isActive = view === v;
                 return (
                   <button
@@ -1280,7 +1290,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       />
                     )}
                     <Icon size={11} className="relative z-10" />
-                    <span className="relative z-10 capitalize">{v}</span>
+                    <span className="relative z-10">{t(key)}</span>
                   </button>
                 );
               })}
@@ -1310,7 +1320,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 value={newTaskInput}
                 onChange={(e) => setNewTaskInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') submitNewTask(); }}
-                placeholder={`Add task — try "Fix login !today #bug *3"…`}
+                placeholder={t('detail.addTaskPlaceholder')}
                 className="flex-1 text-[12.5px] bg-transparent focus:outline-none"
                 style={{ color: 'var(--t)' }}
               />
@@ -1329,8 +1339,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 <FilterChipButton
                   label={
                     statusFilter && statusFilter.length > 0
-                      ? `Status: ${statusFilter.length}`
-                      : 'Status'
+                      ? t('detail.statusFilterN', { count: statusFilter.length })
+                      : t('detail.statusFilter')
                   }
                   active={statusFilter !== null && statusFilter.length > 0}
                   icon={<Filter size={10} />}
@@ -1364,8 +1374,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 <FilterChipButton
                   label={
                     priorityFilter && priorityFilter.length > 0
-                      ? `Priority: ${priorityFilter.length}`
-                      : 'Priority'
+                      ? t('detail.priorityFilterN', { count: priorityFilter.length })
+                      : t('detail.priorityFilter')
                   }
                   active={priorityFilter !== null && priorityFilter.length > 0}
                   icon={<Flag size={10} />}
@@ -1401,8 +1411,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 <FilterChipButton
                   label={
                     typeFilter && typeFilter.length > 0
-                      ? `Type: ${typeFilter.length}`
-                      : 'Type'
+                      ? t('detail.typeFilterN', { count: typeFilter.length })
+                      : t('detail.typeFilter')
                   }
                   active={typeFilter !== null && typeFilter.length > 0}
                   onClick={() => setOpenPopover(openPopover === 'type' ? null : 'type')}
@@ -1436,8 +1446,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   <FilterChipButton
                     label={
                       tagFilter && tagFilter.length > 0
-                        ? `Tags: ${tagFilter.length}`
-                        : 'Tags'
+                        ? t('detail.tagsFilterN', { count: tagFilter.length })
+                        : t('detail.tagsFilter')
                     }
                     active={tagFilter !== null && tagFilter.length > 0}
                     icon={<TagIcon size={10} />}
@@ -1453,7 +1463,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                             <FilterCheckRow
                               key={tag}
                               checked={checked}
-                              label={`#${tag}`}
+                              label={t('detail.tagPrefix', { tag })}
                               onClick={() => {
                                 const cur = tagFilter ?? [];
                                 const next = checked ? cur.filter((x) => x !== tag) : [...cur, tag];
@@ -1470,7 +1480,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
 
               <div className="relative">
                 <FilterChipButton
-                  label={dueFilter ? DUE_FILTER_LABEL[dueFilter] : 'Due'}
+                  label={dueFilter ? t(DUE_FILTER_KEY[dueFilter]) : t('detail.dueFilterLabel')}
                   active={dueFilter !== null}
                   icon={<Calendar size={10} />}
                   onClick={() => setOpenPopover(openPopover === 'due' ? null : 'due')}
@@ -1482,7 +1492,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       <FilterRadioRow
                         key={d}
                         checked={dueFilter === d}
-                        label={DUE_FILTER_LABEL[d]}
+                        label={t(DUE_FILTER_KEY[d])}
                         onClick={() => {
                           setDueFilter(dueFilter === d ? null : d);
                           setOpenPopover(null);
@@ -1495,7 +1505,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
 
               <div className="relative ml-auto">
                 <FilterChipButton
-                  label={`Sort: ${SORT_LABEL[sortBy]}`}
+                  label={t('detail.sortLabel', { label: t(SORT_KEY[sortBy]) })}
                   active={sortBy !== 'manual'}
                   icon={<ArrowDownUp size={10} />}
                   onClick={() => setOpenPopover(openPopover === 'sort' ? null : 'sort')}
@@ -1507,7 +1517,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       <FilterRadioRow
                         key={s}
                         checked={sortBy === s}
-                        label={SORT_LABEL[s]}
+                        label={t(SORT_KEY[s])}
                         onClick={() => { setSortBy(s); setOpenPopover(null); }}
                       />
                     ))}
@@ -1523,7 +1533,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
                 >
-                  Clear all
+                  {t('detail.clearAll')}
                 </button>
               )}
             </div>
@@ -1560,7 +1570,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     border: '1px dashed var(--brd)',
                   }}
                 >
-                  {projectTasksMilestoneFiltered.length === 0 ? 'No tasks yet' : 'No tasks match the current filters'}
+                  {projectTasksMilestoneFiltered.length === 0 ? t('detail.noTasksYet') : t('detail.noTasksMatch')}
                 </div>
               ) : (
                 <AnimatePresence mode="popLayout">
@@ -1590,7 +1600,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                               background: isChecked ? 'var(--accent)' : 'transparent',
                               border: `1px solid ${isChecked ? 'var(--accent)' : 'var(--brd2)'}`,
                             }}
-                            title="Select task (shift-click for range)"
+                            title={t('detail.selectTaskTitle')}
                           >
                             {isChecked && (
                               <svg width="9" height="8" viewBox="0 0 7 6">
@@ -1630,7 +1640,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   }}
                 >
                   <span className="text-[11.5px] font-semibold px-2" style={{ color: 'var(--t) ' }}>
-                    {selectedTaskIds.size} selected
+                    {t('detail.selectedCount', { count: selectedTaskIds.size })}
                   </span>
 
                   <div className="relative">
@@ -1642,7 +1652,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <Flag size={11} />
-                      Priority
+                      {t('detail.priorityFilter')}
                     </button>
                     <AnimatePresence>
                       <FilterPopover open={bulkPopover === 'priority'} onClose={() => setBulkPopover(null)} anchor="left">
@@ -1667,7 +1677,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <Filter size={11} />
-                      Status
+                      {t('detail.statusFilter')}
                     </button>
                     <AnimatePresence>
                       <FilterPopover open={bulkPopover === 'status'} onClose={() => setBulkPopover(null)} anchor="left">
@@ -1692,13 +1702,13 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <Target size={11} />
-                      Milestone
+                      {t('detail.bulkMilestone')}
                     </button>
                     <AnimatePresence>
                       <FilterPopover open={bulkPopover === 'milestone'} onClose={() => setBulkPopover(null)} anchor="left">
                         <FilterRadioRow
                           checked={false}
-                          label="No milestone"
+                          label={t('detail.noMilestoneOpt')}
                           onClick={() => bulkSetMilestone(undefined)}
                         />
                         {project.milestones.map((m) => (
@@ -1721,7 +1731,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     {anyIncompleteSelected ? <CheckCircle2 size={11} /> : <Circle size={11} />}
-                    {anyIncompleteSelected ? 'Complete' : 'Reopen'}
+                    {anyIncompleteSelected ? t('detail.bulkComplete') : t('detail.bulkReopen')}
                   </button>
 
                   <button
@@ -1732,7 +1742,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <Trash2 size={11} />
-                    Delete
+                    {t('detail.bulkDelete')}
                   </button>
 
                   <div className="w-px h-5 mx-1" style={{ background: 'var(--brd)' }} />
@@ -1743,7 +1753,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     style={{ color: 'var(--t3)' }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t2)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-                    title="Clear selection"
+                    title={t('detail.clearSelectionTitle')}
                   >
                     <X size={12} />
                   </button>

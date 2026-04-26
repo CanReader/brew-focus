@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronLeft, ChevronRight, Package, Clock, CheckSquare, TrendingUp,
   Flame, Zap, Trophy, Download, ChevronDown, ArrowUp, ArrowDown,
@@ -51,12 +52,15 @@ const SectionTitle: React.FC<{ children: React.ReactNode; color?: string }> = ({
   </div>
 );
 
-const NoData: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-8 gap-2" style={{ color: 'var(--t3)' }}>
-    <Package size={22} strokeWidth={1.5} />
-    <span className="text-[11px]">No data yet</span>
-  </div>
-);
+const NoData: React.FC = () => {
+  const { t } = useTranslation('reports');
+  return (
+    <div className="flex flex-col items-center justify-center py-8 gap-2" style={{ color: 'var(--t3)' }}>
+      <Package size={22} strokeWidth={1.5} />
+      <span className="text-[11px]">{t('noData')}</span>
+    </div>
+  );
+};
 
 const Card: React.FC<{ children: React.ReactNode; className?: string; accent?: string }> = ({ children, className = '', accent }) => (
   <div
@@ -82,23 +86,26 @@ const Card: React.FC<{ children: React.ReactNode; className?: string; accent?: s
   </div>
 );
 
-const TimeRangeTabs: React.FC<{ value: TimeRange; onChange: (v: TimeRange) => void }> = ({ value, onChange }) => (
-  <div className="flex rounded-xl p-0.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brd)' }}>
-    {(['daily', 'weekly', 'monthly', 'yearly'] as TimeRange[]).map((r) => (
-      <button
-        key={r}
-        onClick={() => onChange(r)}
-        className="px-2.5 py-1 text-[11px] font-medium rounded-lg capitalize transition-all"
-        style={{
-          background: value === r ? 'rgba(255,255,255,0.09)' : 'transparent',
-          color: value === r ? 'var(--t)' : 'var(--t3)',
-        }}
-      >
-        {r}
-      </button>
-    ))}
-  </div>
-);
+const TimeRangeTabs: React.FC<{ value: TimeRange; onChange: (v: TimeRange) => void }> = ({ value, onChange }) => {
+  const { t } = useTranslation('reports');
+  return (
+    <div className="flex rounded-xl p-0.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brd)' }}>
+      {(['daily', 'weekly', 'monthly', 'yearly'] as TimeRange[]).map((r) => (
+        <button
+          key={r}
+          onClick={() => onChange(r)}
+          className="px-2.5 py-1 text-[11px] font-medium rounded-lg capitalize transition-all"
+          style={{
+            background: value === r ? 'rgba(255,255,255,0.09)' : 'transparent',
+            color: value === r ? 'var(--t)' : 'var(--t3)',
+          }}
+        >
+          {t(`ranges.${r}`)}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 // Pill-style bar chart
 const BarChart: React.FC<{
@@ -177,6 +184,7 @@ const DonutChart: React.FC<{ segments: { value: number; color: string; label: st
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export const ReportsScreen: React.FC = () => {
+  const { t } = useTranslation('reports');
   const { sessions, todayFocusSeconds } = useTimerStore();
   const { tasks, projects } = useTaskStore();
   const { settings } = useSettingsStore();
@@ -312,10 +320,10 @@ export const ReportsScreen: React.FC = () => {
       const k = s.taskId??'__none__';
       const ex = map.get(k);
       if (ex) { ex.sessions.push(s); ex.totalMins += s.duration/60; }
-      else map.set(k, { title: s.taskTitle??'No task', sessions: [s], totalMins: s.duration/60 });
+      else map.set(k, { title: s.taskTitle??t('noTask'), sessions: [s], totalMins: s.duration/60 });
     });
     return Array.from(map.values()).map(v=>({...v,totalMins:Math.round(v.totalMins)})).sort((a,b)=>b.totalMins-a.totalMins).slice(0,20);
-  }, [sessions]);
+  }, [sessions, t]);
 
   // Mood
   const moodData = useMemo(() => {
@@ -336,22 +344,22 @@ export const ReportsScreen: React.FC = () => {
     const today = new Date();
     return Array.from({length:14},(_,i) => {
       const d = new Date(today); d.setDate(today.getDate()-i); d.setHours(0,0,0,0);
-      const label = i===0?'Today':i===1?'Yesterday':d.toLocaleDateString('en-US',{day:'numeric',month:'short'});
+      const label = i===0?t('cards.today'):i===1?t('tooltip.yesterday'):d.toLocaleDateString('en-US',{day:'numeric',month:'short'});
       const hours = new Array(24).fill(0);
       sessions.filter(s => { const sd=new Date(s.startedAt); return s.phase==='work'&&sd.getDate()===d.getDate()&&sd.getMonth()===d.getMonth()&&sd.getFullYear()===d.getFullYear(); })
         .forEach(s => { hours[new Date(s.startedAt).getHours()] += s.duration/60; });
       return { label, hours };
     });
-  }, [sessions]);
+  }, [sessions, t]);
 
   // Focus time breakdown
   const focusTimeData = useMemo(() => {
     const { start, end } = getDateRange(focusTimeRange);
     const filtered = sessions.filter(s => s.phase==='work' && s.startedAt>=start.getTime() && s.startedAt<=end.getTime());
     const tm = new Map<string,{title:string;minutes:number}>();
-    filtered.forEach(s => { const k=s.taskId??'__none__'; const ex=tm.get(k); if(ex) ex.minutes+=s.duration/60; else tm.set(k,{title:s.taskTitle??'No task',minutes:s.duration/60}); });
-    return { totalMinutes: Math.round(filtered.reduce((a,s)=>a+s.duration,0)/60), taskBreakdown: Array.from(tm.values()).map(t=>({...t,minutes:Math.round(t.minutes)})).sort((a,b)=>b.minutes-a.minutes), hasData: filtered.length>0 };
-  }, [sessions, focusTimeRange]);
+    filtered.forEach(s => { const k=s.taskId??'__none__'; const ex=tm.get(k); if(ex) ex.minutes+=s.duration/60; else tm.set(k,{title:s.taskTitle??t('noTask'),minutes:s.duration/60}); });
+    return { totalMinutes: Math.round(filtered.reduce((a,s)=>a+s.duration,0)/60), taskBreakdown: Array.from(tm.values()).map(tk=>({...tk,minutes:Math.round(tk.minutes)})).sort((a,b)=>b.minutes-a.minutes), hasData: filtered.length>0 };
+  }, [sessions, focusTimeRange, t]);
 
   // Calendar
   const calendarData = useMemo(() => {
@@ -411,10 +419,10 @@ export const ReportsScreen: React.FC = () => {
         style={{ background: 'linear-gradient(180deg, var(--bg) 70%, transparent 100%)' }}>
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--t)' }}>Reports</h1>
+            <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--t)' }}>{t('title')}</h1>
             <ProBadge size="md" />
           </div>
-          <p className="text-[12px] mt-0.5" style={{ color: 'var(--t3)' }}>Your focus journey at a glance</p>
+          <p className="text-[12px] mt-0.5" style={{ color: 'var(--t3)' }}>{t('subtitle')}</p>
         </div>
         <button
           onClick={handleExport}
@@ -423,7 +431,7 @@ export const ReportsScreen: React.FC = () => {
           onMouseEnter={e => { e.currentTarget.style.borderColor='var(--brd2)'; e.currentTarget.style.color='var(--t)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor='var(--brd)'; e.currentTarget.style.color='var(--t2)'; }}
         >
-          <Download size={13} /> Export CSV
+          <Download size={13} /> {t('exportCsv')}
         </button>
       </div>
 
@@ -432,9 +440,9 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Focus time cards ── */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total Focus Time', value: stats.totalFocusTime, rgb: ACCENT_R, icon: <Clock size={15}/>, trend: null },
-            { label: 'This Week',        value: stats.weekFocusTime,  rgb: BLU_R,    icon: <TrendingUp size={15}/>, trend: stats.weekFocusTrend },
-            { label: 'Today',            value: stats.todayFocusTime, rgb: GRN_R,    icon: <Zap size={15}/>, trend: stats.todayFocusTrend },
+            { label: t('cards.totalFocusTime'), value: stats.totalFocusTime, rgb: ACCENT_R, icon: <Clock size={15}/>, trend: null },
+            { label: t('cards.thisWeek'),       value: stats.weekFocusTime,  rgb: BLU_R,    icon: <TrendingUp size={15}/>, trend: stats.weekFocusTrend },
+            { label: t('cards.today'),          value: stats.todayFocusTime, rgb: GRN_R,    icon: <Zap size={15}/>, trend: stats.todayFocusTrend },
           ].map((card, i) => (
             <motion.div key={i} initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.35,delay:i*0.07}}
               className="rounded-2xl p-5 relative"
@@ -472,9 +480,9 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Task cards ── */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total Tasks Done',    value: String(stats.totalDone), rgb: GRN_R,   icon: <CheckSquare size={15}/>, trend: null },
-            { label: 'Done This Week',      value: String(stats.weekDone),  rgb: AMB_R,   icon: <CheckSquare size={15}/>, trend: stats.weekTaskTrend },
-            { label: 'Done Today',          value: String(stats.todayDone), rgb: ACCENT_R, icon: <CheckSquare size={15}/>, trend: stats.todayTaskTrend },
+            { label: t('cards.totalTasksDone'), value: String(stats.totalDone), rgb: GRN_R,   icon: <CheckSquare size={15}/>, trend: null },
+            { label: t('cards.doneThisWeek'),   value: String(stats.weekDone),  rgb: AMB_R,   icon: <CheckSquare size={15}/>, trend: stats.weekTaskTrend },
+            { label: t('cards.doneToday'),      value: String(stats.todayDone), rgb: ACCENT_R, icon: <CheckSquare size={15}/>, trend: stats.todayTaskTrend },
           ].map((card, i) => (
             <motion.div key={i} initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:0.35,delay:0.21+i*0.07}}
               className="rounded-2xl p-5 relative overflow-hidden"
@@ -510,10 +518,10 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Personal Records ── */}
         <div className="grid grid-cols-4 gap-3">
           {[
-            { icon: <Flame size={18}/>, label: 'Current Streak', value: `${records.currentStreak}`, unit: 'days',  rgb: ORG_R },
-            { icon: <Trophy size={18}/>, label: 'Longest Streak', value: `${records.longestStreak}`, unit: 'days', rgb: AMB_R },
-            { icon: <Zap size={18}/>,   label: 'Best Day Ever',   value: fmtTime(records.bestDaySecs), unit: '',    rgb: BLU_R },
-            { icon: <Clock size={18}/>, label: 'Avg Session',     value: fmtTime(records.avgSecs),    unit: '',    rgb: GRN_R },
+            { icon: <Flame size={18}/>, label: t('records.currentStreak'), value: `${records.currentStreak}`, unit: t('records.days'),  rgb: ORG_R },
+            { icon: <Trophy size={18}/>, label: t('records.longestStreak'), value: `${records.longestStreak}`, unit: t('records.days'), rgb: AMB_R },
+            { icon: <Zap size={18}/>,   label: t('records.bestDayEver'),   value: fmtTime(records.bestDaySecs), unit: '',    rgb: BLU_R },
+            { icon: <Clock size={18}/>, label: t('records.avgSession'),    value: fmtTime(records.avgSecs),    unit: '',    rgb: GRN_R },
           ].map((item, i) => (
             <motion.div key={i} initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} transition={{duration:0.3,delay:0.1+i*0.06}}
               className="rounded-2xl p-4 relative flex flex-col gap-3"
@@ -538,7 +546,7 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Focus Hours + Ratio ── */}
         <div className="grid grid-cols-2 gap-4">
           <Card accent={ACCENT_R}>
-            <SectionTitle color={`rgb(${ACCENT_R})`}>Best Focus Hours</SectionTitle>
+            <SectionTitle color={`rgb(${ACCENT_R})`}>{t('sections.bestFocusHours')}</SectionTitle>
             {records.total === 0 ? <NoData /> : (
               <>
                 <div className="relative h-[90px]">
@@ -578,8 +586,8 @@ export const ReportsScreen: React.FC = () => {
                 <div className="mt-2 flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full" style={{ background:`rgb(${ACCENT_R})` }} />
                   <span className="text-[11px]" style={{ color:'var(--t3)' }}>
-                    Peak: <span style={{ color:'var(--t2)', fontWeight:600 }}>{peakHour}:00</span>
-                    <span className="ml-2">({hourlyData[parseInt(peakHour)]?.value}m total)</span>
+                    {t('focusHours.peak')} <span style={{ color:'var(--t2)', fontWeight:600 }}>{peakHour}:00</span>
+                    <span className="ml-2">{t('focusHours.totalSuffix', { minutes: hourlyData[parseInt(peakHour)]?.value ?? 0 })}</span>
                   </span>
                 </div>
               </>
@@ -587,12 +595,12 @@ export const ReportsScreen: React.FC = () => {
           </Card>
 
           <Card accent={GRN_R}>
-            <SectionTitle color={`rgb(${GRN_R})`}>Focus vs Break Ratio</SectionTitle>
+            <SectionTitle color={`rgb(${GRN_R})`}>{t('sections.focusVsBreakRatio')}</SectionTitle>
             {!ratio.hasData ? <NoData /> : (
               <div className="space-y-4">
                 {[
-                  { label:'Focus', time: ratio.workTime, pct: ratio.workPct, rgb: ACCENT_R },
-                  { label:'Breaks', time: ratio.brkTime, pct: ratio.brkPct, rgb: GRN_R },
+                  { label:t('ratio.focus'), time: ratio.workTime, pct: ratio.workPct, rgb: ACCENT_R },
+                  { label:t('ratio.breaks'), time: ratio.brkTime, pct: ratio.brkPct, rgb: GRN_R },
                 ].map(bar => (
                   <div key={bar.label}>
                     <div className="flex justify-between items-baseline mb-1.5">
@@ -609,11 +617,11 @@ export const ReportsScreen: React.FC = () => {
                   </div>
                 ))}
                 <div className="pt-2 text-[11px]" style={{ color:'var(--t3)', borderTop:'1px solid var(--brd)' }}>
-                  Your ratio is{' '}
+                  {t('ratio.yourRatioIs')}{' '}
                   <span style={{ color: ratio.workPct>=70?`rgb(${GRN_R})`:`rgb(${AMB_R})`, fontWeight:600 }}>
                     {ratio.workPct>0&&ratio.brkPct>0 ? `${Math.round(ratio.workPct/ratio.brkPct*10)/10}:1` : '—'}
                   </span>
-                  {' '}(ideal: 4:1)
+                  {' '}{t('ratio.ideal')}
                 </div>
               </div>
             )}
@@ -623,7 +631,7 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Heatmap + Project Breakdown ── */}
         <div className="grid grid-cols-2 gap-4">
           <Card>
-            <SectionTitle>Pomodoro Heatmap</SectionTitle>
+            <SectionTitle>{t('sections.pomodoroHeatmap')}</SectionTitle>
             <div className="space-y-1">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-[72px]" />
@@ -650,7 +658,7 @@ export const ReportsScreen: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-[3px] h-[18px] rounded-full" style={{ background:`rgb(${PUR_R})` }} />
-                <h3 className="text-[14px] font-semibold" style={{ color:'var(--t)' }}>Project Breakdown</h3>
+                <h3 className="text-[14px] font-semibold" style={{ color:'var(--t)' }}>{t('sections.projectBreakdown')}</h3>
               </div>
               <TimeRangeTabs value={projectTimeRange} onChange={setProjectTimeRange} />
             </div>
@@ -688,7 +696,7 @@ export const ReportsScreen: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <SectionTitle color={`rgb(${ACCENT_R})`}>Focus Time</SectionTitle>
+              <SectionTitle color={`rgb(${ACCENT_R})`}>{t('sections.focusTime')}</SectionTitle>
               <TimeRangeTabs value={focusTimeRange} onChange={setFocusTimeRange} />
             </div>
             <div className="text-[28px] font-bold tabular-nums mb-4" style={{ letterSpacing:'-1px', background:`linear-gradient(135deg, var(--t) 0%, rgba(${ACCENT_R},0.8) 100%)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
@@ -715,16 +723,16 @@ export const ReportsScreen: React.FC = () => {
 
           <Card accent={GRN_R}>
             <div className="flex items-center justify-between mb-3">
-              <SectionTitle color={`rgb(${GRN_R})`}>Focus Goal Calendar</SectionTitle>
+              <SectionTitle color={`rgb(${GRN_R})`}>{t('sections.focusGoalCalendar')}</SectionTitle>
               <div className="px-2.5 py-1 text-[11px] rounded-xl font-semibold" style={{ background:`rgba(${ACCENT_R},0.15)`, color:`rgb(${ACCENT_R})`, border:`1px solid rgba(${ACCENT_R},0.25)` }}>
-                {settings.dailyFocusGoal}h goal
+                {t('calendar.goalSuffix', { hours: settings.dailyFocusGoal })}
               </div>
             </div>
             <div className="flex gap-2 mb-3">
               {[
-                { label:'Focus Days', value:calendarData.focusDays,     rgb:BLU_R },
-                { label:'Goal Days',  value:calendarData.goalDays,      rgb:GRN_R },
-                { label:'Goal Rate',  value:`${calendarData.completionRate}%`, rgb:AMB_R },
+                { label:t('calendar.focusDays'), value:calendarData.focusDays,     rgb:BLU_R },
+                { label:t('calendar.goalDays'),  value:calendarData.goalDays,      rgb:GRN_R },
+                { label:t('calendar.goalRate'),  value:`${calendarData.completionRate}%`, rgb:AMB_R },
               ].map(s => (
                 <div key={s.label} className="flex-1 rounded-xl px-2 py-2 text-center" style={{ background:`rgba(${s.rgb},0.1)`, border:`1px solid rgba(${s.rgb},0.15)` }}>
                   <div className="text-[16px] font-bold leading-none" style={{ color:`rgb(${s.rgb})` }}>{s.value}</div>
@@ -739,7 +747,7 @@ export const ReportsScreen: React.FC = () => {
             </div>
             <div className="space-y-0.5">
               <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] mb-1" style={{ color:'var(--t3)' }}>
-                {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=><div key={d}>{d}</div>)}
+                {(['mo','tu','we','th','fr','sa','su'] as const).map(d=><div key={d}>{t(`calendar.weekdays.${d}`)}</div>)}
               </div>
               {calendarData.weeks.map((week, wi) => (
                 <div key={wi} className="grid grid-cols-7 gap-0.5">
@@ -769,13 +777,13 @@ export const ReportsScreen: React.FC = () => {
         {/* ── Task Completion + Per-task History ── */}
         <div className="grid grid-cols-2 gap-4">
           <Card accent={GRN_R}>
-            <SectionTitle color={`rgb(${GRN_R})`}>Task Completion Rate</SectionTitle>
+            <SectionTitle color={`rgb(${GRN_R})`}>{t('sections.taskCompletionRate')}</SectionTitle>
             {completionRate.length===0 ? (
               <div>
                 <NoData />
                 <div className="mt-2 pt-3" style={{ borderTop:'1px solid var(--brd)' }}>
                   <div className="flex justify-between text-[11px] mb-1.5">
-                    <span style={{ color:'var(--t2)' }}>Overall</span>
+                    <span style={{ color:'var(--t2)' }}>{t('completion.overall')}</span>
                     <span style={{ color:'var(--t3)' }}>{tasks.filter(t=>t.completed).length}/{tasks.length}</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background:'rgba(255,255,255,0.06)' }}>
@@ -801,7 +809,7 @@ export const ReportsScreen: React.FC = () => {
                 ))}
                 <div className="pt-2.5" style={{ borderTop:'1px solid var(--brd)' }}>
                   <div className="flex justify-between text-[11px] mb-1.5">
-                    <span style={{ color:'var(--t2)' }}>Overall</span>
+                    <span style={{ color:'var(--t2)' }}>{t('completion.overall')}</span>
                     <span style={{ color:'var(--t3)' }}>{tasks.filter(t=>t.completed).length}/{tasks.length} ({tasks.length>0?Math.round((tasks.filter(t=>t.completed).length/tasks.length)*100):0}%)</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background:'rgba(255,255,255,0.06)' }}>
@@ -813,7 +821,7 @@ export const ReportsScreen: React.FC = () => {
           </Card>
 
           <Card>
-            <SectionTitle>Per-Task History</SectionTitle>
+            <SectionTitle>{t('sections.perTaskHistory')}</SectionTitle>
             {taskHistory.length===0 ? <NoData /> : (
               <div className="space-y-0.5 max-h-[280px] overflow-y-auto pr-1">
                 {taskHistory.map((item, i) => (
@@ -848,7 +856,7 @@ export const ReportsScreen: React.FC = () => {
                                 </div>
                               );
                             })}
-                            {item.sessions.length>8 && <div className="text-[10px] pl-3 py-0.5" style={{ color:'var(--t3)' }}>+{item.sessions.length-8} more sessions</div>}
+                            {item.sessions.length>8 && <div className="text-[10px] pl-3 py-0.5" style={{ color:'var(--t3)' }}>{t('taskHistory.moreSessions', { count: item.sessions.length-8 })}</div>}
                           </div>
                         </motion.div>
                       )}
@@ -864,12 +872,12 @@ export const ReportsScreen: React.FC = () => {
         {moodData && (
           <Card accent={PUR_R}>
             <div className="flex items-start justify-between mb-4">
-              <SectionTitle color={`rgb(${PUR_R})`}>Energy Log</SectionTitle>
+              <SectionTitle color={`rgb(${PUR_R})`}>{t('sections.energyLog')}</SectionTitle>
               <div className="flex items-center gap-3">
                 <div className="text-[32px]">{moodData.emoji}</div>
                 <div>
                   <div className="text-[22px] font-bold tabular-nums leading-none" style={{ color:'var(--t)' }}>{moodData.overall}<span className="text-[14px] ml-0.5" style={{ color:'var(--t3)' }}>/5</span></div>
-                  <div className="text-[10px]" style={{ color:'var(--t3)' }}>{moodData.count} ratings</div>
+                  <div className="text-[10px]" style={{ color:'var(--t3)' }}>{t('mood.ratings', { count: moodData.count })}</div>
                 </div>
               </div>
             </div>
@@ -894,38 +902,38 @@ export const ReportsScreen: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <Card accent={ACCENT_R}>
             <div className="flex items-center justify-between mb-3">
-              <SectionTitle color={`rgb(${ACCENT_R})`}>Focus Time Chart</SectionTitle>
+              <SectionTitle color={`rgb(${ACCENT_R})`}>{t('sections.focusTimeChart')}</SectionTitle>
               <div className="flex items-center gap-2">
                 <TimeRangeTabs value={focusChartRange} onChange={v=>{setFocusChartRange(v);setFocusChartOffset(0);}} />
                 <div className="flex items-center gap-0.5">
                   <button className="p-1 rounded-lg" style={{ color:'var(--t3)' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='var(--t)';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--t3)';}} onClick={()=>setFocusChartOffset(o=>o+1)}><ChevronLeft size={13}/></button>
-                  <button className="text-[10px] px-1 min-w-[24px] text-center" style={{ color:'var(--t3)' }} onClick={()=>setFocusChartOffset(0)}>{focusChartOffset===0?'Now':`−${focusChartOffset}`}</button>
+                  <button className="text-[10px] px-1 min-w-[24px] text-center" style={{ color:'var(--t3)' }} onClick={()=>setFocusChartOffset(0)}>{focusChartOffset===0?t('charts.now'):`−${focusChartOffset}`}</button>
                   <button className="p-1 rounded-lg" style={{ color:focusChartOffset>0?'var(--t3)':'var(--brd2)' }} disabled={focusChartOffset===0} onMouseEnter={e=>{if(focusChartOffset>0){e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='var(--t)';}}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color=focusChartOffset>0?'var(--t3)':'var(--brd2)';}} onClick={()=>setFocusChartOffset(o=>Math.max(0,o-1))}><ChevronRight size={13}/></button>
                 </div>
               </div>
             </div>
             <div className="flex gap-4 text-[11px] mb-3" style={{ color:'var(--t3)' }}>
-              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.max(...focusChartData.map(d=>d.value)):0}m</span></span>
-              <span>Avg: <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.round(focusChartData.reduce((a,d)=>a+d.value,0)/focusChartData.length):0}m</span></span>
+              <span>{t('charts.top')} <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.max(...focusChartData.map(d=>d.value)):0}m</span></span>
+              <span>{t('charts.avg')} <span style={{ color:'var(--t2)', fontWeight:600 }}>{focusChartData.length>0?Math.round(focusChartData.reduce((a,d)=>a+d.value,0)/focusChartData.length):0}m</span></span>
             </div>
             <BarChart data={focusChartData} maxVal={maxFocusMins} height={150} color={`rgb(${ACCENT_R})`} colorRgb={ACCENT_R} activeIdx={focusChartOffset===0?focusChartData.length-1:undefined} />
           </Card>
 
           <Card accent={GRN_R}>
             <div className="flex items-center justify-between mb-3">
-              <SectionTitle color={`rgb(${GRN_R})`}>Task Completions</SectionTitle>
+              <SectionTitle color={`rgb(${GRN_R})`}>{t('sections.taskCompletions')}</SectionTitle>
               <div className="flex items-center gap-2">
                 <TimeRangeTabs value={taskChartRange} onChange={v=>{setTaskChartRange(v);setTaskChartOffset(0);}} />
                 <div className="flex items-center gap-0.5">
                   <button className="p-1 rounded-lg" style={{ color:'var(--t3)' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='var(--t)';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--t3)';}} onClick={()=>setTaskChartOffset(o=>o+1)}><ChevronLeft size={13}/></button>
-                  <button className="text-[10px] px-1 min-w-[24px] text-center" style={{ color:'var(--t3)' }} onClick={()=>setTaskChartOffset(0)}>{taskChartOffset===0?'Now':`−${taskChartOffset}`}</button>
+                  <button className="text-[10px] px-1 min-w-[24px] text-center" style={{ color:'var(--t3)' }} onClick={()=>setTaskChartOffset(0)}>{taskChartOffset===0?t('charts.now'):`−${taskChartOffset}`}</button>
                   <button className="p-1 rounded-lg" style={{ color:taskChartOffset>0?'var(--t3)':'var(--brd2)' }} disabled={taskChartOffset===0} onMouseEnter={e=>{if(taskChartOffset>0){e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='var(--t)';}}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color=taskChartOffset>0?'var(--t3)':'var(--brd2)';}} onClick={()=>setTaskChartOffset(o=>Math.max(0,o-1))}><ChevronRight size={13}/></button>
                 </div>
               </div>
             </div>
             <div className="flex gap-4 text-[11px] mb-3" style={{ color:'var(--t3)' }}>
-              <span>Top: <span style={{ color:'var(--t2)', fontWeight:600 }}>{taskChartData.length>0?Math.max(...taskChartData.map(d=>d.value)):0} tasks</span></span>
-              <span>Avg: <span style={{ color:'var(--t2)', fontWeight:600 }}>{taskChartData.length>0?(taskChartData.reduce((a,d)=>a+d.value,0)/taskChartData.length).toFixed(1):0} tasks</span></span>
+              <span>{t('charts.top')} <span style={{ color:'var(--t2)', fontWeight:600 }}>{t('charts.tasks', { count: taskChartData.length>0?Math.max(...taskChartData.map(d=>d.value)):0 })}</span></span>
+              <span>{t('charts.avg')} <span style={{ color:'var(--t2)', fontWeight:600 }}>{t('charts.tasks', { count: taskChartData.length>0?Number((taskChartData.reduce((a,d)=>a+d.value,0)/taskChartData.length).toFixed(1)):0 })}</span></span>
             </div>
             <BarChart data={taskChartData} maxVal={maxTaskCnt} height={150} color={`rgb(${GRN_R})`} colorRgb={GRN_R} activeIdx={taskChartOffset===0?taskChartData.length-1:undefined} />
           </Card>

@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 
 export const TaskSelector: React.FC = () => {
+  const { t } = useTranslation('focus');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -43,7 +45,7 @@ export const TaskSelector: React.FC = () => {
       <button
         onClick={() => setOpen(!open)}
         className="absolute inset-0 rounded-xl"
-        aria-label="Select task"
+        aria-label={t('selectTaskAria')}
         style={{ background: 'transparent', border: 'none' }}
       />
 
@@ -58,7 +60,7 @@ export const TaskSelector: React.FC = () => {
       </span>
 
       <span className="flex-1 text-[13px] truncate font-medium text-left" style={{ position: 'relative', pointerEvents: 'none' }}>
-        {activeTask ? activeTask.title : 'Select a task to focus on…'}
+        {activeTask ? activeTask.title : t('selectTask')}
       </span>
 
       <div className="flex items-center gap-1 shrink-0" style={{ position: 'relative' }}>
@@ -68,7 +70,7 @@ export const TaskSelector: React.FC = () => {
             className="w-5 h-5 flex items-center justify-center rounded-md hover:opacity-100 opacity-60 transition-opacity"
             style={{ color: 'var(--t3)', background: 'transparent', border: 'none' }}
             onClick={(e) => { e.stopPropagation(); handleSelect(null); }}
-            aria-label="Clear active task"
+            aria-label={t('clearActiveTask')}
           >
             <X size={11} />
           </button>
@@ -103,7 +105,7 @@ export const TaskSelector: React.FC = () => {
           >
             {incompleteTasks.length === 0 ? (
               <div className="px-4 py-3 text-[12px]" style={{ color: 'var(--t3)' }}>
-                No tasks yet — add some in Tasks tab
+                {t('noTasksYet')}
               </div>
             ) : (
               <div className="max-h-52 overflow-y-auto">
@@ -119,7 +121,7 @@ export const TaskSelector: React.FC = () => {
                   onMouseLeave={(e) => (e.currentTarget.style.background = !activeTaskId ? 'rgba(255,255,255,0.04)' : 'transparent')}
                 >
                   <span style={{ color: 'var(--t3)', opacity: 0.4 }}>—</span>
-                  No task
+                  {t('noTask')}
                 </button>
 
                 {incompleteTasks.map((task) => {
@@ -157,7 +159,7 @@ export const TaskSelector: React.FC = () => {
                         <span
                           className="text-[10px] px-1.5 py-0.5 rounded-md shrink-0"
                           style={{ background: 'var(--accent-d)', color: 'var(--accent)' }}
-                          title={`Custom timer: ${task.customWorkDuration ?? '?'}m work`}
+                          title={t('customTimerHint', { minutes: task.customWorkDuration ?? '?' })}
                         >
                           {task.customWorkDuration}m
                         </span>

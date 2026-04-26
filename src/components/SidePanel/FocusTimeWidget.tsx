@@ -1,10 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export const FocusTimeWidget: React.FC = () => {
+  const { t } = useTranslation('focus');
   const { todayFocusSeconds } = useTimerStore();
   const { settings } = useSettingsStore();
 
@@ -36,7 +38,7 @@ export const FocusTimeWidget: React.FC = () => {
           <Clock size={13} style={{ color: 'var(--accent)' }} />
         </div>
         <span className="text-[12px] font-medium" style={{ color: 'var(--t2)' }}>
-          Focus Time Today
+          {t('timeToday.title')}
         </span>
         {isGoalReached && (
           <motion.span
@@ -45,7 +47,7 @@ export const FocusTimeWidget: React.FC = () => {
             className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold"
             style={{ background: 'rgba(34,211,165,0.15)', color: 'var(--grn)', border: '1px solid rgba(34,211,165,0.3)' }}
           >
-            Goal!
+            {t('timeToday.goal')}
           </motion.span>
         )}
       </div>
@@ -68,7 +70,7 @@ export const FocusTimeWidget: React.FC = () => {
           {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}
         </span>
         <span className="text-[12px] mb-1" style={{ color: 'var(--t3)' }}>
-          / {settings.dailyFocusGoal}h goal
+          {t('timeToday.goalSuffix', { hours: settings.dailyFocusGoal })}
         </span>
       </div>
 
@@ -93,11 +95,11 @@ export const FocusTimeWidget: React.FC = () => {
 
       <div className="mt-2 flex justify-between items-center">
         <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
-          {progressPercent}% of daily goal
+          {t('timeToday.percent', { percent: progressPercent })}
         </span>
         {!isGoalReached && progressPercent > 0 && (
           <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
-            {Math.floor((goalSeconds - todayFocusSeconds) / 60)}m left
+            {t('timeToday.timeLeft', { minutes: Math.floor((goalSeconds - todayFocusSeconds) / 60) })}
           </span>
         )}
       </div>

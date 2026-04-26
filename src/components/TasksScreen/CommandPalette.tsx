@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   Search, Plus, Inbox, Sun, Calendar, AlignLeft, BarChart2, Flag,
@@ -30,11 +31,11 @@ interface CommandPaletteProps {
   onSetPriority: (taskId: string, priority: Priority) => void;
 }
 
-const PRIORITY_META: { priority: Priority; label: string; color: string }[] = [
-  { priority: 'p1', label: 'High',   color: '#ff4d4d' },
-  { priority: 'p2', label: 'Medium', color: '#f5a623' },
-  { priority: 'p3', label: 'Low',    color: '#5b8dee' },
-  { priority: 'p4', label: 'None',   color: 'var(--t3)' },
+const PRIORITY_KEYS: { priority: Priority; key: 'high' | 'medium' | 'low' | 'none'; color: string }[] = [
+  { priority: 'p1', key: 'high',   color: '#ff4d4d' },
+  { priority: 'p2', key: 'medium', color: '#f5a623' },
+  { priority: 'p3', key: 'low',    color: '#5b8dee' },
+  { priority: 'p4', key: 'none',   color: 'var(--t3)' },
 ];
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -45,6 +46,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   activeTaskId,
   onSetPriority,
 }) => {
+  const { t } = useTranslation('tasks');
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -59,35 +61,35 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const nav: Command[] = [
       {
         id: 'nav-inbox',
-        label: 'Go to Inbox',
+        label: t('commandPalette.goToInbox'),
         icon: <Inbox size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onNavigate('all'); onClose(); },
         keywords: ['inbox', 'tasks'],
       },
       {
         id: 'nav-today',
-        label: 'Go to Today',
+        label: t('commandPalette.goToToday'),
         icon: <Sun size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onNavigate('today'); onClose(); },
         keywords: ['today', 'daily'],
       },
       {
         id: 'nav-week',
-        label: 'Go to This Week',
+        label: t('commandPalette.goToWeek'),
         icon: <Calendar size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onNavigate('week'); onClose(); },
         keywords: ['week', 'weekly'],
       },
       {
         id: 'nav-all',
-        label: 'Go to All Tasks',
+        label: t('commandPalette.goToAll'),
         icon: <AlignLeft size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onNavigate('all'); onClose(); },
         keywords: ['all', 'tasks', 'list'],
       },
       {
         id: 'nav-focus-week',
-        label: 'Go to Focus Week',
+        label: t('commandPalette.goToFocusWeek'),
         icon: <BarChart2 size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onNavigate('focus-week'); onClose(); },
         keywords: ['focus', 'week', 'calendar', 'schedule'],
@@ -97,7 +99,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const actions: Command[] = [
       {
         id: 'action-new-task',
-        label: 'New Task',
+        label: t('commandPalette.newTask'),
         icon: <Plus size={14} style={{ color: 'var(--t2)' }} />,
         action: () => { onCreateTask(); onClose(); },
         keywords: ['new', 'create', 'add', 'task'],
@@ -106,8 +108,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const projectCommands: Command[] = projects.map((p) => ({
       id: `project-${p.id}`,
-      label: `Open ${p.name}`,
-      sublabel: 'Project',
+      label: t('commandPalette.openProject', { name: p.name }),
+      sublabel: t('commandPalette.projectSublabel'),
       icon: (
         <div
           className="w-2.5 h-2.5 rounded-full"
@@ -119,23 +121,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }));
 
     const priorityCommands: Command[] = activeTaskId
-      ? PRIORITY_META.map((pm) => ({
-          id: `priority-${pm.priority}`,
-          label: `Set Priority: ${pm.label}`,
-          sublabel: 'Active task',
-          icon: <Flag size={14} color={pm.color} fill={pm.priority !== 'p4' ? pm.color : 'transparent'} strokeWidth={2} />,
-          action: () => { onSetPriority(activeTaskId, pm.priority); onClose(); },
-          keywords: ['priority', pm.label.toLowerCase(), pm.priority, 'flag'],
-        }))
+      ? PRIORITY_KEYS.map((pm) => {
+          const label = t(`commandPalette.${pm.key}`);
+          return {
+            id: `priority-${pm.priority}`,
+            label: t('commandPalette.setPriority', { label }),
+            sublabel: t('commandPalette.activeTaskSublabel'),
+            icon: <Flag size={14} color={pm.color} fill={pm.priority !== 'p4' ? pm.color : 'transparent'} strokeWidth={2} />,
+            action: () => { onSetPriority(activeTaskId, pm.priority); onClose(); },
+            keywords: ['priority', label.toLowerCase(), pm.priority, 'flag'],
+          };
+        })
       : [];
 
     return [
-      { label: 'Navigation', commands: nav },
-      { label: 'Actions',    commands: actions },
-      { label: 'Projects',   commands: projectCommands },
-      { label: 'Priority',   commands: priorityCommands },
+      { label: t('commandPalette.groups.navigation'), commands: nav },
+      { label: t('commandPalette.groups.actions'),    commands: actions },
+      { label: t('commandPalette.groups.projects'),   commands: projectCommands },
+      { label: t('commandPalette.groups.priority'),   commands: priorityCommands },
     ];
-  }, [projects, activeTaskId, onNavigate, onCreateTask, onClose, onSetPriority]);
+  }, [projects, activeTaskId, onNavigate, onCreateTask, onClose, onSetPriority, t]);
 
   // Filtered flat list for keyboard nav + rendering
   const filteredGroups: CommandGroup[] = useMemo(() => {
@@ -221,7 +226,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Command palette"
+        aria-label={t('commandPalette.dialogLabel')}
       >
         {/* Search input */}
         <div
@@ -233,10 +238,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search commands…"
+            placeholder={t('commandPalette.searchPlaceholder')}
             className="flex-1 text-[14px] bg-transparent focus:outline-none"
             style={{ color: 'var(--t)' }}
-            aria-label="Search commands"
+            aria-label={t('commandPalette.searchAria')}
             aria-autocomplete="list"
             aria-controls="command-palette-list"
             aria-activedescendant={
@@ -264,7 +269,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               className="flex items-center justify-center py-8 text-[13px]"
               style={{ color: 'var(--t3)' }}
             >
-              No commands found
+              {t('commandPalette.noFound')}
             </div>
           ) : (
             groupsWithIndex.map((group) => (

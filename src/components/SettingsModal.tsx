@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User, Crown } from 'lucide-react';
+import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User, Crown, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../store/settingsStore';
+import { useLocaleStore } from '../store/localeStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
 import { THEMES, AppTheme, FREE_THEME_IDS } from '../utils/themes';
 import { AccountSettings } from './AccountSettings';
 import { ProBadge } from './ProBadge';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 
 interface SettingsModalProps {
   open: boolean;
@@ -13,36 +16,38 @@ interface SettingsModalProps {
   initialSection?: SectionKey;
 }
 
-type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'account';
+type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'language' | 'account';
 
-const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'timer',      label: 'Timer',      icon: <Clock size={15} /> },
-  { key: 'behavior',   label: 'Behavior',   icon: <Zap size={15} /> },
-  { key: 'goals',      label: 'Goals',      icon: <Target size={15} /> },
-  { key: 'sounds',     label: 'Sounds',     icon: <Volume2 size={15} /> },
-  { key: 'appearance', label: 'Appearance', icon: <Palette size={15} /> },
-  { key: 'account',    label: 'Account',    icon: <User size={15} /> },
-];
-
-const THEME_CATEGORIES: { key: AppTheme['category']; label: string }[] = [
-  { key: 'dark',     label: 'Dark' },
-  { key: 'neutral',  label: 'Neutral' },
-  { key: 'warm',     label: 'Warm' },
-  { key: 'colorful', label: 'Colorful' },
-];
-
-const ACCENT_OPTIONS: { key: AccentColor; name: string }[] = [
-  { key: 'red',    name: 'Red' },
-  { key: 'blue',   name: 'Blue' },
-  { key: 'amber',  name: 'Amber' },
-  { key: 'green',  name: 'Green' },
-  { key: 'purple', name: 'Purple' },
-  { key: 'pink',   name: 'Pink' },
-];
+const ACCENT_KEYS: AccentColor[] = ['red', 'blue', 'amber', 'green', 'purple', 'pink'];
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, initialSection }) => {
+  const { t } = useTranslation('settings');
+  const { t: tCommon } = useTranslation('common');
   const { settings, updateSettings, resetSettings } = useSettingsStore();
+  const { language, setLanguage } = useLocaleStore();
   const [activeSection, setActiveSection] = useState<SectionKey>('timer');
+
+  const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
+    { key: 'timer',      label: t('sections.timer'),      icon: <Clock size={15} /> },
+    { key: 'behavior',   label: t('sections.behavior'),   icon: <Zap size={15} /> },
+    { key: 'goals',      label: t('sections.goals'),      icon: <Target size={15} /> },
+    { key: 'sounds',     label: t('sections.sounds'),     icon: <Volume2 size={15} /> },
+    { key: 'appearance', label: t('sections.appearance'), icon: <Palette size={15} /> },
+    { key: 'language',   label: t('sections.language'),   icon: <Languages size={15} /> },
+    { key: 'account',    label: t('sections.account'),    icon: <User size={15} /> },
+  ];
+
+  const THEME_CATEGORIES: { key: AppTheme['category']; label: string }[] = [
+    { key: 'dark',     label: t('appearance.categories.dark') },
+    { key: 'neutral',  label: t('appearance.categories.neutral') },
+    { key: 'warm',     label: t('appearance.categories.warm') },
+    { key: 'colorful', label: t('appearance.categories.colorful') },
+  ];
+
+  const ACCENT_OPTIONS: { key: AccentColor; name: string }[] = ACCENT_KEYS.map((key) => ({
+    key,
+    name: t(`appearance.accents.${key}`),
+  }));
 
   useEffect(() => {
     if (open) setActiveSection(initialSection ?? 'timer');
@@ -91,9 +96,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
               style={{ borderBottom: '1px solid var(--brd)' }}
             >
               <div>
-                <h2 className="text-[15px] font-bold" style={{ color: 'var(--t)' }}>Settings</h2>
+                <h2 className="text-[15px] font-bold" style={{ color: 'var(--t)' }}>{t('title')}</h2>
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>
-                  Customize your focus experience
+                  {t('subtitle')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -105,7 +110,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                 >
                   <RotateCcw size={11} />
-                  Reset
+                  {tCommon('reset')}
                 </button>
                 <button
                   onClick={onClose}
@@ -165,24 +170,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                 >
                   {activeSection === 'timer' && (
                     <FieldGroup>
-                      <NumberField label="Focus Duration"   value={settings.workDuration}      min={1} max={90} unit="min"      onChange={(v) => updateSettings({ workDuration: v })} />
-                      <NumberField label="Short Break"      value={settings.shortBreakDuration} min={1} max={30} unit="min"      onChange={(v) => updateSettings({ shortBreakDuration: v })} />
-                      <NumberField label="Long Break"       value={settings.longBreakDuration}  min={5} max={60} unit="min"      onChange={(v) => updateSettings({ longBreakDuration: v })} />
-                      <NumberField label="Long Break After" value={settings.longBreakInterval}  min={2} max={8}  unit="sessions" onChange={(v) => updateSettings({ longBreakInterval: v })} />
+                      <NumberField label={t('timer.focusDuration')} value={settings.workDuration}      min={1} max={90} unit={t('timer.minutes')} onChange={(v) => updateSettings({ workDuration: v })} />
+                      <NumberField label={t('timer.shortBreak')}    value={settings.shortBreakDuration} min={1} max={30} unit={t('timer.minutes')} onChange={(v) => updateSettings({ shortBreakDuration: v })} />
+                      <NumberField label={t('timer.longBreak')}     value={settings.longBreakDuration}  min={5} max={60} unit={t('timer.minutes')} onChange={(v) => updateSettings({ longBreakDuration: v })} />
+                      <NumberField label={t('timer.longBreakAfter')} value={settings.longBreakInterval} min={2} max={8}  unit={t('timer.sessions')} onChange={(v) => updateSettings({ longBreakInterval: v })} />
                     </FieldGroup>
                   )}
 
                   {activeSection === 'behavior' && (
                     <FieldGroup>
                       <ToggleField
-                        label="Auto-start Breaks"
-                        description="Automatically start break timer after focus"
+                        label={t('behavior.autoStartBreaks')}
+                        description={t('behavior.autoStartBreaksDesc')}
                         value={settings.autoStartBreaks}
                         onChange={(v) => updateSettings({ autoStartBreaks: v })}
                       />
                       <ToggleField
-                        label="Auto-start Pomodoros"
-                        description="Automatically start focus timer after break"
+                        label={t('behavior.autoStartPomodoros')}
+                        description={t('behavior.autoStartPomodorosDesc')}
                         value={settings.autoStartPomodoros}
                         onChange={(v) => updateSettings({ autoStartPomodoros: v })}
                       />
@@ -192,11 +197,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                   {activeSection === 'goals' && (
                     <FieldGroup>
                       <NumberField
-                        label="Daily Focus Goal"
+                        label={t('goals.dailyFocusGoal')}
                         value={settings.dailyFocusGoal}
                         min={1}
                         max={16}
-                        unit="hours"
+                        unit={t('goals.hours')}
                         onChange={(v) => updateSettings({ dailyFocusGoal: v })}
                       />
                     </FieldGroup>
@@ -205,19 +210,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                   {activeSection === 'sounds' && (
                     <FieldGroup>
                       <ToggleField
-                        label="Session Sounds"
-                        description="Play sound when work session or break ends"
+                        label={t('sounds.sessionSounds')}
+                        description={t('sounds.sessionSoundsDesc')}
                         value={settings.soundNotifications}
                         onChange={(v) => updateSettings({ soundNotifications: v })}
                       />
                       <ToggleField
-                        label="Click Sounds"
-                        description="Subtle click on button interactions"
+                        label={t('sounds.clickSounds')}
+                        description={t('sounds.clickSoundsDesc')}
                         value={settings.clickSounds}
                         onChange={(v) => updateSettings({ clickSounds: v })}
                       />
                       <SliderField
-                        label="Volume"
+                        label={t('sounds.volume')}
                         value={settings.soundVolume ?? 70}
                         min={0}
                         max={100}
@@ -227,13 +232,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                     </FieldGroup>
                   )}
 
+                  {activeSection === 'language' && (
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <div className="text-[11px] font-semibold tracking-widest uppercase mb-1.5" style={{ color: 'var(--t3)' }}>
+                          {t('language.title')}
+                        </div>
+                        <p className="text-[11.5px] mb-3" style={{ color: 'var(--t3)' }}>
+                          {t('language.description')}
+                        </p>
+                        <div
+                          className="rounded-2xl overflow-hidden flex flex-col"
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
+                        >
+                          {SUPPORTED_LANGUAGES.map((code) => {
+                            const isSelected = language === code;
+                            return (
+                              <button
+                                key={code}
+                                onClick={() => setLanguage(code as SupportedLanguage)}
+                                className="flex items-center justify-between px-4 py-3 border-b last:border-0 text-left transition-colors"
+                                style={{
+                                  borderColor: 'var(--brd)',
+                                  background: isSelected ? 'rgba(255,255,255,0.06)' : 'transparent',
+                                }}
+                              >
+                                <span className="text-[13px]" style={{ color: 'var(--t)' }}>
+                                  {LANGUAGE_NATIVE_NAMES[code]}
+                                </span>
+                                {isSelected && (
+                                  <Check size={13} style={{ color: 'var(--accent)' }} strokeWidth={3} />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {activeSection === 'account' && <AccountSettings />}
 
                   {activeSection === 'appearance' && (
                     <div className="flex flex-col gap-5">
                       <div>
                         <div className="text-[11px] font-semibold tracking-widest uppercase mb-2.5" style={{ color: 'var(--t3)' }}>
-                          Accent Color
+                          {t('appearance.accentColor')}
                         </div>
                         <div
                           className="rounded-2xl overflow-hidden px-4 py-3 flex flex-wrap gap-2"

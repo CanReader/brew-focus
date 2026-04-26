@@ -1,13 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { History } from 'lucide-react';
 import { useTimerStore } from '../../store/timerStore';
 import { TimerPhase } from '../../types';
-
-const phaseLabel: Record<TimerPhase, string> = {
-  work: 'Focus',
-  shortBreak: 'Break',
-  longBreak: 'Long Break',
-};
 
 const phaseColor: Record<TimerPhase, string> = {
   work: 'var(--accent)',
@@ -27,7 +22,13 @@ function formatTime(ts: number): string {
 }
 
 export const HistoryWidget: React.FC = () => {
+  const { t } = useTranslation('focus');
   const { sessions } = useTimerStore();
+  const phaseLabel: Record<TimerPhase, string> = {
+    work: t('phase.work'),
+    shortBreak: t('phase.shortBreak'),
+    longBreak: t('phase.longBreak'),
+  };
   const today = new Date().toDateString();
   const todaySessions = sessions
     .filter((s) => new Date(s.startedAt).toDateString() === today)
@@ -43,7 +44,7 @@ export const HistoryWidget: React.FC = () => {
           <History size={13} style={{ color: 'var(--grn)' }} />
         </div>
         <span className="text-[12px] font-medium" style={{ color: 'var(--t2)' }}>
-          Focus History
+          {t('history.title')}
         </span>
         <span
           className="ml-auto text-[11px] px-1.5 py-0.5 rounded-md"
@@ -56,7 +57,7 @@ export const HistoryWidget: React.FC = () => {
       {todaySessions.length === 0 ? (
         <div className="py-4 text-center">
           <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
-            No sessions yet today
+            {t('history.noSessions')}
           </span>
         </div>
       ) : (

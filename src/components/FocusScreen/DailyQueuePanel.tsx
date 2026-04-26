@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Check, ChevronDown, Search, Sunrise, Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
@@ -12,6 +13,7 @@ function todayKey(): string {
 }
 
 export const DailyQueuePanel: React.FC = () => {
+  const { t } = useTranslation('focus');
   const { settings, updateSettings } = useSettingsStore();
   const { tasks, setActiveTask } = useTaskStore();
   const { activeTaskId, setActiveTask: setTimerActiveTask } = useTimerStore();
@@ -104,7 +106,7 @@ export const DailyQueuePanel: React.FC = () => {
             style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
           />
           <Sunrise size={11} style={{ color: 'var(--accent)' }} />
-          <span className="text-[10.5px] font-bold uppercase tracking-widest">Today</span>
+          <span className="text-[10.5px] font-bold uppercase tracking-widest">{t('queue.title')}</span>
         </button>
         <span className="text-[10.5px] tabular-nums" style={{ color: 'var(--t3)' }}>
           {incompleteInQueue.length}
@@ -120,7 +122,7 @@ export const DailyQueuePanel: React.FC = () => {
           }}
           onMouseEnter={(e) => { if (!adding) { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t2)'; } }}
           onMouseLeave={(e) => { if (!adding) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; } }}
-          title="Add a task to today"
+          title={t('queue.addTooltip')}
         >
           <Plus size={11} />
         </button>
@@ -137,7 +139,7 @@ export const DailyQueuePanel: React.FC = () => {
             {/* Empty state */}
             {queueTasks.length === 0 && !adding && (
               <div className="px-3 pb-3 text-[11px]" style={{ color: 'var(--t3)' }}>
-                No queue yet. Tap <span style={{ color: 'var(--t2)' }}>+</span> to plan today.
+                {t('queue.empty')}
               </div>
             )}
 
@@ -164,7 +166,7 @@ export const DailyQueuePanel: React.FC = () => {
                           if (e.key === 'Escape') setAdding(false);
                           if (e.key === 'Enter' && candidates[0]) addToQueue(candidates[0].id);
                         }}
-                        placeholder="Search tasks…"
+                        placeholder={t('queue.searchPlaceholder')}
                         className="flex-1 text-[11.5px] bg-transparent focus:outline-none"
                         style={{ color: 'var(--t)' }}
                       />
@@ -172,7 +174,7 @@ export const DailyQueuePanel: React.FC = () => {
                     <div className="max-h-32 overflow-y-auto flex flex-col gap-0.5">
                       {candidates.length === 0 && (
                         <span className="text-[11px] px-2 py-1" style={{ color: 'var(--t3)' }}>
-                          {search.trim() ? 'No matches' : 'No tasks to add'}
+                          {search.trim() ? t('queue.noMatches') : t('queue.noTasksToAdd')}
                         </span>
                       )}
                       {candidates.map((c) => (
@@ -196,11 +198,11 @@ export const DailyQueuePanel: React.FC = () => {
 
             {/* Rows */}
             <div className="max-h-[176px] overflow-y-auto pb-1">
-              {queueTasks.map((t) => {
-                const isActive = t.id === activeTaskId;
+              {queueTasks.map((task) => {
+                const isActive = task.id === activeTaskId;
                 return (
                   <div
-                    key={t.id}
+                    key={task.id}
                     className="group flex items-center gap-2 px-3 py-1 transition-colors"
                     style={{
                       background: isActive ? 'var(--accent-d)' : 'transparent',
@@ -213,39 +215,39 @@ export const DailyQueuePanel: React.FC = () => {
                     {/* Status dot — completion */}
                     <span
                       className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ background: t.completed ? 'var(--grn)' : isActive ? 'var(--accent)' : 'var(--t3)' }}
+                      style={{ background: task.completed ? 'var(--grn)' : isActive ? 'var(--accent)' : 'var(--t3)' }}
                     />
                     <button
-                      onClick={() => setAsActive(t.id)}
+                      onClick={() => setAsActive(task.id)}
                       className="flex-1 text-left text-[12px] truncate min-w-0"
                       style={{
-                        color: t.completed ? 'var(--t3)' : isActive ? 'var(--t)' : 'var(--t2)',
-                        textDecoration: t.completed ? 'line-through' : 'none',
+                        color: task.completed ? 'var(--t3)' : isActive ? 'var(--t)' : 'var(--t2)',
+                        textDecoration: task.completed ? 'line-through' : 'none',
                       }}
-                      title="Make active"
+                      title={t('queue.makeActive')}
                     >
-                      {t.title}
+                      {task.title}
                     </button>
-                    {t.completed && (
+                    {task.completed && (
                       <Check size={11} style={{ color: 'var(--grn)' }} />
                     )}
-                    {!isActive && !t.completed && (
+                    {!isActive && !task.completed && (
                       <button
-                        onClick={() => setAsActive(t.id)}
+                        onClick={() => setAsActive(task.id)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                         style={{ color: 'var(--t3)' }}
-                        title="Make active"
+                        title={t('queue.makeActive')}
                       >
                         <Play size={10} />
                       </button>
                     )}
                     <button
-                      onClick={() => removeFromQueue(t.id)}
+                      onClick={() => removeFromQueue(task.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ color: 'var(--t3)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
                       onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
-                      title="Remove from today"
+                      title={t('queue.removeFromToday')}
                     >
                       <X size={10} />
                     </button>

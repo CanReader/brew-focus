@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ListTodo, Target, Coffee } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTaskStore } from '../../store/taskStore';
@@ -20,6 +21,7 @@ const priorityAccentRgba: Record<Priority, string> = {
 };
 
 export const UpcomingWidget: React.FC = () => {
+  const { t } = useTranslation('tasks');
   const { tasks, setActiveTask } = useTaskStore();
   const { activeTaskId, setActiveTask: setTimerActiveTask } = useTimerStore();
 
@@ -44,7 +46,7 @@ export const UpcomingWidget: React.FC = () => {
           <ListTodo size={13} style={{ color: 'var(--blu)' }} />
         </div>
         <span className="text-[12px] font-medium" style={{ color: 'var(--t2)' }}>
-          Upcoming Tasks
+          {t('upcomingTasks')}
         </span>
         <span
           className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md tabular-nums"
@@ -61,7 +63,7 @@ export const UpcomingWidget: React.FC = () => {
       {upcoming.length === 0 ? (
         <div className="py-6 text-center">
           <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
-            No upcoming tasks
+            {t('noUpcomingTasks')}
           </span>
         </div>
       ) : (

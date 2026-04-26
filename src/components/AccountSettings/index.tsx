@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Camera, AtSign, Lock, Trash2, CheckCircle, XCircle,
   Loader, AlertTriangle, Eye, EyeOff,
@@ -110,6 +111,7 @@ function FeedbackMsg({ type, text }: { type: 'success' | 'error'; text: string }
 // ── Section A: Profile Picture ─────────────────────────────────────────────────
 
 function AvatarSection({ user }: { user: User }) {
+  const { t } = useTranslation('settings');
   const { updateAvatar } = useAuthStore();
   const [imgFailed, setImgFailed] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -140,12 +142,12 @@ function AvatarSection({ user }: { user: User }) {
     const result = await updateAvatar(selectedFile);
     setLoading(false);
     if (result.success) {
-      setFeedback({ type: 'success', text: 'Photo updated successfully.' });
+      setFeedback({ type: 'success', text: t('account.photoUpdated') });
       setSelectedFile(null);
       setPreview(null);
       setImgFailed(false);
     } else {
-      setFeedback({ type: 'error', text: result.error ?? 'Failed to upload photo.' });
+      setFeedback({ type: 'error', text: result.error ?? t('account.photoFailed') });
     }
   };
 
@@ -153,14 +155,14 @@ function AvatarSection({ user }: { user: User }) {
     <div style={sectionStyle}>
       <div style={sectionTitleStyle}>
         <Camera size={10} style={{ display: 'inline', marginRight: 5 }} />
-        Profile Photo
+        {t('account.profilePhoto')}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ flexShrink: 0, position: 'relative' }}>
           {displayUrl ? (
             <img
               src={displayUrl}
-              alt="Avatar"
+              alt={t('account.avatarAlt')}
               onError={() => { setImgFailed(true); setPreview(null); }}
               style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
             />
@@ -179,7 +181,7 @@ function AvatarSection({ user }: { user: User }) {
           )}
           <button
             onClick={() => fileInputRef.current?.click()}
-            title="Choose photo"
+            title={t('account.choosePhotoTitle')}
             style={{
               position: 'absolute', bottom: 0, right: 0,
               width: 22, height: 22, borderRadius: '50%',
@@ -206,7 +208,7 @@ function AvatarSection({ user }: { user: User }) {
             </div>
           ) : (
             <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 8 }}>
-              PNG, JPG, WEBP up to 2 MB
+              {t('account.photoLimit')}
             </div>
           )}
           <div style={{ display: 'flex', gap: 8 }}>
@@ -215,7 +217,7 @@ function AvatarSection({ user }: { user: User }) {
               style={{ ...ghostBtnStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               <Camera size={11} />
-              Choose Photo
+              {t('account.choosePhoto')}
             </button>
             {selectedFile && (
               <button
@@ -230,7 +232,7 @@ function AvatarSection({ user }: { user: User }) {
                 {loading
                   ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} />
                   : null}
-                Upload
+                {t('account.upload')}
               </button>
             )}
           </div>
@@ -248,6 +250,7 @@ function AvatarSection({ user }: { user: User }) {
 type AvailStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 function UsernameSection({ user }: { user: User }) {
+  const { t } = useTranslation('settings');
   const { updateUsername } = useAuthStore();
   const currentUsername = (user.user_metadata?.username as string | undefined) ?? '';
 
@@ -294,11 +297,11 @@ function UsernameSection({ user }: { user: User }) {
     const result = await updateUsername(input);
     setLoading(false);
     if (result.success) {
-      setFeedback({ type: 'success', text: 'Username updated successfully.' });
+      setFeedback({ type: 'success', text: t('account.usernameUpdated') });
       setInput('');
       setAvailStatus('idle');
     } else {
-      setFeedback({ type: 'error', text: result.error ?? 'Failed to update username.' });
+      setFeedback({ type: 'error', text: result.error ?? t('account.usernameFailed') });
     }
   };
 
@@ -306,21 +309,21 @@ function UsernameSection({ user }: { user: User }) {
     if (!input || input === currentUsername) return null;
     if (availStatus === 'checking') return (
       <span style={{ color: '#f5a623', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
-        <Loader size={10} style={{ animation: 'spin 1s linear infinite' }} /> Checking…
+        <Loader size={10} style={{ animation: 'spin 1s linear infinite' }} /> {t('account.checking')}
       </span>
     );
     if (availStatus === 'available') return (
       <span style={{ color: 'var(--grn)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
-        <CheckCircle size={10} /> Available
+        <CheckCircle size={10} /> {t('account.available')}
       </span>
     );
     if (availStatus === 'taken') return (
       <span style={{ color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
-        <XCircle size={10} /> Taken
+        <XCircle size={10} /> {t('account.taken')}
       </span>
     );
     if (availStatus === 'invalid') return (
-      <span style={{ color: 'var(--t3)', fontSize: 11 }}>3–20 chars, letters/numbers/underscore</span>
+      <span style={{ color: 'var(--t3)', fontSize: 11 }}>{t('account.invalidUsername')}</span>
     );
     return null;
   };
@@ -329,10 +332,10 @@ function UsernameSection({ user }: { user: User }) {
     <div style={sectionStyle}>
       <div style={sectionTitleStyle}>
         <AtSign size={10} style={{ display: 'inline', marginRight: 5 }} />
-        Username
+        {t('account.username')}
       </div>
       <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 10 }}>
-        Current: <span style={{ color: 'var(--t2)', fontWeight: 600 }}>@{currentUsername || '—'}</span>
+        {t('account.currentUsername', { username: `@${currentUsername || '—'}` })}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <div style={{ flex: 1, position: 'relative' }}>
@@ -340,7 +343,7 @@ function UsernameSection({ user }: { user: User }) {
             type="text"
             value={input}
             onChange={(e) => handleChange(e.target.value)}
-            placeholder="new_username"
+            placeholder={t('account.newUsernamePlaceholder')}
             style={inputBaseStyle}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)')}
             onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--brd)')}
@@ -360,7 +363,7 @@ function UsernameSection({ user }: { user: User }) {
           }}
         >
           {loading ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-          Save
+          {t('account.save')}
         </button>
       </div>
       <div style={{ marginTop: 6, minHeight: 18 }}>{availIndicator()}</div>
@@ -383,6 +386,7 @@ function PasswordField({
   onToggleShow: () => void;
   placeholder?: string;
 }) {
+  const { t } = useTranslation('settings');
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 5 }}>{label}</div>
@@ -413,7 +417,7 @@ function PasswordField({
             alignItems: 'center',
           }}
           tabIndex={-1}
-          aria-label={show ? 'Hide password' : 'Show password'}
+          aria-label={show ? t('account.hidePassword') : t('account.showPassword')}
         >
           {show ? <EyeOff size={13} /> : <Eye size={13} />}
         </button>
@@ -423,6 +427,7 @@ function PasswordField({
 }
 
 function PasswordSection() {
+  const { t } = useTranslation('settings');
   const { updatePassword } = useAuthStore();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -443,10 +448,10 @@ function PasswordSection() {
     const result = await updatePassword(current, next);
     setLoading(false);
     if (result.success) {
-      setFeedback({ type: 'success', text: 'Password updated successfully.' });
+      setFeedback({ type: 'success', text: t('account.passwordUpdated') });
       setCurrent(''); setNext(''); setConfirm('');
     } else {
-      setFeedback({ type: 'error', text: result.error ?? 'Failed to update password.' });
+      setFeedback({ type: 'error', text: result.error ?? t('account.passwordFailed') });
     }
   };
 
@@ -454,13 +459,13 @@ function PasswordSection() {
     <div style={sectionStyle}>
       <div style={sectionTitleStyle}>
         <Lock size={10} style={{ display: 'inline', marginRight: 5 }} />
-        Change Password
+        {t('account.changePassword')}
       </div>
-      <PasswordField label="Current Password" value={current} onChange={setCurrent} show={showCurrent} onToggleShow={() => setShowCurrent((v) => !v)} placeholder="Enter current password" />
-      <PasswordField label="New Password" value={next} onChange={setNext} show={showNext} onToggleShow={() => setShowNext((v) => !v)} placeholder="At least 6 characters" />
-      <PasswordField label="Confirm New Password" value={confirm} onChange={setConfirm} show={showConfirm} onToggleShow={() => setShowConfirm((v) => !v)} placeholder="Repeat new password" />
+      <PasswordField label={t('account.currentPassword')} value={current} onChange={setCurrent} show={showCurrent} onToggleShow={() => setShowCurrent((v) => !v)} placeholder={t('account.currentPasswordPlaceholder')} />
+      <PasswordField label={t('account.newPassword')} value={next} onChange={setNext} show={showNext} onToggleShow={() => setShowNext((v) => !v)} placeholder={t('account.newPasswordPlaceholder')} />
+      <PasswordField label={t('account.confirmPassword')} value={confirm} onChange={setConfirm} show={showConfirm} onToggleShow={() => setShowConfirm((v) => !v)} placeholder={t('account.confirmPasswordPlaceholder')} />
       {mismatch && (
-        <div style={{ fontSize: 12, color: '#ff6b6b', marginBottom: 8 }}>Passwords do not match.</div>
+        <div style={{ fontSize: 12, color: '#ff6b6b', marginBottom: 8 }}>{t('account.passwordMismatch')}</div>
       )}
       <button
         onClick={handleSave}
@@ -474,7 +479,7 @@ function PasswordSection() {
         }}
       >
         {loading ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-        Update Password
+        {t('account.updatePassword')}
       </button>
       <AnimatePresence>
         {feedback && <FeedbackMsg type={feedback.type} text={feedback.text} />}
@@ -486,13 +491,15 @@ function PasswordSection() {
 // ── Section D: Danger Zone ─────────────────────────────────────────────────────
 
 function DangerSection() {
+  const { t } = useTranslation('settings');
   const { deleteAccount } = useAuthStore();
   const [confirming, setConfirming] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
+  const deleteToken = t('account.deleteToken');
 
   const handleDelete = async () => {
-    if (confirmText !== 'DELETE') return;
+    if (confirmText !== deleteToken) return;
     setLoading(true);
     await deleteAccount();
     setLoading(false);
@@ -508,7 +515,7 @@ function DangerSection() {
     >
       <div style={{ ...sectionTitleStyle, color: '#ff6b6b' }}>
         <AlertTriangle size={10} style={{ display: 'inline', marginRight: 5 }} />
-        Danger Zone
+        {t('account.dangerZone')}
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div
@@ -528,10 +535,10 @@ function DangerSection() {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--t)', marginBottom: 3 }}>
-            Delete Account
+            {t('account.deleteAccount')}
           </div>
           <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 12, lineHeight: 1.5 }}>
-            This permanently deletes all your data and cannot be undone.
+            {t('account.deleteWarning')}
           </div>
 
           <AnimatePresence mode="wait">
@@ -550,7 +557,7 @@ function DangerSection() {
                   }}
                 >
                   <Trash2 size={11} />
-                  Delete Account
+                  {t('account.deleteAccount')}
                 </button>
               </motion.div>
             ) : (
@@ -562,45 +569,45 @@ function DangerSection() {
                 transition={{ duration: 0.15 }}
               >
                 <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 8 }}>
-                  Type <span style={{ fontWeight: 700, color: '#ff6b6b' }}>DELETE</span> to confirm
+                  {t('account.typeDeleteToConfirm', { token: deleteToken })}
                 </div>
                 <input
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="DELETE"
+                  placeholder={deleteToken}
                   style={{
                     ...inputBaseStyle,
                     maxWidth: 200,
-                    borderColor: confirmText === 'DELETE' ? 'rgba(255,77,77,0.5)' : 'var(--brd)',
+                    borderColor: confirmText === deleteToken ? 'rgba(255,77,77,0.5)' : 'var(--brd)',
                   }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(255,77,77,0.5)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = confirmText === 'DELETE' ? 'rgba(255,77,77,0.5)' : 'var(--brd)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = confirmText === deleteToken ? 'rgba(255,77,77,0.5)' : 'var(--brd)')}
                   autoFocus
                 />
                 <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                   <button
                     onClick={handleDelete}
-                    disabled={confirmText !== 'DELETE' || loading}
+                    disabled={confirmText !== deleteToken || loading}
                     style={{
                       ...smallBtnStyle,
-                      background: confirmText === 'DELETE' ? '#ef4444' : 'rgba(255,77,77,0.12)',
+                      background: confirmText === deleteToken ? '#ef4444' : 'rgba(255,77,77,0.12)',
                       border: '1px solid rgba(255,77,77,0.3)',
                       color: '#fff',
-                      opacity: confirmText !== 'DELETE' || loading ? 0.5 : 1,
+                      opacity: confirmText !== deleteToken || loading ? 0.5 : 1,
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
                     }}
                   >
                     {loading ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={11} />}
-                    Confirm Delete
+                    {t('account.confirmDelete')}
                   </button>
                   <button
                     onClick={() => { setConfirming(false); setConfirmText(''); }}
                     style={ghostBtnStyle}
                   >
-                    Cancel
+                    {t('account.cancel')}
                   </button>
                 </div>
               </motion.div>
@@ -613,12 +620,13 @@ function DangerSection() {
 }
 
 export const AccountSettings: React.FC = () => {
+  const { t } = useTranslation('settings');
   const { user } = useAuthStore();
 
   if (!user) {
     return (
       <div style={{ color: 'var(--t3)', fontSize: 13, padding: 16 }}>
-        Not signed in.
+        {t('account.notSignedIn')}
       </div>
     );
   }

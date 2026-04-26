@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Task } from '../../types';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -16,6 +17,7 @@ function formatStatTime(seconds: number): { main: string; sub: string } {
 }
 
 export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
+  const { t } = useTranslation('tasks');
   const { todayFocusSeconds } = useTimerStore();
   const { settings } = useSettingsStore();
   const { projects } = useTaskStore();
@@ -37,28 +39,28 @@ export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
       style={{ borderBottom: '1px solid var(--brd)', background: 'var(--bg)' }}
     >
       <StatCard
-        label="Estimated"
+        label={t('stats.estimated')}
         main={estimatedTime.main}
         sub={estimatedTime.sub}
         color="var(--accent)"
         gradient="rgba(255,77,77,0.06)"
       />
       <StatCard
-        label="Remaining"
+        label={t('stats.remaining')}
         main={String(activeTasks.length)}
         sub=""
         color="var(--t2)"
         gradient="rgba(255,255,255,0.02)"
       />
       <StatCard
-        label="Elapsed"
+        label={t('stats.elapsed')}
         main={elapsedTime.main}
         sub={elapsedTime.sub}
         color="var(--blu)"
         gradient="rgba(91,141,238,0.06)"
       />
       <StatCard
-        label="Completed"
+        label={t('stats.completed')}
         main={String(completedTasks.length)}
         sub=""
         color="var(--grn)"

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -48,22 +49,25 @@ const priorityActiveBg: Record<Priority, string> = {
   p4: 'transparent',
 };
 
-const PlayCircleBtn: React.FC<{ active: boolean; onClick: (e: React.MouseEvent) => void }> = ({ active, onClick }) => (
-  <button
-    onClick={onClick}
-    className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-150"
-    style={{
-      background: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)',
-      border: `1px solid ${active ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
-      boxShadow: active ? '0 0 8px var(--accent-g)' : 'none',
-    }}
-    title="Start timer for this task"
-  >
-    <svg width="7" height="8" viewBox="0 0 7 8" fill="none">
-      <path d="M1.5 1L6 4L1.5 7V1Z" fill="white" />
-    </svg>
-  </button>
-);
+const PlayCircleBtn: React.FC<{ active: boolean; onClick: (e: React.MouseEvent) => void }> = ({ active, onClick }) => {
+  const { t } = useTranslation('tasks');
+  return (
+    <button
+      onClick={onClick}
+      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-150"
+      style={{
+        background: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)',
+        border: `1px solid ${active ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
+        boxShadow: active ? '0 0 8px var(--accent-g)' : 'none',
+      }}
+      title={t('taskItem.startTimerForThis')}
+    >
+      <svg width="7" height="8" viewBox="0 0 7 8" fill="none">
+        <path d="M1.5 1L6 4L1.5 7V1Z" fill="white" />
+      </svg>
+    </button>
+  );
+};
 
 const PomodoroDots: React.FC<{ completed: number; estimate: number }> = ({ completed, estimate }) => {
   if (estimate > 8) {
@@ -135,6 +139,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onPlay,
   onContextMenu,
 }) => {
+  const { t } = useTranslation('tasks');
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const editRef = useRef<HTMLInputElement>(null);
@@ -316,7 +321,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               if (blockers.length > 0) {
                 const blockerNames = blockers.map((b) => `"${b.title}"`).join(', ');
                 const proceed = window.confirm(
-                  `This task is blocked by ${blockerNames}. Start focus anyway?`
+                  t('taskItem.blockedConfirm', { names: blockerNames })
                 );
                 if (!proceed) return;
               }
@@ -355,7 +360,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         {stale && (
           <span
             className="shrink-0 flex items-center opacity-50"
-            title="No activity in 14 days"
+            title={t('taskItem.noActivity14Days')}
             style={{ color: 'var(--t3)' }}
           >
             <Clock size={11} />
@@ -367,11 +372,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <span
             className="shrink-0 flex items-center gap-0.5"
             style={{ color: 'var(--t3)' }}
-            title={blockers.length === 1 ? `Blocked by: ${blockers[0].title}` : `Blocked by ${blockers.length} tasks`}
+            title={blockers.length === 1
+              ? t('taskItem.blockedByOne', { title: blockers[0].title })
+              : t('taskItem.blockedByMany', { count: blockers.length })}
           >
             <Lock size={11} />
             <span className="text-[10px]">
-              {blockers.length === 1 ? 'Blocked' : `Blocked·${blockers.length}`}
+              {blockers.length === 1 ? t('taskItem.blocked') : t('taskItem.blockedCount', { count: blockers.length })}
             </span>
           </span>
         )}

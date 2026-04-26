@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { TimerPhase } from '../../types';
 
 interface TimerDisplayProps {
@@ -10,12 +11,6 @@ interface TimerDisplayProps {
   /** The active task's pomodoro estimate (or longBreakInterval if no task). */
   sessionsGoal: number;
 }
-
-const phaseLabels: Record<TimerPhase, string> = {
-  work: 'Focus',
-  shortBreak: 'Short Break',
-  longBreak: 'Long Break',
-};
 
 const phaseColors: Record<TimerPhase, string> = {
   work: 'var(--accent)',
@@ -41,6 +36,12 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   sessionsCompleted,
   sessionsGoal,
 }) => {
+  const { t } = useTranslation('focus');
+  const phaseLabels: Record<TimerPhase, string> = {
+    work: t('phase.work'),
+    shortBreak: t('phase.shortBreak'),
+    longBreak: t('phase.longBreak'),
+  };
   const goal = Math.max(1, Math.min(12, sessionsGoal));
   const completed = Math.min(goal, Math.max(0, sessionsCompleted));
   return (

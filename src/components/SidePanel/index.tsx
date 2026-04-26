@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FocusTimeWidget } from './FocusTimeWidget';
 import { UpcomingWidget } from './UpcomingWidget';
 import { FocusCalendar } from './FocusCalendar';
 import { useTimerStore } from '../../store/timerStore';
 
 const SessionScratchPad: React.FC = () => {
+  const { t } = useTranslation('focus');
   const [notes, setNotes] = useState('');
   const { isRunning, phase } = useTimerStore();
   const prevPhaseRef = useRef(phase);
@@ -35,13 +37,13 @@ const SessionScratchPad: React.FC = () => {
           <path d="M3 4h5M3 6h3" stroke="var(--t3)" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
         <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>
-          Session Notes
+          {t('scratchpad.title')}
         </span>
       </div>
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Jot things down…"
+        placeholder={t('scratchpad.placeholder')}
         rows={3}
         className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
         style={{
@@ -55,6 +57,7 @@ const SessionScratchPad: React.FC = () => {
 };
 
 export const SidePanel: React.FC = () => {
+  const { t } = useTranslation('focus');
   return (
     <div
       className="flex flex-col gap-3 p-4 h-full overflow-y-auto"
@@ -67,7 +70,7 @@ export const SidePanel: React.FC = () => {
           className="text-[10px] font-bold tracking-widest uppercase shrink-0"
           style={{ color: 'var(--t3)' }}
         >
-          Dashboard
+          {t('dashboard')}
         </h3>
         <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent 0%, var(--brd2) 100%)' }} />
       </div>

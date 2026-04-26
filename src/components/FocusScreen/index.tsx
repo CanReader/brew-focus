@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRight, Sliders } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
@@ -22,6 +23,7 @@ import { FocusCustomizePanel } from '../FocusCustomizePanel';
 interface FocusScreenProps {}
 
 export const FocusScreen: React.FC<FocusScreenProps> = () => {
+  const { t } = useTranslation('focus');
   const [panelOpen, setPanelOpen] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [cupPickerOpen, setCupPickerOpen] = useState(false);
@@ -206,7 +208,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'var(--t2)'; e.currentTarget.style.borderColor = 'var(--brd2)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.borderColor = 'var(--brd)'; }}
-          title="Customize sounds & background"
+          title={t('customize')}
         >
           <Sliders size={14} />
         </button>
@@ -234,7 +236,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
               e.currentTarget.style.borderColor = 'var(--brd)';
             }
           }}
-          title="Toggle side panel"
+          title={t('togglePanel')}
         >
           <PanelRight size={15} />
         </button>
@@ -271,8 +273,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
                 onClick={() => setCupPickerOpen(true)}
                 className="group relative block bg-transparent border-0 p-0 cursor-pointer"
                 style={{ outline: 'none' }}
-                title="Change cup"
-                aria-label="Change coffee cup"
+                title={t('changeCup')}
+                aria-label={t('changeCupAria')}
               >
                 <CoffeeCup
                   progress={progress}
@@ -290,7 +292,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Change cup
+                  {t('changeCup')}
                 </span>
               </button>
             </motion.div>
@@ -376,7 +378,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
               boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
-            <span className="text-[11px] font-medium" style={{ color: 'var(--t3)' }}>How was your energy?</span>
+            <span className="text-[11px] font-medium" style={{ color: 'var(--t3)' }}>{t('moodPrompt')}</span>
             <div className="flex items-center gap-1.5">
               {(['😴','😐','🙂','😊','🔥'] as const).map((emoji, i) => (
                 <button
@@ -400,7 +402,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
                 onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--t2)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; }}
               >
-                skip
+                {t('skip', { ns: 'common' })}
               </button>
             </div>
           </motion.div>

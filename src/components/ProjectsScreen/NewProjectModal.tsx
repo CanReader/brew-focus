@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PROJECT_COLORS } from '../../types';
 import { useTaskStore } from '../../store/taskStore';
-import { PROJECT_TEMPLATES, ProjectTemplate, daysFromNowMs } from './projectTemplates';
+import { PROJECT_TEMPLATES, ProjectTemplate, daysFromNowMs, getTemplateName, getTemplateDescription, localizeTemplateMilestones, localizeTemplateTasks } from './projectTemplates';
 
 interface Props {
   open: boolean;
@@ -13,6 +14,8 @@ interface Props {
 type Step = 'template' | 'customize';
 
 export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
+  const { t } = useTranslation('projects');
+  const { t: tCommon } = useTranslation('common');
   const { addProject, _seedProjectFromTemplate } = useTaskStore();
   const [step, setStep] = useState<Step>('template');
   const [template, setTemplate] = useState<ProjectTemplate | null>(null);
@@ -46,7 +49,9 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
       // than the captured `projects` (stale).
       const created = useTaskStore.getState().projects.find((p) => p.name === trimmed && p.color === color);
       if (created && template && template.id !== 'blank') {
-        const milestones = template.milestones.map((m) => ({
+        const localizedMilestones = localizeTemplateMilestones(template);
+        const localizedTasks = localizeTemplateTasks(template);
+        const milestones = localizedMilestones.map((m) => ({
           title: m.title,
           targetDate: m.daysFromNow !== undefined ? daysFromNowMs(m.daysFromNow) : undefined,
         }));
@@ -62,7 +67,7 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
           created.id,
           template.emoji === '·' ? undefined : template.emoji,
           milestones,
-          template.tasks,
+          localizedTasks,
           defaults,
         );
       } else if (created && template && template.emoji !== '·') {
@@ -120,10 +125,10 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
               )}
               <Sparkles size={14} style={{ color }} />
               <h3 className="font-fraunces text-[18px]" style={{ color: 'var(--t)' }}>
-                {step === 'template' ? 'New Project' : 'Customize'}
+                {step === 'template' ? t('modal.title') : t('modal.customize')}
               </h3>
               <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
-                {step === 'template' ? '· Pick a template' : `· ${template?.name}`}
+                {step === 'template' ? t('modal.pickTemplate') : (template ? `· ${getTemplateName(template)}` : '')}
               </span>
             </div>
             <button
@@ -147,10 +152,10 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                 transition={{ duration: 0.15 }}
                 className="grid grid-cols-2 gap-2.5"
               >
-                {PROJECT_TEMPLATES.map((t) => (
+                {PROJECT_TEMPLATES.map((tpl) => (
                   <button
-                    key={t.id}
-                    onClick={() => pickTemplate(t)}
+                    key={tpl.id}
+                    onClick={() => pickTemplate(tpl)}
                     className="group flex flex-col items-start text-left p-4 rounded-xl transition-all"
                     style={{
                       background: 'var(--bg2)',
@@ -158,7 +163,7 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                       minHeight: 140,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = t.suggestedColor + '88';
+                      e.currentTarget.style.borderColor = tpl.suggestedColor + '88';
                       e.currentTarget.style.background = 'var(--card-h)';
                     }}
                     onMouseLeave={(e) => {
@@ -166,18 +171,18 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                       e.currentTarget.style.background = 'var(--bg2)';
                     }}
                   >
-                    <span className="text-[28px] leading-none mb-2">{t.emoji}</span>
+                    <span className="text-[28px] leading-none mb-2">{tpl.emoji}</span>
                     <span className="text-[14px] font-semibold" style={{ color: 'var(--t)' }}>
-                      {t.name}
+                      {getTemplateName(tpl)}
                     </span>
                     <span className="text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>
-                      {t.description}
+                      {getTemplateDescription(tpl)}
                     </span>
                     <div className="flex-1" />
                     <span className="text-[10.5px] mt-2" style={{ color: 'var(--t3)' }}>
-                      {t.milestones.length === 0 && t.tasks.length === 0
-                        ? 'Empty'
-                        : `${t.milestones.length} milestone${t.milestones.length === 1 ? '' : 's'} · ${t.tasks.length} starter task${t.tasks.length === 1 ? '' : 's'}`}
+                      {tpl.milestones.length === 0 && tpl.tasks.length === 0
+                        ? t('modal.empty')
+                        : t('modal.summary', { milestones: tpl.milestones.length, tasks: tpl.tasks.length })}
                     </span>
                   </button>
                 ))}
@@ -192,14 +197,14 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
               >
                 <div className="mb-4">
                   <label className="text-[10.5px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--t3)' }}>
-                    Name
+                    {t('modal.name')}
                   </label>
                   <input
                     autoFocus
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-                    placeholder="e.g. Brew Focus mobile app"
+                    placeholder={t('modal.namePlaceholder')}
                     className="w-full px-3 py-2.5 rounded-xl text-[13px] focus:outline-none transition-all"
                     style={{
                       background: 'var(--bg2)',
@@ -214,10 +219,10 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-                      Color
+                      {t('modal.color')}
                     </label>
                     {template && color === template.suggestedColor && (
-                      <span className="text-[10.5px]" style={{ color: 'var(--t3)' }}>Suggested</span>
+                      <span className="text-[10.5px]" style={{ color: 'var(--t3)' }}>{t('modal.suggested')}</span>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -242,11 +247,11 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                     style={{ background: 'var(--bg2)', border: '1px solid var(--brd)' }}
                   >
                     <div className="text-[10.5px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--t3)' }}>
-                      Will be created
+                      {t('modal.willBeCreated')}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      {template.milestones.map((m) => (
-                        <div key={m.title} className="flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--t2)' }}>
+                      {localizeTemplateMilestones(template).map((m, idx) => (
+                        <div key={`m-${idx}`} className="flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--t2)' }}>
                           <span className="w-1 h-1 rounded-full" style={{ background: color }} />
                           <span className="flex-1">{m.title}</span>
                           {m.daysFromNow !== undefined && (
@@ -257,12 +262,12 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                       {template.tasks.length > 0 && template.milestones.length > 0 && (
                         <div className="h-px my-1" style={{ background: 'var(--brd)' }} />
                       )}
-                      {template.tasks.map((t) => (
-                        <div key={t.title} className="flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--t2)' }}>
+                      {localizeTemplateTasks(template).map((task, idx) => (
+                        <div key={`t-${idx}`} className="flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--t2)' }}>
                           <span style={{ color: 'var(--t3)' }}>·</span>
-                          <span className="flex-1">{t.title}</span>
-                          {t.type && (
-                            <span className="text-[10px]" style={{ color: 'var(--t3)' }}>#{t.type}</span>
+                          <span className="flex-1">{task.title}</span>
+                          {task.type && (
+                            <span className="text-[10px]" style={{ color: 'var(--t3)' }}>#{task.type}</span>
                           )}
                         </div>
                       ))}
@@ -276,7 +281,7 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                     className="px-3.5 py-2 rounded-xl text-[12px] font-medium transition-colors"
                     style={{ color: 'var(--t3)', background: 'transparent' }}
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                   <button
                     onClick={submit}
@@ -289,9 +294,9 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                       boxShadow: name.trim() && !submitting ? `0 4px 16px ${color}55` : 'none',
                     }}
                   >
-                    {submitting ? 'Creating…' : (
+                    {submitting ? tCommon('creating') : (
                       <>
-                        Create
+                        {tCommon('create')}
                         <ArrowRight size={11} />
                       </>
                     )}

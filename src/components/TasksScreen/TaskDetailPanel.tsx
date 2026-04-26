@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Trash2, Check, Plus, Flag, GripVertical,
@@ -35,11 +36,11 @@ interface TaskDetailPanelProps {
   onDelete: () => void;
 }
 
-const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
-  { value: 'p1', label: 'High',  color: 'var(--accent)' },
-  { value: 'p2', label: 'Med',   color: 'var(--amb)' },
-  { value: 'p3', label: 'Low',   color: 'var(--blu)' },
-  { value: 'p4', label: 'None',  color: 'var(--t3)' },
+const PRIORITY_OPTIONS: { value: Priority; labelKey: 'priorityHigh' | 'priorityMed' | 'priorityLow' | 'priorityNone'; color: string }[] = [
+  { value: 'p1', labelKey: 'priorityHigh',  color: 'var(--accent)' },
+  { value: 'p2', labelKey: 'priorityMed',   color: 'var(--amb)' },
+  { value: 'p3', labelKey: 'priorityLow',   color: 'var(--blu)' },
+  { value: 'p4', labelKey: 'priorityNone',  color: 'var(--t3)' },
 ];
 
 const priorityFlagColors: Record<Priority, string> = {
@@ -163,6 +164,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   const notesRef = useRef<HTMLTextAreaElement>(null);
+  const { t } = useTranslation('tasks');
 
   const { addSubtask, toggleSubtask, updateSubtask, deleteSubtask, reorderSubtasks, addTag, removeTag } = useTaskStore();
 
@@ -226,22 +228,22 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
   const pomodoroValue = `${task.pomodoroCompleted}/${task.pomodoroEstimate}  ${estimatedStr}`;
   const repeatLabel = task.repeatType && task.repeatType !== 'none'
-    ? task.repeatType.charAt(0).toUpperCase() + task.repeatType.slice(1)
-    : 'None';
+    ? t(`detail.repeatOptions.${task.repeatType}`)
+    : t('detail.repeatOptions.none');
   const reminderLabel = task.reminder
     ? new Date(task.reminder).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-    : 'None';
+    : t('detail.dependsNone');
 
   const flagColor = priorityFlagColors[task.priority];
   const overdue = !task.completed && isDueDateOverdue(task.dueDate);
   const dueDateDisplay = formatDueDateDisplay(task.dueDate);
 
-  const DATE_SHORTCUTS: { label: string; value: DueDate }[] = [
-    { label: 'Today', value: 'today' },
-    { label: 'Tomorrow', value: 'tomorrow' },
-    { label: 'Next Week', value: isoDatePlusDays(7) },
-    { label: 'Someday', value: 'someday' },
-    { label: 'None', value: null },
+  const DATE_SHORTCUTS: { labelKey: 'today' | 'tomorrow' | 'nextWeek' | 'someday' | 'none'; value: DueDate }[] = [
+    { labelKey: 'today', value: 'today' },
+    { labelKey: 'tomorrow', value: 'tomorrow' },
+    { labelKey: 'nextWeek', value: isoDatePlusDays(7) },
+    { labelKey: 'someday', value: 'someday' },
+    { labelKey: 'none', value: null },
   ];
 
   return (
@@ -316,7 +318,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               color: flagColor,
               background: expanded === 'priority' ? `${flagColor}18` : 'transparent',
             }}
-            title="Change priority"
+            title={t('detail.changePriority')}
           >
             <Flag size={14} fill={task.priority !== 'p4' ? flagColor : 'none'} />
           </button>
@@ -379,7 +381,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                       }}
                     >
                       <Flag size={11} color={isSelected ? p.color : 'var(--t3)'} fill={isSelected ? p.color : 'transparent'} strokeWidth={2} />
-                      {p.label}
+                      {t(`detail.${p.labelKey}`)}
                     </button>
                   );
                 })}
@@ -457,7 +459,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               </div>
               {!DEFAULT_TASK_TYPES.find((d) => d.value === task.type) && (
                 <div className="mt-2 text-[10.5px]" style={{ color: 'var(--t3)' }}>
-                  Custom: <span style={{ color: taskTypeColor(task.type) }}>{task.type}</span>
+                  {t('detail.customType')} <span style={{ color: taskTypeColor(task.type) }}>{task.type}</span>
                 </div>
               )}
             </motion.div>
@@ -495,7 +497,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               if (e.key === 'Escape') setNewTagValue('');
             }}
             onBlur={() => { if (newTagValue.trim()) handleAddTag(); }}
-            placeholder="+ tag"
+            placeholder={t('detail.addTag')}
             className="text-[12px] bg-transparent focus:outline-none w-14 focus:w-20 transition-all"
             style={{ color: 'var(--t3)' }}
           />
@@ -505,12 +507,12 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--brd)' }}>
           <div className="flex items-center gap-1.5 mb-1.5">
             <FileText size={11} style={{ color: 'var(--t3)' }} />
-            <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>Notes</span>
+            <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>{t('detail.notes')}</span>
           </div>
           <MarkdownNotes
             value={task.notes}
             onChange={(notes) => onUpdate({ notes })}
-            placeholder="Add notes — markdown supported. Use [[Task name]] to link."
+            placeholder={t('detail.notesPlaceholder')}
             minEditHeight={120}
             preprocess={preprocessWikiLinks}
             componentOverrides={{
@@ -529,7 +531,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         {/* Detail rows */}
         <DetailRow
           icon={<Clock size={12} />}
-          label="Pomodoro"
+          label={t('detail.pomodoro')}
           value={pomodoroValue}
           expanded={expanded === 'pomodoro'}
           onClick={() => toggleRow('pomodoro')}
@@ -537,21 +539,21 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         >
           <div className="pt-2 flex flex-col gap-2">
             <PomodoroRow
-              label="Sessions"
+              label={t('detail.sessions')}
               value={task.pomodoroEstimate}
               min={1}
               onDec={() => { if (task.pomodoroEstimate > 1) onUpdate({ pomodoroEstimate: task.pomodoroEstimate - 1 }); }}
               onInc={() => onUpdate({ pomodoroEstimate: task.pomodoroEstimate + 1 })}
             />
             <PomodoroRow
-              label="Work (min)"
+              label={t('detail.workMin')}
               value={task.customWorkDuration ?? settings.workDuration}
               min={1}
               onDec={() => onUpdate({ customWorkDuration: Math.max(1, (task.customWorkDuration ?? settings.workDuration) - 1) })}
               onInc={() => onUpdate({ customWorkDuration: (task.customWorkDuration ?? settings.workDuration) + 1 })}
             />
             <PomodoroRow
-              label="Short break (min)"
+              label={t('detail.shortBreakMin')}
               value={task.customShortBreakDuration ?? settings.shortBreakDuration}
               min={1}
               onDec={() => onUpdate({ customShortBreakDuration: Math.max(1, (task.customShortBreakDuration ?? settings.shortBreakDuration) - 1) })}
@@ -560,7 +562,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
             <div className="border-t pt-2 mt-0.5 flex flex-col gap-2" style={{ borderColor: 'var(--brd)' }}>
               <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--t3)' }}>Skip long breaks</span>
+                <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{t('detail.skipLongBreaks')}</span>
                 <label className="toggle shrink-0">
                   <input
                     type="checkbox"
@@ -573,17 +575,17 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               {!task.skipLongBreak && (
                 <>
                   <PomodoroRow
-                    label="Long break (min)"
+                    label={t('detail.longBreakMin')}
                     value={task.customLongBreakDuration ?? settings.longBreakDuration}
                     min={1}
                     onDec={() => onUpdate({ customLongBreakDuration: Math.max(1, (task.customLongBreakDuration ?? settings.longBreakDuration) - 1) })}
                     onInc={() => onUpdate({ customLongBreakDuration: (task.customLongBreakDuration ?? settings.longBreakDuration) + 1 })}
                   />
                   <PomodoroRow
-                    label="Long break after"
+                    label={t('detail.longBreakAfter')}
                     value={task.customLongBreakInterval ?? settings.longBreakInterval}
                     min={2}
-                    suffix="sessions"
+                    suffix={t('detail.sessionsSuffix')}
                     onDec={() => onUpdate({ customLongBreakInterval: Math.max(2, (task.customLongBreakInterval ?? settings.longBreakInterval) - 1) })}
                     onInc={() => onUpdate({ customLongBreakInterval: (task.customLongBreakInterval ?? settings.longBreakInterval) + 1 })}
                   />
@@ -603,7 +605,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 className="text-[11px] text-left underline"
                 style={{ color: 'var(--t3)' }}
               >
-                Reset to defaults
+                {t('detail.resetToDefaults')}
               </button>
             )}
           </div>
@@ -611,7 +613,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
         <DetailRow
           icon={<Calendar size={12} />}
-          label="Due Date"
+          label={t('detail.dueDate')}
           value={dueDateDisplay}
           valueColor={task.dueDate ? (overdue ? '#ff6b5a' : 'var(--accent)') : 'var(--t3)'}
           expanded={expanded === 'dueDate'}
@@ -634,13 +636,13 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                       border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
                     }}
                   >
-                    {s.label}
+                    {t(`detail.dueOptions.${s.labelKey}`)}
                   </button>
                 );
               })}
             </div>
             <div>
-              <span className="text-[11px] block mb-1" style={{ color: 'var(--t3)' }}>Custom date</span>
+              <span className="text-[11px] block mb-1" style={{ color: 'var(--t3)' }}>{t('detail.customDate')}</span>
               <input
                 type="date"
                 value={
@@ -668,14 +670,14 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             .filter((t): t is Task => !!t);
           const candidates = dependencyCandidates(task, allTasks);
           const valueText = dependsOnTasks.length === 0
-            ? 'None'
+            ? t('detail.dependsNone')
             : blockers.length > 0
-              ? `${blockers.length} blocking`
-              : `${dependsOnTasks.length} done`;
+              ? t('detail.blockingCount', { count: blockers.length })
+              : t('detail.doneCount', { count: dependsOnTasks.length });
           return (
             <DetailRow
               icon={<Lock size={12} />}
-              label="Depends on"
+              label={t('detail.dependsOn')}
               value={valueText}
               valueColor={blockers.length > 0 ? 'var(--amb)' : dependsOnTasks.length > 0 ? 'var(--grn)' : 'var(--t3)'}
               expanded={expanded === 'depends'}
@@ -683,7 +685,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             >
               <div className="pt-2 flex flex-col gap-1">
                 {dependsOnTasks.length === 0 && (
-                  <span className="text-[11px]" style={{ color: 'var(--t3)' }}>No dependencies yet.</span>
+                  <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{t('detail.noDependencies')}</span>
                 )}
                 {dependsOnTasks.map((d) => (
                   <div
@@ -723,7 +725,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                     >
                       <Search size={10} style={{ color: 'var(--t3)' }} />
                       <span className="text-[11px] flex-1" style={{ color: 'var(--t3)' }}>
-                        Add a task this one waits on…
+                        {t('detail.addDependencyHint')}
                       </span>
                     </div>
                     <div className="max-h-32 overflow-y-auto mt-1 flex flex-col gap-0.5">
@@ -756,8 +758,8 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           return (
             <DetailRow
               icon={<Target size={12} />}
-              label="Milestone"
-              value={ms?.title ?? 'None'}
+              label={t('detail.milestoneLabel')}
+              value={ms?.title ?? t('detail.dependsNone')}
               valueColor={ms ? proj.color : 'var(--t3)'}
               expanded={expanded === 'milestone'}
               onClick={() => toggleRow('milestone')}
@@ -769,7 +771,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   style={{ background: !task.milestoneId ? 'rgba(255,255,255,0.05)' : 'transparent', color: !task.milestoneId ? 'var(--t2)' : 'var(--t3)' }}
                 >
                   <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
-                  <span className="text-[12px]">No milestone</span>
+                  <span className="text-[12px]">{t('detail.noMilestone')}</span>
                 </button>
                 {proj.milestones.map((m) => (
                   <button
@@ -802,8 +804,8 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
         <DetailRow
           icon={<FolderOpen size={12} />}
-          label="Project"
-          value={projects.find((p) => p.id === task.projectId)?.name ?? 'None'}
+          label={t('detail.projectLabel')}
+          value={projects.find((p) => p.id === task.projectId)?.name ?? t('detail.noProject')}
           valueColor={task.projectId ? 'var(--t2)' : 'var(--t3)'}
           expanded={expanded === 'project'}
           onClick={() => toggleRow('project')}
@@ -815,7 +817,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               style={{ background: !task.projectId ? 'rgba(255,255,255,0.05)' : 'transparent', color: !task.projectId ? 'var(--t2)' : 'var(--t3)' }}
             >
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
-              <span className="text-[12px]">None</span>
+              <span className="text-[12px]">{t('detail.noProject')}</span>
             </button>
             {projects.map((p) => (
               <button
@@ -841,7 +843,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
         <DetailRow
           icon={<Bell size={12} />}
-          label="Reminder"
+          label={t('detail.reminder')}
           value={reminderLabel}
           valueColor={task.reminder ? 'var(--t2)' : 'var(--t3)'}
           expanded={expanded === 'reminder'}
@@ -864,7 +866,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 className="text-[11px] text-left underline"
                 style={{ color: 'var(--t3)' }}
               >
-                Clear reminder
+                {t('detail.clearReminder')}
               </button>
             )}
           </div>
@@ -872,7 +874,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
         <DetailRow
           icon={<RefreshCw size={12} />}
-          label="Repeat"
+          label={t('detail.repeat')}
           value={repeatLabel}
           valueColor={task.repeatType && task.repeatType !== 'none' ? 'var(--t2)' : 'var(--t3)'}
           expanded={expanded === 'repeat'}
@@ -893,7 +895,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                     border: `1.5px solid ${isSelected ? 'var(--accent-g)' : 'var(--brd)'}`,
                   }}
                 >
-                  {r.charAt(0).toUpperCase() + r.slice(1)}
+                  {t(`detail.repeatOptions.${r}`)}
                 </button>
               );
             })}
@@ -953,7 +955,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 if (e.key === 'Enter') handleAddSubtask();
                 if (e.key === 'Escape') setNewSubtaskValue('');
               }}
-              placeholder="Add a step…"
+              placeholder={t('detail.addStep')}
               className="flex-1 text-[12px] bg-transparent focus:outline-none"
               style={{ color: 'var(--t)', caretColor: 'var(--accent)' }}
             />
@@ -973,7 +975,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
         <div className="section-divider mx-0 my-1" />
         <div className="px-4 pt-3 pb-1">
           <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>
-            Activity
+            {t('detail.activity')}
           </span>
         </div>
         <div className="pb-3">
@@ -996,7 +998,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             style={{ color: 'var(--t3)' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--t)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-            title="Edit title"
+            title={t('detail.editTitle')}
           >
             <Edit3 size={12} />
           </button>
@@ -1006,7 +1008,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             style={{ color: 'var(--t3)' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,77,0.12)'; e.currentTarget.style.color = 'var(--accent)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-            title="Delete task"
+            title={t('detail.deleteTask')}
           >
             <Trash2 size={12} />
           </button>
@@ -1032,6 +1034,7 @@ const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
   subtask, isEditing, draft, onDraftChange, onStartEdit, onCommit, onCancel, onToggle, onDelete,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id });
+  const { t } = useTranslation('tasks');
   return (
     <div
       ref={setNodeRef}
@@ -1049,7 +1052,7 @@ const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
         {...listeners}
         className="shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/sub:opacity-60 transition-opacity"
         style={{ color: 'var(--t3)', touchAction: 'none' }}
-        title="Drag to reorder"
+        title={t('detail.dragToReorder')}
       >
         <GripVertical size={12} />
       </span>
@@ -1084,7 +1087,7 @@ const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
             color: subtask.completed ? 'var(--t3)' : 'var(--t)',
             textDecoration: subtask.completed ? 'line-through' : 'none',
           }}
-          title="Double-click to edit"
+          title={t('detail.doubleClickToEdit')}
         >
           {subtask.title}
         </span>

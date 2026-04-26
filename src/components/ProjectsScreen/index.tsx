@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Folder, Search, X, LayoutGrid, GitBranch } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { ProjectCard } from './ProjectCard';
@@ -12,19 +13,19 @@ import { TaskDetailPanel } from '../TasksScreen/TaskDetailPanel';
 
 type Filter = 'all' | 'active' | 'on_hold' | 'completed' | 'archived';
 
-const FILTER_TABS: { id: Filter; label: string }[] = [
-  { id: 'all',       label: 'All'       },
-  { id: 'active',    label: 'Active'    },
-  { id: 'on_hold',   label: 'On Hold'   },
-  { id: 'completed', label: 'Completed' },
-  { id: 'archived',  label: 'Archived'  },
-];
-
 interface Props {
   onSwitchToFocus: () => void;
 }
 
 export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
+  const { t } = useTranslation('projects');
+  const FILTER_TABS: { id: Filter; label: string }[] = [
+    { id: 'all',       label: t('filter.all')       },
+    { id: 'active',    label: t('filter.active')    },
+    { id: 'on_hold',   label: t('filter.onHold')   },
+    { id: 'completed', label: t('filter.completed') },
+    { id: 'archived',  label: t('filter.archived')  },
+  ];
   const { projects, tasks, updateTask, deleteTask } = useTaskStore();
   const { sessions } = useTimerStore();
   const [graphSelectedTaskId, setGraphSelectedTaskId] = useState<string | null>(null);
@@ -80,11 +81,11 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
                 backgroundClip: 'text',
               }}
             >
-              Projects
+              {t('title')}
             </h1>
             <p className="text-[12px]" style={{ color: 'var(--t3)' }}>
-              {filtered.length} {filtered.length === 1 ? 'project' : 'projects'}
-              {search && ` matching "${search}"`}
+              {t('project_count', { ns: 'common', count: filtered.length })}
+              {search && ` ${t('matching', { query: search })}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -93,7 +94,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
               className="flex items-center rounded-xl p-0.5"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brd)' }}
             >
-              {([['grid', LayoutGrid, 'Grid'], ['graph', GitBranch, 'Graph']] as const).map(([v, Icon, label]) => {
+              {([['grid', LayoutGrid, t('view.grid')], ['graph', GitBranch, t('view.graph')]] as const).map(([v, Icon, label]) => {
                 const isActive = topView === v;
                 return (
                   <button
@@ -129,7 +130,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px var(--accent-g)'; }}
             >
               <Plus size={13} />
-              New Project
+              {t('newProject')}
             </button>
           </div>
         </div>
@@ -175,7 +176,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search projects…"
+              placeholder={t('search')}
               className="flex-1 text-[12px] bg-transparent focus:outline-none"
               style={{ color: 'var(--t)' }}
             />
@@ -223,12 +224,12 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
               <Folder size={26} style={{ color: 'var(--t3)' }} />
             </div>
             <p className="text-[13px]" style={{ color: 'var(--t2)' }}>
-              {projects.length === 0 ? 'No projects yet' : 'Nothing here'}
+              {projects.length === 0 ? t('noProjectsYet') : t('nothingHere')}
             </p>
             <p className="text-[11.5px]" style={{ color: 'var(--t3)' }}>
               {projects.length === 0
-                ? 'Group your tasks, track focus time, ship things.'
-                : `Try switching filter or clearing search.`}
+                ? t('tagline')
+                : t('tryFilter')}
             </p>
             {projects.length === 0 && (
               <button
@@ -241,7 +242,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
                 }}
               >
                 <Plus size={13} />
-                Create your first project
+                {t('createFirstProject')}
               </button>
             )}
           </div>

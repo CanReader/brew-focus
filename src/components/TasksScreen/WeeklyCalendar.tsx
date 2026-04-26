@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { TimerSession } from '../../types';
 
@@ -55,6 +56,7 @@ function sessionBlocks(sessions: TimerSession[]): Block[] {
 }
 
 export const WeeklyCalendar: React.FC = () => {
+  const { t } = useTranslation('tasks');
   const { sessions } = useTimerStore();
 
   // Refresh every minute so the "now" indicator tracks real time.
@@ -99,7 +101,7 @@ export const WeeklyCalendar: React.FC = () => {
       {/* Header */}
       <div className="px-6 pt-5 pb-3 shrink-0">
         <div className="flex items-end justify-between">
-          <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>Focus Week</h1>
+          <h1 className="font-fraunces text-[26px]" style={{ color: 'var(--t)' }}>{t('weeklyCalendar.title')}</h1>
           <div className="flex flex-col items-end gap-0.5 pb-1">
             <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
               {days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

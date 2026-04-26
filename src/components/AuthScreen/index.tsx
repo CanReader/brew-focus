@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Coffee, CheckCircle, AtSign } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 
 type Mode = 'signIn' | 'signUp' | 'forgot';
@@ -55,6 +56,7 @@ function InputField({
 }
 
 export const AuthScreen: React.FC = () => {
+  const { t } = useTranslation('auth');
   const { signIn, signUp, resetPassword, isLoading, error, clearError } = useAuthStore();
   const [mode, setMode] = useState<Mode>('signIn');
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
@@ -86,7 +88,7 @@ export const AuthScreen: React.FC = () => {
 
     if (mode === 'forgot') {
       const ok = await resetPassword(email);
-      if (ok) setSuccessMsg(`Reset link sent to ${email}. Check your inbox.`);
+      if (ok) setSuccessMsg(t('resetSent', { email }));
       return;
     }
 
@@ -96,7 +98,7 @@ export const AuthScreen: React.FC = () => {
       const result = await signUp(email, password, username);
       if (result.success) {
         if (result.needsConfirmation) {
-          switchMode('signIn', 'Account created! Check your email to confirm, then sign in.');
+          switchMode('signIn', t('accountCreated'));
         }
         // if !needsConfirmation the auth listener auto-navigates to the app
       }
@@ -197,7 +199,7 @@ export const AuthScreen: React.FC = () => {
               Brew Focus
             </h1>
             <p className="text-[12px] mt-1" style={{ color: 'var(--t3)' }}>
-              {mode === 'forgot' ? 'Reset your password' : 'Your personal focus space'}
+              {mode === 'forgot' ? t('resetTagline') : t('tagline')}
             </p>
           </motion.div>
         </div>
@@ -222,7 +224,7 @@ export const AuthScreen: React.FC = () => {
                   border: mode === m ? '1px solid var(--brd2)' : '1px solid transparent',
                 }}
               >
-                {m === 'signIn' ? 'Sign in' : 'Create account'}
+                {m === 'signIn' ? t('tabs.signIn') : t('tabs.signUp')}
               </button>
             ))}
           </motion.div>
@@ -272,11 +274,11 @@ export const AuthScreen: React.FC = () => {
 
               {mode === 'signIn' && (
                 <InputField
-                  label="Username or email"
+                  label={t('fields.usernameOrEmail')}
                   type="text"
                   value={usernameOrEmail}
                   onChange={setUsernameOrEmail}
-                  placeholder="username or you@example.com"
+                  placeholder={t('fields.usernameOrEmailPlaceholder')}
                   icon={<AtSign size={14} />}
                   autoComplete="username"
                 />
@@ -285,17 +287,17 @@ export const AuthScreen: React.FC = () => {
               {mode === 'signUp' && (
                 <div>
                   <InputField
-                    label="Username"
+                    label={t('fields.username')}
                     type="text"
                     value={username}
                     onChange={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    placeholder="your_username"
+                    placeholder={t('fields.usernamePlaceholder')}
                     icon={<AtSign size={14} />}
                     autoComplete="username"
                   />
                   {username && !isValidUsername(username) && (
                     <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#f5a623' }}>
-                      3–20 chars, letters, numbers, underscores only
+                      {t('validation.usernameRules')}
                     </p>
                   )}
                 </div>
@@ -303,11 +305,11 @@ export const AuthScreen: React.FC = () => {
 
               {mode !== 'signIn' && (
                 <InputField
-                  label="Email address"
+                  label={t('fields.email')}
                   type="email"
                   value={email}
                   onChange={setEmail}
-                  placeholder="you@example.com"
+                  placeholder={t('fields.emailPlaceholder')}
                   icon={<Mail size={14} />}
                   autoComplete="email"
                 />
@@ -315,7 +317,7 @@ export const AuthScreen: React.FC = () => {
 
               {mode !== 'forgot' && (
                 <InputField
-                  label="Password"
+                  label={t('fields.password')}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={setPassword}
@@ -329,7 +331,7 @@ export const AuthScreen: React.FC = () => {
               {mode === 'signUp' && (
                 <div>
                   <InputField
-                    label="Confirm password"
+                    label={t('fields.confirmPassword')}
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={setConfirmPassword}
@@ -340,7 +342,7 @@ export const AuthScreen: React.FC = () => {
                   />
                   {confirmPassword && !passwordsMatch && (
                     <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#ff6b6b' }}>
-                      Passwords do not match
+                      {t('validation.passwordsDoNotMatch')}
                     </p>
                   )}
                 </div>
@@ -356,7 +358,7 @@ export const AuthScreen: React.FC = () => {
                     onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; }}
                   >
-                    Forgot password?
+                    {t('forgotPassword')}
                   </button>
                 </div>
               )}
@@ -384,7 +386,7 @@ export const AuthScreen: React.FC = () => {
                 ) : (
                   <>
                     <Coffee size={14} />
-                    {mode === 'signIn' ? 'Sign in' : mode === 'signUp' ? 'Create account' : 'Send reset link'}
+                    {mode === 'signIn' ? t('actions.signIn') : mode === 'signUp' ? t('actions.signUp') : t('actions.sendReset')}
                     <ArrowRight size={13} />
                   </>
                 )}
@@ -399,7 +401,7 @@ export const AuthScreen: React.FC = () => {
                   onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--t2)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; }}
                 >
-                  ← Back to sign in
+                  {t('backToSignIn')}
                 </button>
               )}
             </motion.form>
@@ -410,9 +412,9 @@ export const AuthScreen: React.FC = () => {
           <div className="flex-1 h-px" style={{ background: 'var(--brd)' }} />
           <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
             {mode === 'signUp'
-              ? 'Already have an account?'
+              ? t('haveAccount')
               : mode === 'signIn'
-              ? 'New to Brew Focus?'
+              ? t('newToBrewFocus')
               : ''}
           </span>
           <div className="flex-1 h-px" style={{ background: 'var(--brd)' }} />
@@ -426,7 +428,7 @@ export const AuthScreen: React.FC = () => {
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
-              {mode === 'signIn' ? 'Create a free account →' : '← Sign in instead'}
+              {mode === 'signIn' ? t('switchToSignUp') : t('switchToSignIn')}
             </button>
           </div>
         )}

@@ -4,6 +4,7 @@ import {
   Sun, Calendar, CalendarDays, AlignLeft, CloudSun,
   CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2, Inbox, Bookmark,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { Task, PROJECT_COLORS, resolveDueDateToTs, SavedView } from '../../types';
@@ -30,6 +31,7 @@ function formatTime(seconds: number) {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLoadSavedView }) => {
+  const { t } = useTranslation('tasks');
   const { tasks, projects, addProject, deleteProject } = useTaskStore();
   const { settings, updateSettings } = useSettingsStore();
   const { todayFocusSeconds } = useTimerStore();
@@ -105,15 +107,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
   })();
 
   const navItems = [
-    { id: 'inbox', label: 'Inbox', icon: <Inbox size={14} />, count: inboxCount, time: 0 },
-    { id: 'today', label: 'Today', icon: <Sun size={14} />, count: todayTasks.length + overdueCount, time: todayEstimate },
-    { id: 'tomorrow', label: 'Tomorrow', icon: <Calendar size={14} />, count: tomorrowTasks.length, time: 0 },
-    { id: 'week', label: 'This Week', icon: <CalendarDays size={14} />, count: thisWeekCount, time: 0 },
-    { id: 'planned', label: 'Planned', icon: <AlignLeft size={14} />, count: plannedTasks.length, time: 0 },
-    { id: 'someday', label: 'Someday', icon: <CloudSun size={14} />, count: somedayTasks.length, time: 0 },
-    { id: 'completed', label: 'Completed', icon: <CheckCircle2 size={14} />, count: completed.length, time: 0 },
-    { id: 'all', label: 'Tasks', icon: <FolderOpen size={14} />, count: allTasks.length, time: 0 },
-    { id: 'focus-week', label: 'Focus Week', icon: <BarChart2 size={14} />, count: 0, time: 0 },
+    { id: 'inbox', label: t('views.inbox'), icon: <Inbox size={14} />, count: inboxCount, time: 0 },
+    { id: 'today', label: t('views.today'), icon: <Sun size={14} />, count: todayTasks.length + overdueCount, time: todayEstimate },
+    { id: 'tomorrow', label: t('views.tomorrow'), icon: <Calendar size={14} />, count: tomorrowTasks.length, time: 0 },
+    { id: 'week', label: t('views.week'), icon: <CalendarDays size={14} />, count: thisWeekCount, time: 0 },
+    { id: 'planned', label: t('views.planned'), icon: <AlignLeft size={14} />, count: plannedTasks.length, time: 0 },
+    { id: 'someday', label: t('views.someday'), icon: <CloudSun size={14} />, count: somedayTasks.length, time: 0 },
+    { id: 'completed', label: t('views.completed'), icon: <CheckCircle2 size={14} />, count: completed.length, time: 0 },
+    { id: 'all', label: t('views.all'), icon: <FolderOpen size={14} />, count: allTasks.length, time: 0 },
+    { id: 'focus-week', label: t('views.focusWeek'), icon: <BarChart2 size={14} />, count: 0, time: 0 },
   ];
 
   return (
@@ -197,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                 size={10}
                 style={{ transform: showSavedViews ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
               />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Views</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t('sections.views')}</span>
               <span className="ml-auto text-[10px] tabular-nums" style={{ color: 'var(--t3)' }}>
                 {savedViews.length}
               </span>
@@ -280,7 +282,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
               size={10}
               style={{ transform: showProjects ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
             />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Projects</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{t('sections.projects')}</span>
           </button>
 
           <AnimatePresence>
@@ -337,14 +339,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                             tabIndex={0}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm(`Delete project "${proj.name}"? Tasks in this project will be moved to Inbox.`)) {
+                              if (confirm(t('deleteProjectConfirm', { name: proj.name }))) {
                                 deleteProject(proj.id);
                               }
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.stopPropagation();
-                                if (confirm(`Delete project "${proj.name}"? Tasks in this project will be moved to Inbox.`)) {
+                                if (confirm(t('deleteProjectConfirm', { name: proj.name }))) {
                                   deleteProject(proj.id);
                                 }
                               }
@@ -423,7 +425,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                           if (e.key === 'Enter') handleAddProject();
                           if (e.key === 'Escape') { setAddingProject(false); setNewProjectName(''); }
                         }}
-                        placeholder="Project name…"
+                        placeholder={t('projectName')}
                         className="w-full text-[12px] bg-transparent focus:outline-none border-b pb-1"
                         style={{ color: 'var(--t)', borderColor: 'var(--accent)' }}
                       />
@@ -437,14 +439,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                             boxShadow: '0 2px 8px var(--accent-g)',
                           }}
                         >
-                          Add
+                          {t('add', { ns: 'common' })}
                         </button>
                         <button
                           onClick={() => { setAddingProject(false); setNewProjectName(''); }}
                           className="text-[11px] px-2.5 py-1 rounded-lg transition-colors"
                           style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--t3)' }}
                         >
-                          Cancel
+                          {t('cancel', { ns: 'common' })}
                         </button>
                       </div>
                     </motion.div>
@@ -457,7 +459,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                       onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
                     >
                       <Plus size={12} />
-                      <span className="text-[12px]">Add Project</span>
+                      <span className="text-[12px]">{t('addProject')}</span>
                     </button>
                   )}
                 </AnimatePresence>
@@ -480,7 +482,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                 size={10}
                 style={{ transform: showTags ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
               />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Tags</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t('sections.tags')}</span>
             </button>
 
             <AnimatePresence>
@@ -533,7 +535,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
         style={{ borderTop: '1px solid var(--brd)' }}
       >
         <div className="text-[10px] uppercase tracking-widest mb-0.5 font-semibold" style={{ color: 'var(--t3)' }}>
-          Today's Focus
+          {t('todaysFocus')}
         </div>
         <div
           className="text-[15px] font-semibold tabular-nums"

@@ -8,6 +8,7 @@ import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
 import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target, Bookmark } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -31,18 +32,22 @@ interface ContextMenuState {
   y: number;
 }
 
-function getViewTitle(view: SidebarView, projects: { id: string; name: string }[]): string {
+function getViewTitle(
+  view: SidebarView,
+  projects: { id: string; name: string }[],
+  t: (key: string) => string,
+): string {
   if (view.startsWith('tag:')) return `#${view.slice(4)}`;
   switch (view) {
-    case 'inbox': return 'Inbox';
-    case 'today': return 'Today';
-    case 'tomorrow': return 'Tomorrow';
-    case 'week': return 'This Week';
-    case 'planned': return 'Planned';
-    case 'someday': return 'Someday';
-    case 'completed': return 'Completed';
-    case 'all': return 'Tasks';
-    default: return projects.find((p) => p.id === view)?.name ?? 'Tasks';
+    case 'inbox': return t('views.inbox');
+    case 'today': return t('views.today');
+    case 'tomorrow': return t('views.tomorrow');
+    case 'week': return t('views.week');
+    case 'planned': return t('views.planned');
+    case 'someday': return t('views.someday');
+    case 'completed': return t('views.completed');
+    case 'all': return t('views.all');
+    default: return projects.find((p) => p.id === view)?.name ?? t('views.all');
   }
 }
 
@@ -149,17 +154,23 @@ const QuickCup: React.FC<{ filled: boolean }> = ({ filled }) => (
   </svg>
 );
 
-const STATUS_OPTIONS: { value: import('../../types').ProjectStatus; label: string; color: string }[] = [
-  { value: 'active', label: 'Active', color: 'var(--grn)' },
-  { value: 'on_hold', label: 'On Hold', color: 'var(--amb)' },
-  { value: 'completed', label: 'Done', color: 'var(--t3)' },
-];
+const STATUS_COLORS: Record<import('../../types').ProjectStatus, string> = {
+  active: 'var(--grn)',
+  on_hold: 'var(--amb)',
+  completed: 'var(--t3)',
+};
 
 const ProjectDetailCard: React.FC<{
   project: Project;
   tasks: Task[];
   onUpdate: (partial: Partial<Project>) => void;
 }> = ({ project, tasks, onUpdate }) => {
+  const { t } = useTranslation('tasks');
+  const STATUS_OPTIONS: { value: import('../../types').ProjectStatus; label: string; color: string }[] = [
+    { value: 'active', label: t('status.active'), color: STATUS_COLORS.active },
+    { value: 'on_hold', label: t('status.onHold'), color: STATUS_COLORS.on_hold },
+    { value: 'completed', label: t('status.done'), color: STATUS_COLORS.completed },
+  ];
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(project.description || '');
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
@@ -224,7 +235,7 @@ const ProjectDetailCard: React.FC<{
         <div className="mb-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
-              {completed}/{total} tasks
+              {t('tasksCount', { completed, total })}
             </span>
             <span className="text-[11px] tabular-nums" style={{ color: project.color }}>
               {Math.round(progress * 100)}%
@@ -248,7 +259,7 @@ const ProjectDetailCard: React.FC<{
           onBlur={() => { onUpdate({ description: descValue }); setEditingDesc(false); }}
           onKeyDown={(e) => { if (e.key === 'Escape') { setDescValue(project.description || ''); setEditingDesc(false); } }}
           rows={2}
-          placeholder="Project description…"
+          placeholder={t('projectDescriptionPlaceholder')}
           className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
           style={{ color: 'var(--t2)' }}
         />
@@ -258,7 +269,7 @@ const ProjectDetailCard: React.FC<{
           style={{ color: project.description ? 'var(--t2)' : 'var(--t3)' }}
           onClick={() => setEditingDesc(true)}
         >
-          {project.description || 'Add description…'}
+          {project.description || t('addDescription')}
         </p>
       )}
 
@@ -266,7 +277,7 @@ const ProjectDetailCard: React.FC<{
       <div className="mt-3">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>
-            Milestones
+            {t('milestonesLabel')}
           </span>
           {project.milestones.length > 0 && (
             <span className="text-[11px]" style={{ color: 'var(--t3)' }}>
@@ -304,7 +315,7 @@ const ProjectDetailCard: React.FC<{
               </span>
               {m.targetDate && (
                 <span className="text-[10px] shrink-0" style={{ color: 'var(--t3)' }}>
-                  {new Date(m.targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(m.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 </span>
               )}
               <button
@@ -342,7 +353,7 @@ const ProjectDetailCard: React.FC<{
                 setNewMilestoneDate('');
               }
             }}
-            placeholder="+ Add milestone…"
+            placeholder={t('addMilestonePlaceholder')}
             className="flex-1 text-[12px] bg-transparent focus:outline-none"
             style={{ color: 'var(--t3)' }}
           />
@@ -362,6 +373,8 @@ const ProjectDetailCard: React.FC<{
 };
 
 export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitchToFocus }) => {
+  const { t } = useTranslation('tasks');
+  const { t: tFocus } = useTranslation('focus');
   const [inputValue, setInputValue] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>('all');
@@ -553,8 +566,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     setLastClickedId(task.id);
   };
 
-  const title = getViewTitle(sidebarView, projects);
-  const phaseLabel = phase === 'work' ? 'Focus' : phase === 'shortBreak' ? 'Short Break' : 'Long Break';
+  const title = getViewTitle(sidebarView, projects, t);
+  const phaseLabel =
+    phase === 'work' ? tFocus('phase.work') :
+    phase === 'shortBreak' ? tFocus('phase.shortBreak') :
+    tFocus('phase.longBreak');
   const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
 
   const displayPomodoros = hoverPomodoros ?? newTaskPomodoros;
@@ -610,7 +626,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                 }}
               >
                 <SortAsc size={12} />
-                {sortBy !== 'manual' && <span className="capitalize">{sortBy === 'dueDate' ? 'Due' : sortBy}</span>}
+                {sortBy !== 'manual' && (
+                  <span>
+                    {sortBy === 'dueDate' ? t('sort.due') : t(`sort.${sortBy}`)}
+                  </span>
+                )}
               </button>
               <AnimatePresence>
                 {showSortMenu && (
@@ -629,11 +649,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                     onMouseLeave={() => setShowSortMenu(false)}
                   >
                     {([
-                      ['manual', 'Manual'],
-                      ['priority', 'Priority'],
-                      ['dueDate', 'Due Date'],
-                      ['created', 'Created'],
-                      ['sessions', 'Sessions'],
+                      ['manual', t('sort.manual')],
+                      ['priority', t('sort.priority')],
+                      ['dueDate', t('sort.dueDate')],
+                      ['created', t('sort.created')],
+                      ['sessions', t('sort.sessions')],
                     ] as [SortBy, string][]).map(([val, label]) => (
                       <button
                         key={val}
@@ -680,7 +700,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tasks…"
+                placeholder={t('searchPlaceholder')}
                 className="flex-1 text-[12px] bg-transparent focus:outline-none"
                 style={{ color: 'var(--t)' }}
               />
@@ -703,7 +723,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                 }}
                 onMouseEnter={(e) => { if (!showSaveView) { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t2)'; } }}
                 onMouseLeave={(e) => { if (!showSaveView) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--t3)'; } }}
-                title="Save current view"
+                title={t('saveView')}
               >
                 <Bookmark size={12} />
               </button>
@@ -724,7 +744,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                     onMouseLeave={() => { /* keep open until explicit dismiss */ }}
                   >
                     <div className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--t3)' }}>
-                      Save this view
+                      {t('saveViewTitle')}
                     </div>
                     <input
                       autoFocus
@@ -734,7 +754,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                         if (e.key === 'Enter') saveCurrentView();
                         if (e.key === 'Escape') setShowSaveView(false);
                       }}
-                      placeholder="e.g. Today + work"
+                      placeholder={t('saveViewPlaceholder')}
                       className="w-full px-2.5 py-2 rounded-lg text-[12px] focus:outline-none"
                       style={{ background: 'var(--bg2)', border: '1px solid var(--brd)', color: 'var(--t)' }}
                     />
@@ -748,7 +768,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                         cursor: saveViewName.trim() ? 'pointer' : 'not-allowed',
                       }}
                     >
-                      Save
+                      {t('save', { ns: 'common' })}
                     </button>
                   </motion.div>
                 )}
@@ -770,7 +790,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
             {/* Plus button */}
             <button
               type="button"
-              aria-label="Add task"
+              aria-label={t('addTaskAria')}
               className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105"
               style={{
                 background: 'linear-gradient(135deg, var(--accent) 0%, #ff2929 100%)',
@@ -789,7 +809,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAddTask(); }}
-              placeholder={`Add a task to "${title}", press [Enter] to save`}
+              placeholder={t('addTaskPlaceholder', { view: title })}
               className="flex-1 text-[13px] bg-transparent focus:outline-none min-w-0"
               style={{ color: 'var(--t)' }}
             />
@@ -803,7 +823,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                   onMouseEnter={() => setHoverPomodoros(i + 1)}
                   onMouseLeave={() => setHoverPomodoros(null)}
                   className="transition-transform hover:scale-110"
-                  title={`${i + 1} session${i > 0 ? 's' : ''}`}
+                  title={t('sessionTooltip', { count: i + 1 })}
                 >
                   <QuickCup filled={i < displayPomodoros} />
                 </button>
@@ -819,7 +839,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                   color: newTaskProjectId ? projects.find(p => p.id === newTaskProjectId)?.color ?? 'var(--t3)' : 'var(--t3)',
                   background: newTaskProjectId ? 'var(--card-h)' : 'transparent',
                 }}
-                title="Set project"
+                title={t('setProject')}
               >
                 {newTaskProjectId ? (
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: projects.find(p => p.id === newTaskProjectId)?.color }} />
@@ -851,7 +871,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                       onMouseLeave={(e) => (e.currentTarget.style.background = !newTaskProjectId ? 'var(--card-h)' : 'transparent')}
                     >
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--brd2)' }} />
-                      <span className="text-[12px]">No Project</span>
+                      <span className="text-[12px]">{t('noProject')}</span>
                     </button>
                     {projects.map((p) => (
                       <button
@@ -892,16 +912,16 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                 <path d="M30 19.5h2.5a4 4 0 000-8H30" stroke="var(--t)" strokeWidth="2" strokeLinecap="round"/>
                 <path d="M10 30c2 1 16 1 18 0" stroke="var(--t)" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <p className="text-[13px]" style={{ color: 'var(--t3)' }}>No tasks here yet</p>
+              <p className="text-[13px]" style={{ color: 'var(--t3)' }}>{t('noTasksHere')}</p>
             </div>
           ) : (
             <>
               {viewTasks.length > 0 && (
                 <div className="flex items-center gap-2 mb-3 mt-1">
-                  <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>Tasks</span>
+                  <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>{t('tasksHeader')}</span>
                   <span style={{ color: 'var(--t3)' }}>·</span>
                   <span className="text-[12px]" style={{ color: 'var(--t3)' }}>
-                    {formatEstimate(totalEstimateMinutes)} estimated
+                    {formatEstimate(totalEstimateMinutes)} {t('estimated', { ns: 'common' })}
                   </span>
                 </div>
               )}
@@ -921,7 +941,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                           {overdueGroup.length > 0 && (
                             <>
                               <div className="flex items-center gap-2 mb-2 mt-1">
-                                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>Overdue</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('overdue')}</span>
                                 <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{overdueGroup.length}</span>
                               </div>
                               {overdueGroup.map((task) => (
@@ -946,7 +966,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                             <>
                               {overdueGroup.length > 0 && (
                                 <div className="flex items-center gap-2 mb-2 mt-3">
-                                  <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--t3)' }}>Today</span>
+                                  <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--t3)' }}>{t('today')}</span>
                                   <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{todayGroup.length}</span>
                                 </div>
                               )}
@@ -998,10 +1018,10 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                   >
                     {showCompleted
                       ? <ChevronDown size={13} style={{ color: 'var(--t3)' }} />
-                      : <ChevronRight size={13} style={{ color: 'var(--t3)' }} />
+                      : <ChevronRight size={13} style={{ color: 'var(--t3)' }} className="rtl:scale-x-[-1]" />
                     }
                     <span className="text-[12px] font-medium" style={{ color: 'var(--t3)' }}>
-                      Completed ({completedTasks.length})
+                      {t('completedHeader', { count: completedTasks.length })}
                     </span>
                   </button>
                   <AnimatePresence>

@@ -3,6 +3,7 @@ import { Settings, Minus, Square, X, RefreshCw, LogOut, ChevronDown, Zap } from 
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { useTaskStore } from '../store/taskStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -74,6 +75,7 @@ function Avatar({ user, size = 24 }: { user: User; size?: number }) {
 }
 
 function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose: () => void; onAccountSettings: () => void }) {
+  const { t } = useTranslation('common');
   const { signOut } = useAuthStore();
   const displayName = getDisplayName(user);
   const [syncing, setSyncing] = useState(false);
@@ -171,7 +173,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
           >
             <Settings size={11} />
           </div>
-          Account Settings
+          {t('settings')}
         </button>
 
         <button
@@ -202,7 +204,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
               }}
             />
           </div>
-          <span className="flex-1">{syncing ? 'Syncing…' : syncDone ? 'Up to date' : 'Sync Now'}</span>
+          <span className="flex-1">{syncing ? t('syncing') : syncDone ? t('upToDate') : t('syncNow')}</span>
           <ProBadge />
         </button>
 
@@ -227,7 +229,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
           >
             <LogOut size={11} />
           </div>
-          Sign out
+          {t('signOut')}
         </button>
       </div>
 
@@ -236,7 +238,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         style={{ borderTop: '1px solid var(--brd)' }}
       >
         <Zap size={9} style={{ color: 'var(--accent)' }} />
-        <span className="text-[10px]" style={{ color: 'var(--t3)' }}>Brew Focus — Free plan</span>
+        <span className="text-[10px]" style={{ color: 'var(--t3)' }}>{t('freePlan')}</span>
       </div>
     </motion.div>
   );
@@ -317,6 +319,8 @@ interface TitleBarProps {
 }
 
 export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSettingsClick, onAccountSettingsClick }) => {
+  const { t } = useTranslation('focus');
+  const { t: tCommon } = useTranslation('common');
   const { user } = useAuthStore();
 
   const handleMinimize = async () => { const win = getCurrentWindow(); await win.minimize(); };
@@ -329,10 +333,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
   const handleClose = async () => { const win = getCurrentWindow(); await win.hide(); };
 
   const tabs: { id: TitleBarTab; label: string }[] = [
-    { id: 'focus',    label: 'Focus'    },
-    { id: 'tasks',    label: 'Tasks'    },
-    { id: 'projects', label: 'Projects' },
-    { id: 'reports',  label: 'Reports'  },
+    { id: 'focus',    label: t('tabs.focus')    },
+    { id: 'tasks',    label: t('tabs.tasks')    },
+    { id: 'projects', label: t('tabs.projects') },
+    { id: 'reports',  label: t('tabs.reports')  },
   ];
 
   return (
@@ -411,7 +415,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.color = 'var(--t2)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
-          title="Settings"
+          title={tCommon('settings')}
         >
           <Settings size={13} />
         </button>

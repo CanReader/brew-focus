@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2, Trash2, Activity, FolderOpen, Target,
@@ -28,6 +29,7 @@ const PRIORITY_OPTIONS: { value: Priority; color: string }[] = [
 
 export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, onClear }) => {
   const { updateTask, deleteTask, toggleTask } = useTaskStore();
+  const { t } = useTranslation('tasks');
   const [popover, setPopover] = useState<Popover>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -101,7 +103,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
       }}
     >
       <span className="px-2.5 text-[12px] font-semibold tabular-nums" style={{ color: 'var(--t)' }}>
-        {count} <span className="font-normal" style={{ color: 'var(--t3)' }}>selected</span>
+        {count} <span className="font-normal" style={{ color: 'var(--t3)' }}>{t('bulk.selected')}</span>
       </span>
       <div className="w-px h-4" style={{ background: 'var(--brd)' }} />
 
@@ -112,10 +114,10 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
         style={{ color: 'var(--grn)' }}
         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(34,211,165,0.08)')}
         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-        title="Mark all as done"
+        title={t('bulk.markAllAsDone')}
       >
         <CheckCircle2 size={12} />
-        Complete
+        {t('bulk.complete')}
       </button>
 
       {/* Status */}
@@ -128,7 +130,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
           onMouseLeave={(e) => { if (popover !== 'status') e.currentTarget.style.background = 'transparent'; }}
         >
           <Activity size={12} />
-          Status
+          {t('bulk.status')}
         </button>
         <AnimatePresence>
           {popover === 'status' && (
@@ -171,7 +173,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
           onMouseLeave={(e) => { if (popover !== 'priority') e.currentTarget.style.background = 'transparent'; }}
         >
           <Flag size={12} />
-          Priority
+          {t('bulk.priority')}
         </button>
         <AnimatePresence>
           {popover === 'priority' && (
@@ -211,7 +213,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
           onMouseLeave={(e) => { if (popover !== 'project') e.currentTarget.style.background = 'transparent'; }}
         >
           <FolderOpen size={12} />
-          Project
+          {t('bulk.project')}
         </button>
         <AnimatePresence>
           {popover === 'project' && (
@@ -231,7 +233,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 <span className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
-                None
+                {t('bulk.none')}
               </button>
               {projects.map((p) => (
                 <button
@@ -262,7 +264,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
             onMouseLeave={(e) => { if (popover !== 'milestone') e.currentTarget.style.background = 'transparent'; }}
           >
             <Target size={12} />
-            Milestone
+            {t('bulk.milestone')}
           </button>
           <AnimatePresence>
             {popover === 'milestone' && (
@@ -281,7 +283,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  None
+                  {t('bulk.none')}
                 </button>
                 {sharedProject.milestones.map((m) => (
                   <button
@@ -314,7 +316,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
         onMouseLeave={(e) => { if (!confirmDelete) e.currentTarget.style.background = 'transparent'; }}
       >
         <Trash2 size={12} />
-        {confirmDelete ? `Delete ${count}?` : 'Delete'}
+        {confirmDelete ? t('bulk.deleteConfirm', { count }) : t('bulk.deleteAction')}
       </button>
 
       <div className="w-px h-4" style={{ background: 'var(--brd)' }} />
@@ -323,7 +325,7 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
         onClick={onClear}
         className="flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] transition-colors"
         style={{ color: 'var(--t3)' }}
-        title="Clear selection (Esc)"
+        title={t('bulk.clearSelection')}
       >
         <X size={11} />
         Esc

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { TimerSession } from '../../types';
 
@@ -44,6 +45,7 @@ function sessionBlocks(sessions: TimerSession[]): Block[] {
 const HOURS = Array.from({ length: 25 }, (_, i) => i); // 0..24
 
 export const FocusCalendar: React.FC = () => {
+  const { t } = useTranslation('focus');
   const { sessions } = useTimerStore();
 
   const today = new Date();
@@ -65,7 +67,7 @@ export const FocusCalendar: React.FC = () => {
     <div className="rounded-xl p-3" style={{ background: 'var(--card)' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[12px] font-medium" style={{ color: 'var(--t2)' }}>Focus History</span>
+        <span className="text-[12px] font-medium" style={{ color: 'var(--t2)' }}>{t('history.title')}</span>
         {totalWorkMins > 0 && (
           <span className="text-[11px] tabular-nums" style={{ color: 'var(--accent)' }}>
             {totalWorkMins >= 60

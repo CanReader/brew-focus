@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Edit3, Eye, Bold, Italic, Code, List, ListOrdered, Heading2, CheckSquare, Quote } from 'lucide-react';
 
 interface Props {
@@ -31,6 +32,7 @@ export const MarkdownNotes: React.FC<Props> = ({
   value, onChange, placeholder, maxWidth, minEditHeight = 200,
   accentColor, componentOverrides, preprocess,
 }) => {
+  const { t } = useTranslation('tasks');
   const [mode, setMode] = useState<Mode>('preview');
   const [draft, setDraft] = useState(value);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -162,7 +164,7 @@ export const MarkdownNotes: React.FC<Props> = ({
 
         {mode === 'edit' && (
           <span className="text-[10.5px] ml-auto" style={{ color: 'var(--t3)' }}>
-            <kbd>Esc</kbd> or click <span style={{ color: 'var(--t2)' }}>Preview</span> to render
+            {t('notes.editHint')}
           </span>
         )}
       </div>
