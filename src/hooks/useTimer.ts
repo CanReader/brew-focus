@@ -41,17 +41,25 @@ export function useTimer() {
   } = useTimerStore();
 
   const { settings } = useSettingsStore();
-  const { tasks, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
+  const { tasks, projects, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
 
-  // Derive effective durations: use task's custom values when set, otherwise global settings
+  // Derive effective durations: task override → project override → global setting.
   const activeTask = tasks.find((t) => t.id === activeTaskId);
-  const effectiveWorkDuration = activeTask?.customWorkDuration ?? settings.workDuration;
-  const effectiveShortBreakDuration = activeTask?.customShortBreakDuration ?? settings.shortBreakDuration;
-  const effectiveLongBreakDuration = activeTask?.customLongBreakDuration ?? settings.longBreakDuration;
-  // Use Infinity when skipLongBreak is set so sessionCount % interval never reaches 0
-  const effectiveLongBreakInterval = activeTask?.skipLongBreak
+  const activeProject = activeTask?.projectId
+    ? projects.find((p) => p.id === activeTask.projectId)
+    : undefined;
+  const effectiveWorkDuration =
+    activeTask?.customWorkDuration ?? activeProject?.customWorkDuration ?? settings.workDuration;
+  const effectiveShortBreakDuration =
+    activeTask?.customShortBreakDuration ?? activeProject?.customShortBreakDuration ?? settings.shortBreakDuration;
+  const effectiveLongBreakDuration =
+    activeTask?.customLongBreakDuration ?? activeProject?.customLongBreakDuration ?? settings.longBreakDuration;
+  // Use Infinity when skipLongBreak is set so sessionCount % interval never reaches 0.
+  // Task's skipLongBreak takes precedence; only falls through to project when undefined.
+  const skipLongBreak = activeTask?.skipLongBreak ?? activeProject?.skipLongBreak ?? false;
+  const effectiveLongBreakInterval = skipLongBreak
     ? Infinity
-    : (activeTask?.customLongBreakInterval ?? settings.longBreakInterval);
+    : (activeTask?.customLongBreakInterval ?? activeProject?.customLongBreakInterval ?? settings.longBreakInterval);
 
   // Update timer display when:
   // 1. Tasks finish loading for the first time (app init with a pre-selected task)
@@ -84,6 +92,9 @@ export function useTimer() {
         const elapsed = totalSeconds;
 
         const currentActiveTask = tasks.find((t) => t.id === activeTaskId);
+        const currentActiveProject = currentActiveTask?.projectId
+          ? projects.find((p) => p.id === currentActiveTask.projectId)
+          : undefined;
         recordSession(completedPhase, elapsed, activeTaskId || undefined, currentActiveTask?.title);
 
         if (completedPhase === 'work') {
@@ -119,12 +130,19 @@ export function useTimer() {
           }
         }
 
-        // Use the task-effective durations for the next phase
-        const taskWork = currentActiveTask?.customWorkDuration ?? settings.workDuration;
-        const taskShort = currentActiveTask?.customShortBreakDuration ?? settings.shortBreakDuration;
-        const taskLong = currentActiveTask?.customLongBreakDuration ?? settings.longBreakDuration;
+        // Use the effective durations for the next phase: task → project → settings.
+        const taskWork = currentActiveTask?.customWorkDuration
+          ?? currentActiveProject?.customWorkDuration ?? settings.workDuration;
+        const taskShort = currentActiveTask?.customShortBreakDuration
+          ?? currentActiveProject?.customShortBreakDuration ?? settings.shortBreakDuration;
+        const taskLong = currentActiveTask?.customLongBreakDuration
+          ?? currentActiveProject?.customLongBreakDuration ?? settings.longBreakDuration;
 
-        const taskSkipLong = currentActiveTask?.skipLongBreak ? Infinity : (currentActiveTask?.customLongBreakInterval ?? settings.longBreakInterval);
+        const skipLong = currentActiveTask?.skipLongBreak ?? currentActiveProject?.skipLongBreak ?? false;
+        const taskSkipLong = skipLong
+          ? Infinity
+          : (currentActiveTask?.customLongBreakInterval
+              ?? currentActiveProject?.customLongBreakInterval ?? settings.longBreakInterval);
         advancePhase(taskWork, taskShort, taskLong, taskSkipLong);
       } else {
         tick();
@@ -140,6 +158,7 @@ export function useTimer() {
     settings,
     activeTaskId,
     tasks,
+    projects,
     tick,
     advancePhase,
     recordSession,

@@ -1,17 +1,33 @@
 import { create } from 'zustand';
-import { Task, Priority, DueDate, Project, ProjectStatus, RepeatType, SubTask, Milestone } from '../types';
+import {
+  Task, Priority, DueDate, Project, ProjectStatus, RepeatType, SubTask, Milestone,
+  TaskStatus, TaskType, ProjectLink,
+} from '../types';
 import { calculateNextDueDate } from '../utils/repeatUtils';
 import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
+import { useActivityStore } from './activityStore';
 
 // ── Row mappers ───────────────────────────────────────────────────────────────
 // Supabase returns JSONB columns as real JS objects, not strings
 
+function nullable<T>(v: unknown): T | undefined {
+  return v == null ? undefined : (v as T);
+}
+
 function rowToTask(row: Record<string, unknown>): Task {
+  const rawStatus = (row.status as string) || (row.completed ? 'done' : 'todo');
+  const completed = Boolean(row.completed);
+  // Defensive: enforce invariant on read in case an old row predates the migration.
+  const status: TaskStatus = (completed && rawStatus !== 'done')
+    ? 'done'
+    : (!completed && rawStatus === 'done')
+      ? 'todo'
+      : (rawStatus as TaskStatus);
   return {
     id: row.id as string,
     title: row.title as string,
-    completed: Boolean(row.completed),
+    completed,
     priority: row.priority as Priority,
     pomodoroEstimate: (row.pomodoroEstimate as number) ?? 1,
     pomodoroCompleted: (row.pomodoroCompleted as number) ?? 0,
@@ -24,10 +40,15 @@ function rowToTask(row: Record<string, unknown>): Task {
     projectId: row.projectId as string | undefined,
     reminder: row.reminder as number | undefined,
     repeatType: (row.repeatType as RepeatType) || 'none',
+    status,
+    type: ((row.type as string) || 'task') as TaskType,
+    milestoneId: row.milestoneId as string | undefined,
+    dependsOn: (row.dependsOn as string[]) ?? [],
+    boardPosition: row.boardPosition as number | undefined,
     customWorkDuration: row.customWorkDuration as number | undefined,
     customShortBreakDuration: row.customShortBreakDuration as number | undefined,
     customLongBreakDuration: row.customLongBreakDuration as number | undefined,
-    skipLongBreak: Boolean(row.skipLongBreak),
+    skipLongBreak: nullable<boolean>(row.skipLongBreak),
     customLongBreakInterval: row.customLongBreakInterval as number | undefined,
   };
 }
@@ -42,6 +63,17 @@ function rowToProject(row: Record<string, unknown>): Project {
     targetDate: row.targetDate as number | undefined,
     createdAt: row.createdAt as number,
     milestones: (row.milestones as Milestone[]) ?? [],
+    links: (row.links as ProjectLink[]) ?? [],
+    notes: (row.notes as string) || '',
+    archived: Boolean(row.archived),
+    priority: ((row.priority as string) || 'p3') as Priority,
+    icon: row.icon as string | undefined,
+    weeklyFocusGoalHrs: row.weeklyFocusGoalHrs as number | undefined,
+    customWorkDuration: row.customWorkDuration as number | undefined,
+    customShortBreakDuration: row.customShortBreakDuration as number | undefined,
+    customLongBreakDuration: row.customLongBreakDuration as number | undefined,
+    customLongBreakInterval: row.customLongBreakInterval as number | undefined,
+    skipLongBreak: nullable<boolean>(row.skipLongBreak),
   };
 }
 
@@ -53,16 +85,34 @@ interface TaskStore {
   activeTaskId: string | null;
   isLoaded: boolean;
   loadTasks: () => Promise<void>;
-  addTask: (title: string, priority?: Priority, projectId?: string, dueDate?: DueDate, pomodoroEstimate?: number) => Promise<void>;
+  addTask: (title: string, priority?: Priority, projectId?: string, dueDate?: DueDate, pomodoroEstimate?: number, opts?: { type?: TaskType; milestoneId?: string }) => Promise<void>;
   updateTask: (id: string, partial: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
+  setTaskStatus: (id: string, status: TaskStatus) => Promise<void>;
+  setTaskBoardPosition: (id: string, status: TaskStatus, position: number) => Promise<void>;
   reorderTasks: (tasks: Task[]) => Promise<void>;
   setActiveTask: (id: string | null) => Promise<void>;
   incrementPomodoroCompleted: (id: string) => Promise<void>;
   addProject: (name: string, color: string) => Promise<void>;
   updateProject: (id: string, partial: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
+  archiveProject: (id: string, archived?: boolean) => Promise<void>;
+  addProjectLink: (projectId: string, label: string, url: string) => Promise<void>;
+  removeProjectLink: (projectId: string, linkId: string) => Promise<void>;
+  _seedProjectFromTemplate: (
+    projectId: string,
+    icon: string | undefined,
+    milestones: { title: string; targetDate?: number }[],
+    starterTasks: { title: string; type?: TaskType; priority?: Priority; pomodoroEstimate?: number }[],
+    defaults?: {
+      customWorkDuration?: number;
+      customShortBreakDuration?: number;
+      customLongBreakDuration?: number;
+      customLongBreakInterval?: number;
+      skipLongBreak?: boolean;
+    },
+  ) => Promise<void>;
   addSubtask: (taskId: string, title: string) => Promise<void>;
   toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
   updateSubtask: (taskId: string, subtaskId: string, title: string) => Promise<void>;
@@ -105,15 +155,24 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  addTask: async (title, priority = 'p4', projectId?, dueDate: DueDate = null, pomodoroEstimate = 1) => {
+  addTask: async (title, priority = 'p4', projectId, dueDate: DueDate = null, pomodoroEstimate = 1, opts) => {
     const userId = await getCurrentUserId();
     if (!userId) return;
     const id = nanoid();
     const createdAt = Date.now();
     const maxOrder = get().tasks.reduce((m, t) => Math.max(m, (t as unknown as { sortOrder?: number }).sortOrder ?? 0), 0);
+    // Append at the end of the 'todo' column on the board.
+    const maxBoardPos = get().tasks
+      .filter((t) => t.status === 'todo' && t.projectId === projectId)
+      .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
     const newTask: Task = {
       id, title: title.trim(), completed: false, priority, pomodoroEstimate, pomodoroCompleted: 0,
       tags: [], subtasks: [], notes: '', createdAt, dueDate, projectId, repeatType: 'none',
+      status: 'todo',
+      type: opts?.type ?? 'task',
+      milestoneId: opts?.milestoneId,
+      dependsOn: [],
+      boardPosition: maxBoardPos + 1024,
     };
     set({ tasks: [newTask, ...get().tasks] });
     try {
@@ -123,8 +182,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         tags: [], subtasks: [], notes: '', createdAt,
         completedAt: null, dueDate: dueDate ?? null, projectId: projectId ?? null,
         reminder: null, repeatType: 'none',
+        status: 'todo',
+        type: newTask.type,
+        milestoneId: newTask.milestoneId ?? null,
+        dependsOn: [],
+        boardPosition: newTask.boardPosition,
         customWorkDuration: null, customShortBreakDuration: null, customLongBreakDuration: null,
         skipLongBreak: false, customLongBreakInterval: null, sortOrder: maxOrder + 1,
+      });
+      useActivityStore.getState().log('task.created', {
+        taskId: id, projectId: projectId ?? undefined,
+        payload: { title: newTask.title, type: newTask.type },
       });
     } catch (e) {
       console.warn('Failed to add task:', e);
@@ -132,8 +200,49 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   updateTask: async (id, partial) => {
-    const tasks = get().tasks.map((t) => t.id === id ? { ...t, ...partial } : t);
+    const before = get().tasks.find((t) => t.id === id);
+    // Maintain the completed↔status invariant in one place. If a caller flips
+    // either side, the other tracks automatically — keeps the DB CHECK happy.
+    const merged: Partial<Task> = { ...partial };
+    if (partial.status !== undefined && partial.completed === undefined) {
+      merged.completed = partial.status === 'done';
+      if (merged.completed && !partial.completedAt) merged.completedAt = Date.now();
+      if (!merged.completed) merged.completedAt = undefined;
+    } else if (partial.completed !== undefined && partial.status === undefined) {
+      merged.status = partial.completed ? 'done' : 'todo';
+    }
+    const tasks = get().tasks.map((t) => t.id === id ? { ...t, ...merged } : t);
     set({ tasks });
+
+    // Activity events for meaningful changes (best-effort, non-blocking).
+    if (before) {
+      const after = tasks.find((t) => t.id === id)!;
+      const log = useActivityStore.getState().log;
+      if (before.status !== after.status) {
+        log('task.status_changed', {
+          taskId: id, projectId: after.projectId,
+          payload: { from: before.status, to: after.status },
+        });
+      }
+      if (before.priority !== after.priority) {
+        log('task.priority_changed', {
+          taskId: id, projectId: after.projectId,
+          payload: { from: before.priority, to: after.priority },
+        });
+      }
+      if (before.milestoneId !== after.milestoneId) {
+        log('task.milestone_changed', {
+          taskId: id, projectId: after.projectId,
+          payload: { from: before.milestoneId, to: after.milestoneId },
+        });
+      }
+      if (before.projectId !== after.projectId) {
+        log('task.project_changed', {
+          taskId: id, projectId: after.projectId,
+          payload: { from: before.projectId, to: after.projectId },
+        });
+      }
+    }
     const userId = await getCurrentUserId();
     if (!userId) return;
     const task = tasks.find((t) => t.id === id);
@@ -146,6 +255,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         completedAt: task.completedAt ?? null, dueDate: task.dueDate ?? null,
         projectId: task.projectId ?? null, reminder: task.reminder ?? null,
         repeatType: task.repeatType ?? 'none',
+        status: task.status,
+        type: task.type,
+        milestoneId: task.milestoneId ?? null,
+        dependsOn: task.dependsOn ?? [],
+        boardPosition: task.boardPosition ?? null,
         customWorkDuration: task.customWorkDuration ?? null,
         customShortBreakDuration: task.customShortBreakDuration ?? null,
         customLongBreakDuration: task.customLongBreakDuration ?? null,
@@ -157,10 +271,19 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  setTaskStatus: async (id, status) => {
+    await get().updateTask(id, { status });
+  },
+
+  setTaskBoardPosition: async (id, status, position) => {
+    await get().updateTask(id, { status, boardPosition: position });
+  },
+
   deleteTask: async (id) => {
     const prevActive = get().activeTaskId;
     const activeTaskId = prevActive === id ? null : prevActive;
     set({ tasks: get().tasks.filter((t) => t.id !== id), activeTaskId });
+    useActivityStore.getState().clearForTask(id);
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
@@ -181,11 +304,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (!task) return;
     const completed = !task.completed;
     const completedAt = completed ? Date.now() : undefined;
-    set({ tasks: get().tasks.map((t) => t.id === id ? { ...t, completed, completedAt } : t) });
+    const status: TaskStatus = completed ? 'done' : (task.status === 'done' ? 'todo' : task.status);
+    set({ tasks: get().tasks.map((t) => t.id === id ? { ...t, completed, completedAt, status } : t) });
+    useActivityStore.getState().log(completed ? 'task.completed' : 'task.uncompleted', {
+      taskId: id, projectId: task.projectId,
+      payload: { title: task.title },
+    });
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
-      await supabase.from('tasks').update({ completed, completedAt: completedAt ?? null })
+      await supabase.from('tasks').update({ completed, completedAt: completedAt ?? null, status })
         .eq('id', id).eq('user_id', userId);
 
       if (completed && task.repeatType && task.repeatType !== 'none') {
@@ -193,7 +321,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         const newCreatedAt = Date.now();
         const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
         const maxOrder = get().tasks.reduce((m, t) => Math.max(m, (t as unknown as { sortOrder?: number }).sortOrder ?? 0), 0);
-        const newTask: Task = { ...task, id: newId, createdAt: newCreatedAt, completed: false, completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate };
+        const maxBoardPos = get().tasks
+          .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
+          .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
+        const newTask: Task = {
+          ...task, id: newId, createdAt: newCreatedAt, completed: false,
+          completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
+          status: 'todo', boardPosition: maxBoardPos + 1024,
+        };
         await supabase.from('tasks').insert({
           id: newId, user_id: userId, title: newTask.title, completed: false,
           priority: newTask.priority, pomodoroEstimate: newTask.pomodoroEstimate, pomodoroCompleted: 0,
@@ -201,6 +336,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           createdAt: newCreatedAt, completedAt: null, dueDate: newDueDate ?? null,
           projectId: newTask.projectId ?? null, reminder: newTask.reminder ?? null,
           repeatType: newTask.repeatType ?? 'none',
+          status: 'todo',
+          type: newTask.type,
+          milestoneId: newTask.milestoneId ?? null,
+          dependsOn: [],
+          boardPosition: newTask.boardPosition,
           customWorkDuration: newTask.customWorkDuration ?? null,
           customShortBreakDuration: newTask.customShortBreakDuration ?? null,
           customLongBreakDuration: newTask.customLongBreakDuration ?? null,
@@ -273,13 +413,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   addProject: async (name, color) => {
     const userId = await getCurrentUserId();
     if (!userId) return;
-    const project: Project = { id: nanoid(), name, color, description: '', status: 'active', createdAt: Date.now(), milestones: [] };
+    const project: Project = {
+      id: nanoid(), name, color, description: '', status: 'active',
+      createdAt: Date.now(), milestones: [], links: [], notes: '',
+      archived: false, priority: 'p3',
+    };
     set({ projects: [...get().projects, project] });
     try {
       await supabase.from('projects').insert({
         id: project.id, user_id: userId, name, color,
         description: '', status: 'active', createdAt: project.createdAt,
         targetDate: null, milestones: [],
+        links: [], notes: '', archived: false, priority: 'p3', icon: null,
+        weeklyFocusGoalHrs: null,
+        customWorkDuration: null, customShortBreakDuration: null,
+        customLongBreakDuration: null, customLongBreakInterval: null,
+        skipLongBreak: false,
       });
     } catch (e) {
       console.warn('Failed to add project:', e);
@@ -298,6 +447,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         name: proj.name, color: proj.color, description: proj.description ?? '',
         status: proj.status ?? 'active', targetDate: proj.targetDate ?? null,
         milestones: proj.milestones ?? [],
+        links: proj.links ?? [],
+        notes: proj.notes ?? '',
+        archived: proj.archived ?? false,
+        priority: proj.priority ?? 'p3',
+        icon: proj.icon ?? null,
+        weeklyFocusGoalHrs: proj.weeklyFocusGoalHrs ?? null,
+        customWorkDuration: proj.customWorkDuration ?? null,
+        customShortBreakDuration: proj.customShortBreakDuration ?? null,
+        customLongBreakDuration: proj.customLongBreakDuration ?? null,
+        customLongBreakInterval: proj.customLongBreakInterval ?? null,
+        skipLongBreak: proj.skipLongBreak ?? false,
       }).eq('id', id).eq('user_id', userId);
     } catch (e) {
       console.warn('Failed to update project:', e);
@@ -316,6 +476,58 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     } catch (e) {
       console.warn('Failed to delete project:', e);
     }
+  },
+
+  archiveProject: async (id, archived = true) => {
+    await get().updateProject(id, { archived });
+  },
+
+  /**
+   * Internal helper used by the template flow — appends already-prepared
+   * milestones to a project (created moments earlier).
+   */
+  _seedProjectFromTemplate: async (
+    projectId: string,
+    icon: string | undefined,
+    milestones: { title: string; targetDate?: number }[],
+    starterTasks: { title: string; type?: TaskType; priority?: Priority; pomodoroEstimate?: number }[],
+    defaults?: {
+      customWorkDuration?: number;
+      customShortBreakDuration?: number;
+      customLongBreakDuration?: number;
+      customLongBreakInterval?: number;
+      skipLongBreak?: boolean;
+    },
+  ) => {
+    const seeded: Milestone[] = milestones.map((m) => ({
+      id: nanoid(), title: m.title.trim(), completed: false, targetDate: m.targetDate,
+    }));
+    await get().updateProject(projectId, {
+      milestones: seeded,
+      icon,
+      ...(defaults?.customWorkDuration !== undefined       ? { customWorkDuration: defaults.customWorkDuration } : {}),
+      ...(defaults?.customShortBreakDuration !== undefined ? { customShortBreakDuration: defaults.customShortBreakDuration } : {}),
+      ...(defaults?.customLongBreakDuration !== undefined  ? { customLongBreakDuration: defaults.customLongBreakDuration } : {}),
+      ...(defaults?.customLongBreakInterval !== undefined  ? { customLongBreakInterval: defaults.customLongBreakInterval } : {}),
+      ...(defaults?.skipLongBreak !== undefined            ? { skipLongBreak: defaults.skipLongBreak } : {}),
+    });
+    for (const t of starterTasks) {
+      await get().addTask(t.title, t.priority ?? 'p4', projectId, null, t.pomodoroEstimate ?? 1, { type: t.type });
+    }
+  },
+
+  addProjectLink: async (projectId, label, url) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    const link: ProjectLink = { id: nanoid(), label: label.trim(), url: url.trim() };
+    if (!link.label || !link.url) return;
+    await get().updateProject(projectId, { links: [...(project.links ?? []), link] });
+  },
+
+  removeProjectLink: async (projectId, linkId) => {
+    const project = get().projects.find((p) => p.id === projectId);
+    if (!project) return;
+    await get().updateProject(projectId, { links: (project.links ?? []).filter((l) => l.id !== linkId) });
   },
 
   // ── Subtasks ──────────────────────────────────────────────────────────────
