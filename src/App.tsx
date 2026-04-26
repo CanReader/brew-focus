@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { TitleBar } from './components/TitleBar';
 import { FocusScreen } from './components/FocusScreen';
 import { TasksScreen } from './components/TasksScreen';
+import { ProjectsScreen } from './components/ProjectsScreen';
 import { ReportsScreen } from './components/ReportsScreen';
 import { TimerView } from './components/FocusScreen/TimerView';
 import { SettingsModal } from './components/SettingsModal';
@@ -12,6 +13,8 @@ import { useAuthStore } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
 import { useTimerStore } from './store/timerStore';
+import { useActivityStore } from './store/activityStore';
+import { useCoffeeCupCatalogStore } from './store/coffeeCupCatalogStore';
 import { useClickSound } from './hooks/useClickSound';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
@@ -19,7 +22,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { onOpenUrl, getCurrent as getCurrentDeepLink } from '@tauri-apps/plugin-deep-link';
 import { supabase } from './utils/supabase';
 
-type Tab = 'focus' | 'tasks' | 'reports';
+type Tab = 'focus' | 'tasks' | 'projects' | 'reports';
 
 function LoadingScreen({ message = 'Brewing your workspace…' }: { message?: string }) {
   return (
@@ -75,6 +78,8 @@ function MainApp() {
   const { loadSettings } = useSettingsStore();
   const { loadTasks } = useTaskStore();
   const { loadState, setActiveTask, isRunning: timerIsRunning, phase: timerPhase } = useTimerStore();
+  const { loadEvents } = useActivityStore();
+  const loadCatalog = useCoffeeCupCatalogStore((s) => s.loadCatalog);
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
@@ -97,12 +102,16 @@ function MainApp() {
   useEffect(() => {
     const init = async () => {
       try {
-        await Promise.all([loadSettings(), loadTasks()]);
+        await Promise.all([loadSettings(), loadTasks(), loadEvents(), loadCatalog()]);
         const currentSettings = useSettingsStore.getState().settings;
-        const { tasks: loadedTasks, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
+        const { tasks: loadedTasks, projects: loadedProjects, activeTaskId: loadedActiveTaskId } = useTaskStore.getState();
         setActiveTask(loadedActiveTaskId);
         const activeTask = loadedTasks.find((t) => t.id === loadedActiveTaskId);
-        const effectiveWorkDuration = activeTask?.customWorkDuration ?? currentSettings.workDuration;
+        const activeProject = activeTask?.projectId
+          ? loadedProjects.find((p) => p.id === activeTask.projectId)
+          : undefined;
+        const effectiveWorkDuration = activeTask?.customWorkDuration
+          ?? activeProject?.customWorkDuration ?? currentSettings.workDuration;
         await loadState(effectiveWorkDuration);
       } catch (e) {
         console.error('App init failed:', e);
@@ -137,6 +146,11 @@ function MainApp() {
           {activeTab === 'tasks' && (
             <motion.div key="tasks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
               <TasksScreen onSwitchToFocus={() => setActiveTab('focus')} />
+            </motion.div>
+          )}
+          {activeTab === 'projects' && (
+            <motion.div key="projects" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
+              <ProjectsScreen onSwitchToFocus={() => setActiveTab('focus')} />
             </motion.div>
           )}
           {activeTab === 'reports' && (

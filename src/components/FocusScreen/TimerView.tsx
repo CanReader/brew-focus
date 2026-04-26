@@ -101,7 +101,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
         {/* Coffee cup */}
         <div data-no-drag>
-          <CoffeeCup progress={progress} isRunning={isRunning} size={100} />
+          <CoffeeCup progress={progress} isRunning={isRunning} size={100} variantId={settings.coffeeCupVariant ?? 'classic'} />
         </div>
 
         {/* Time */}
@@ -278,7 +278,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
         animate={isRunning ? { scale: [1, 1.02, 1] } : { scale: 1 }}
         transition={isRunning ? { duration: 4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
       >
-        <CoffeeCup progress={progress} isRunning={isRunning} size={240} />
+        <CoffeeCup progress={progress} isRunning={isRunning} size={240} variantId={settings.coffeeCupVariant ?? 'classic'} />
       </motion.div>
 
       {/* Time */}

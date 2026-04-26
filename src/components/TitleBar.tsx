@@ -91,10 +91,14 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
       // whatever the server has before we snap the timer display.
       await Promise.all([loadTasks(), loadSettings()]);
       if (!isRunning) {
-        const { tasks, activeTaskId } = useTaskStore.getState();
+        const { tasks, projects, activeTaskId } = useTaskStore.getState();
         const { settings } = useSettingsStore.getState();
         const active = tasks.find((t) => t.id === activeTaskId);
-        const effective = active?.customWorkDuration ?? settings.workDuration;
+        const activeProject = active?.projectId
+          ? projects.find((p) => p.id === active.projectId)
+          : undefined;
+        const effective = active?.customWorkDuration
+          ?? activeProject?.customWorkDuration ?? settings.workDuration;
         await loadState(effective);
       }
       setSyncDone(true);
@@ -303,9 +307,11 @@ function UserBadge({ user, onAccountSettings }: { user: User; onAccountSettings:
   );
 }
 
+type TitleBarTab = 'focus' | 'tasks' | 'projects' | 'reports';
+
 interface TitleBarProps {
-  activeTab: 'focus' | 'tasks' | 'reports';
-  onTabChange: (tab: 'focus' | 'tasks' | 'reports') => void;
+  activeTab: TitleBarTab;
+  onTabChange: (tab: TitleBarTab) => void;
   onSettingsClick: () => void;
   onAccountSettingsClick?: () => void;
 }
@@ -322,10 +328,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
   // Tray menu's "Quit" is the only path that truly exits the app.
   const handleClose = async () => { const win = getCurrentWindow(); await win.hide(); };
 
-  const tabs: { id: 'focus' | 'tasks' | 'reports'; label: string }[] = [
-    { id: 'focus',   label: 'Focus'   },
-    { id: 'tasks',   label: 'Tasks'   },
-    { id: 'reports', label: 'Reports' },
+  const tabs: { id: TitleBarTab; label: string }[] = [
+    { id: 'focus',    label: 'Focus'    },
+    { id: 'tasks',    label: 'Tasks'    },
+    { id: 'projects', label: 'Projects' },
+    { id: 'reports',  label: 'Reports'  },
   ];
 
   return (

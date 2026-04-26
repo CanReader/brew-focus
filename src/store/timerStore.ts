@@ -77,6 +77,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         phase: r.phase as TimerPhase,
         taskId: r.taskId as string | undefined,
         taskTitle: r.taskTitle as string | undefined,
+        projectId: r.projectId as string | undefined,
         notes: r.notes as string | undefined,
         mood: r.mood != null ? (r.mood as number) : undefined,
       }));
@@ -167,6 +168,18 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   setActiveTask: (id) => set({ activeTaskId: id }),
 
   recordSession: async (phase, duration, taskId, taskTitle, notes) => {
+    // Resolve the task's projectId at write time so the session carries it
+    // forward even if the task is later deleted or reassigned. Avoids a static
+    // import cycle by reading the store dynamically.
+    let projectId: string | undefined;
+    if (taskId) {
+      try {
+        const taskStoreMod = await import('./taskStore');
+        const task = taskStoreMod.useTaskStore.getState().tasks.find((t) => t.id === taskId);
+        projectId = task?.projectId;
+      } catch { /* non-fatal */ }
+    }
+
     const session: TimerSession = {
       id: nanoid(),
       startedAt: Date.now() - duration * 1000,
@@ -174,6 +187,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       phase,
       taskId,
       taskTitle,
+      projectId,
       notes,
     };
     const sessions = [session, ...get().sessions].slice(0, 100);
@@ -190,8 +204,20 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         phase: session.phase,
         taskId: session.taskId ?? null,
         taskTitle: session.taskTitle ?? null,
+        projectId: session.projectId ?? null,
         notes: session.notes ?? null,
       });
+      // Log a focus event for work phases that touched a task.
+      if (phase === 'work' && taskId) {
+        try {
+          const activityMod = await import('./activityStore');
+          activityMod.useActivityStore.getState().log('focus.session_completed', {
+            taskId,
+            projectId: session.projectId,
+            payload: { duration: session.duration, taskTitle: session.taskTitle },
+          });
+        } catch { /* non-fatal */ }
+      }
     } catch (e) {
       console.warn('Failed to save session:', e);
     }

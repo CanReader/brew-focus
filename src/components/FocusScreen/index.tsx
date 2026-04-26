@@ -7,9 +7,11 @@ import { useTaskStore } from '../../store/taskStore';
 import { useTimer } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
+import { CoffeeCupPicker } from './CoffeeCupPicker';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { TaskSelector } from './TaskSelector';
+import { DailyQueuePanel } from './DailyQueuePanel';
 import { SidePanel } from '../SidePanel';
 import { playTimerPause } from '../../utils/sounds';
 import { playSoundOption, playCustomSoundFile } from '../../utils/soundOptions';
@@ -22,6 +24,7 @@ interface FocusScreenProps {}
 export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [panelOpen, setPanelOpen] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [cupPickerOpen, setCupPickerOpen] = useState(false);
   const [sessionAnim, setSessionAnim] = useState<SessionAnimationType>(null);
   const [moodSessionId, setMoodSessionId] = useState<string | null>(null);
   const {
@@ -37,7 +40,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     rateMood,
   } = useTimerStore();
   const { settings } = useSettingsStore();
-  const { tasks, activeTaskId } = useTaskStore();
+  const { tasks, activeTaskId, setActiveTask } = useTaskStore();
+  const { setActiveTask: setTimerActiveTask } = useTimerStore();
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const {
     formatTime,
@@ -64,6 +68,19 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
       setSessionAnim('session-complete');
       const latest = sessions.find(s => s.phase === 'work');
       if (latest) setMoodSessionId(latest.id);
+
+      // Auto-flow: pick the next incomplete task from the daily queue, if any.
+      // We don't auto-start the timer — user still presses Play (per design).
+      const queue = settings.dailyQueue?.taskIds ?? [];
+      if (queue.length > 0) {
+        const next = queue
+          .map((id) => tasks.find((t) => t.id === id))
+          .find((t) => t && !t.completed && t.id !== activeTaskId);
+        if (next) {
+          setActiveTask(next.id);
+          setTimerActiveTask(next.id);
+        }
+      }
     } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
       setSessionAnim('break-complete');
     }
@@ -250,7 +267,32 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
                   : { duration: 0.3 }
               }
             >
-              <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={180} />
+              <button
+                onClick={() => setCupPickerOpen(true)}
+                className="group relative block bg-transparent border-0 p-0 cursor-pointer"
+                style={{ outline: 'none' }}
+                title="Change cup"
+                aria-label="Change coffee cup"
+              >
+                <CoffeeCup
+                  progress={progress}
+                  isRunning={isRunning}
+                  phase={phase}
+                  size={180}
+                  variantId={settings.coffeeCupVariant ?? 'classic'}
+                />
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 -bottom-2 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200"
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--brd2)',
+                    color: 'var(--t2)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Change cup
+                </span>
+              </button>
             </motion.div>
           </div>
 
@@ -281,6 +323,11 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
             onWidget={enterWidget}
           />
         </div>
+
+        {/* Daily Focus Queue */}
+        <div className="px-4 relative z-10 w-full flex justify-center">
+          <DailyQueuePanel />
+        </div>
       </div>
 
       {/* Side Panel */}
@@ -304,6 +351,9 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
 
       {/* Customize panel */}
       <FocusCustomizePanel open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+
+      {/* Coffee cup picker */}
+      <CoffeeCupPicker open={cupPickerOpen} onClose={() => setCupPickerOpen(false)} />
 
       {/* Session end animations */}
       <SessionAnimation

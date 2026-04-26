@@ -164,6 +164,16 @@ body,
   animation: cup-glow 3s ease-in-out infinite;
 }
 
+/* Cup picker skeleton pulse */
+@keyframes cup-skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.cup-skeleton {
+  animation: cup-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
 /* Gradient mesh background — blob classes no longer used (replaced by
    a single inset div with multiple CSS radial-gradients at % positions) */
 

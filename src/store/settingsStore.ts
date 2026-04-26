@@ -25,6 +25,9 @@ const defaultSettings: AppSettings = {
   customSoundFiles: {},
   backgroundNoise: 'none',
   noiseVolume: 50,
+  savedViews: [],
+  dailyQueue: { taskIds: [], lastSweepDate: '' },
+  coffeeCupVariant: 'classic',
 };
 
 interface SettingsStore {
