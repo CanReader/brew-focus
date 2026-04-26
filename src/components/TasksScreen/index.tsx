@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -7,7 +7,7 @@ import {
 import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
-import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target, Bookmark } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -19,7 +19,11 @@ import { TaskContextMenu } from './TaskContextMenu';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { WeeklyCalendar } from './WeeklyCalendar';
 import { CommandPalette } from './CommandPalette';
-import { Task, DueDate, Project, resolveDueDateToTs } from '../../types';
+import { BulkActionBar } from './BulkActionBar';
+import { Task, DueDate, Project, SavedView, resolveDueDateToTs } from '../../types';
+import { nanoid } from '../../utils/nanoid';
+import { parseQuickTask } from '../../utils/quickCapture';
+import { QuickCapturePreview, QuickCaptureLegend } from '../QuickCapturePreview';
 
 interface ContextMenuState {
   taskId: string;
@@ -372,6 +376,8 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [newTaskProjectId, setNewTaskProjectId] = useState<string | undefined>(undefined);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [lastClickedId, setLastClickedId] = useState<string | null>(null);
   const addTaskInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -380,7 +386,31 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
   } = useTaskStore();
 
   const { isRunning, phase, secondsLeft, start, pause, skip, reset, setActiveTask: setTimerActiveTask } = useTimerStore();
-  const { settings } = useSettingsStore();
+  const { settings, updateSettings } = useSettingsStore();
+  const [showSaveView, setShowSaveView] = useState(false);
+  const [saveViewName, setSaveViewName] = useState('');
+
+  const saveCurrentView = async () => {
+    const name = saveViewName.trim();
+    if (!name) return;
+    const view: SavedView = {
+      id: nanoid(),
+      name,
+      view: sidebarView,
+      sortBy: sortBy,
+      searchQuery,
+    };
+    await updateSettings({ savedViews: [...(settings.savedViews ?? []), view] });
+    setSaveViewName('');
+    setShowSaveView(false);
+  };
+
+  const handleLoadSavedView = (sv: SavedView) => {
+    setSidebarView(sv.view as SidebarView);
+    setSortBy(sv.sortBy);
+    setSearchQuery(sv.searchQuery);
+    setSelectedTaskId(null);
+  };
   const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useTimer();
 
   const viewTasks = sortTasks(searchTasks(filterTasks(tasks, sidebarView), searchQuery), sortBy);
@@ -401,10 +431,19 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
         e.preventDefault();
         setPaletteOpen((p) => !p);
       }
+      if (e.key === 'Escape' && bulkSelected.size > 0) {
+        e.preventDefault();
+        setBulkSelected(new Set());
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [bulkSelected]);
+
+  // Clear bulk selection on view change.
+  useEffect(() => {
+    setBulkSelected(new Set());
+  }, [sidebarView]);
 
   const handleCreateTask = () => {
     setPaletteOpen(false);
@@ -414,15 +453,34 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     setTimeout(() => { addTaskInputRef.current?.focus(); }, 50);
   };
 
+  // Parse the input live so we can preview the chips. boundProjectId is set
+  // when the sidebar view is a project, so @project tokens are silently swallowed.
+  const sidebarProjectId = projects.find((p) => p.id === sidebarView)?.id;
+  const parsedInput = useMemo(
+    () => parseQuickTask(inputValue, projects, { boundProjectId: sidebarProjectId }),
+    [inputValue, projects, sidebarProjectId]
+  );
+
   const handleAddTask = async () => {
-    const trimmed = inputValue.trim();
-    if (!trimmed) return;
-    const projectId = projects.find((p) => p.id === sidebarView)?.id ?? newTaskProjectId;
-    const dueDate = getDueDateForView(sidebarView);
-    await addTask(trimmed, 'p4', projectId, dueDate, newTaskPomodoros);
+    const parsed = parsedInput;
+    const title = parsed.title.trim();
+    if (!title) return;
+    const projectId = sidebarProjectId ?? parsed.projectId ?? newTaskProjectId;
+    const dueDate: DueDate = (parsed.dueDate as DueDate | undefined) ?? getDueDateForView(sidebarView);
+    const priority = parsed.priority ?? 'p4';
+    const pomodoros = parsed.pomodoroEstimate ?? newTaskPomodoros;
+    await addTask(title, priority, projectId, dueDate, pomodoros, { type: parsed.type });
     setInputValue('');
     setNewTaskProjectId(undefined);
     setNewTaskPomodoros(1);
+  };
+
+  const removeQuickToken = (raw: string) => {
+    setInputValue((v) => v.replace(raw, '').replace(/\s+/g, ' ').trim());
+  };
+  const applyQuickSuggestion = (badToken: string, suggestion: string) => {
+    const sigil = badToken[0];
+    setInputValue((v) => v.replace(badToken, sigil + suggestion));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -450,7 +508,9 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
   const handlePlayTask = (task: Task) => {
     setActiveTask(task.id);
     setTimerActiveTask(task.id);
-    const workDuration = task.customWorkDuration ?? settings.workDuration;
+    const project = task.projectId ? projects.find((p) => p.id === task.projectId) : undefined;
+    const workDuration = task.customWorkDuration
+      ?? project?.customWorkDuration ?? settings.workDuration;
     reset(workDuration);
     start();
     onSwitchToFocus();
@@ -462,8 +522,35 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     setContextMenu({ taskId: task.id, x: e.clientX, y: e.clientY });
   };
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = (task: Task, e?: React.MouseEvent) => {
+    // Multi-select shortcuts. Shift extends; Cmd/Ctrl toggles.
+    if (e?.shiftKey && lastClickedId) {
+      const ids = viewTasks.map((t) => t.id);
+      const a = ids.indexOf(lastClickedId);
+      const b = ids.indexOf(task.id);
+      if (a >= 0 && b >= 0) {
+        const [from, to] = a < b ? [a, b] : [b, a];
+        const next = new Set(bulkSelected);
+        for (let i = from; i <= to; i++) next.add(ids[i]);
+        setBulkSelected(next);
+        setSelectedTaskId(null);
+        setLastClickedId(task.id);
+        return;
+      }
+    }
+    if (e?.metaKey || e?.ctrlKey) {
+      const next = new Set(bulkSelected);
+      if (next.has(task.id)) next.delete(task.id);
+      else next.add(task.id);
+      setBulkSelected(next);
+      setSelectedTaskId(null);
+      setLastClickedId(task.id);
+      return;
+    }
+    // Plain click — clear bulk if any, toggle detail panel.
+    if (bulkSelected.size > 0) setBulkSelected(new Set());
     setSelectedTaskId((prev) => (prev === task.id ? null : task.id));
+    setLastClickedId(task.id);
   };
 
   const title = getViewTitle(sidebarView, projects);
@@ -472,9 +559,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
 
   const displayPomodoros = hoverPomodoros ?? newTaskPomodoros;
 
-  // BUG 3 FIX: use per-task work duration for estimate calculation
+  // BUG 3 FIX: use per-task work duration for estimate calculation, falling
+  // through to project-level override before the global setting.
   const totalEstimateMinutes = viewTasks.reduce((s, t) => {
-    const workMin = t.customWorkDuration ?? settings.workDuration;
+    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : undefined;
+    const workMin = t.customWorkDuration ?? proj?.customWorkDuration ?? settings.workDuration;
     return s + t.pomodoroEstimate * workMin;
   }, 0);
 
@@ -482,7 +571,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     <div className="flex h-full relative" style={{ background: 'var(--bg)' }}>
       {/* Sidebar */}
       <div className="w-44 shrink-0 h-full">
-        <Sidebar activeView={sidebarView} onViewChange={(v) => { setSidebarView(v); setSelectedTaskId(null); }} />
+        <Sidebar
+          activeView={sidebarView}
+          onViewChange={(v) => { setSidebarView(v); setSelectedTaskId(null); }}
+          onLoadSavedView={handleLoadSavedView}
+        />
       </div>
 
       {/* Main content */}
@@ -572,29 +665,95 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
             />
           )}
 
-          {/* Search bar */}
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-1 transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              borderColor: searchQuery ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-              boxShadow: searchQuery ? '0 0 0 2px rgba(255,255,255,0.04)' : 'none',
-            }}
-          >
-            <Search size={13} style={{ color: 'var(--t3)', flexShrink: 0 }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tasks…"
-              className="flex-1 text-[12px] bg-transparent focus:outline-none"
-              style={{ color: 'var(--t)' }}
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} style={{ color: 'var(--t3)' }}>
-                <X size={11} />
+          {/* Search bar + save view */}
+          <div className="flex items-center gap-2 mb-1">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border flex-1 transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                borderColor: searchQuery ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
+                boxShadow: searchQuery ? '0 0 0 2px rgba(255,255,255,0.04)' : 'none',
+              }}
+            >
+              <Search size={13} style={{ color: 'var(--t3)', flexShrink: 0 }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks…"
+                className="flex-1 text-[12px] bg-transparent focus:outline-none"
+                style={{ color: 'var(--t)' }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} style={{ color: 'var(--t3)' }}>
+                  <X size={11} />
+                </button>
+              )}
+            </div>
+
+            {/* Save view bookmark */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSaveView((v) => !v)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                style={{
+                  color: showSaveView ? 'var(--blu)' : 'var(--t3)',
+                  background: showSaveView ? 'var(--card-h)' : 'rgba(255,255,255,0.04)',
+                  border: '1px solid var(--brd)',
+                }}
+                onMouseEnter={(e) => { if (!showSaveView) { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t2)'; } }}
+                onMouseLeave={(e) => { if (!showSaveView) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--t3)'; } }}
+                title="Save current view"
+              >
+                <Bookmark size={12} />
               </button>
-            )}
+              <AnimatePresence>
+                {showSaveView && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-full mt-2 rounded-xl z-50 p-3"
+                    style={{
+                      background: 'var(--card)',
+                      border: '1px solid var(--brd2)',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                      width: 240,
+                    }}
+                    onMouseLeave={() => { /* keep open until explicit dismiss */ }}
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--t3)' }}>
+                      Save this view
+                    </div>
+                    <input
+                      autoFocus
+                      value={saveViewName}
+                      onChange={(e) => setSaveViewName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveCurrentView();
+                        if (e.key === 'Escape') setShowSaveView(false);
+                      }}
+                      placeholder="e.g. Today + work"
+                      className="w-full px-2.5 py-2 rounded-lg text-[12px] focus:outline-none"
+                      style={{ background: 'var(--bg2)', border: '1px solid var(--brd)', color: 'var(--t)' }}
+                    />
+                    <button
+                      onClick={saveCurrentView}
+                      disabled={!saveViewName.trim()}
+                      className="w-full mt-2 py-1.5 rounded-lg text-[11.5px] font-semibold transition-all"
+                      style={{
+                        background: saveViewName.trim() ? 'linear-gradient(135deg, var(--blu), #3b73d8)' : 'var(--card-h)',
+                        color: saveViewName.trim() ? '#fff' : 'var(--t3)',
+                        cursor: saveViewName.trim() ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      Save
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -712,6 +871,15 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
               </AnimatePresence>
             </div>
           </div>
+
+          {/* Quick-capture preview / hints */}
+          <QuickCapturePreview
+            parsed={parsedInput}
+            rawText={inputValue}
+            onRemoveToken={removeQuickToken}
+            onApplySuggestion={applyQuickSuggestion}
+          />
+          {inputValue.trim() === '' && <QuickCaptureLegend />}
         </div>
 
         {/* Task list */}
@@ -757,11 +925,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                                 <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{overdueGroup.length}</span>
                               </div>
                               {overdueGroup.map((task) => (
-                                <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                                <div key={task.id} className="mb-1.5" onClick={(e) => handleTaskClick(task, e)}>
                                   <TaskItem
                                     task={task}
                                     isActive={task.id === activeTaskId}
-                                    isSelected={task.id === selectedTaskId}
+                                    isSelected={task.id === selectedTaskId} isMultiSelected={bulkSelected.has(task.id)}
                                     projectName={projects.find((p) => p.id === task.projectId)?.name}
                                     projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                     onToggle={() => toggleTask(task.id)}
@@ -783,11 +951,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                                 </div>
                               )}
                               {todayGroup.map((task) => (
-                                <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                                <div key={task.id} className="mb-1.5" onClick={(e) => handleTaskClick(task, e)}>
                                   <TaskItem
                                     task={task}
                                     isActive={task.id === activeTaskId}
-                                    isSelected={task.id === selectedTaskId}
+                                    isSelected={task.id === selectedTaskId} isMultiSelected={bulkSelected.has(task.id)}
                                     projectName={projects.find((p) => p.id === task.projectId)?.name}
                                     projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                     onToggle={() => toggleTask(task.id)}
@@ -803,11 +971,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                         </>
                       );
                     })() : viewTasks.map((task) => (
-                      <div key={task.id} className="mb-1.5" onClick={() => handleTaskClick(task)}>
+                      <div key={task.id} className="mb-1.5" onClick={(e) => handleTaskClick(task, e)}>
                         <TaskItem
                           task={task}
                           isActive={task.id === activeTaskId}
-                          isSelected={task.id === selectedTaskId}
+                          isSelected={task.id === selectedTaskId} isMultiSelected={bulkSelected.has(task.id)}
                           projectName={projects.find((p) => p.id === task.projectId)?.name}
                           projectColor={projects.find((p) => p.id === task.projectId)?.color}
                           onToggle={() => toggleTask(task.id)}
@@ -850,7 +1018,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                               <TaskItem
                                 task={task}
                                 isActive={false}
-                                isSelected={task.id === selectedTaskId}
+                                isSelected={task.id === selectedTaskId} isMultiSelected={bulkSelected.has(task.id)}
                                 projectName={projects.find((p) => p.id === task.projectId)?.name}
                                 projectColor={projects.find((p) => p.id === task.projectId)?.color}
                                 onToggle={() => toggleTask(task.id)}
@@ -871,6 +1039,18 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
         </div>
 
         </>)}
+
+        {/* Bulk action bar — floats above mini timer */}
+        <AnimatePresence>
+          {bulkSelected.size > 0 && (
+            <BulkActionBar
+              selectedIds={bulkSelected}
+              tasks={tasks}
+              projects={projects}
+              onClear={() => setBulkSelected(new Set())}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Mini timer bar at bottom */}
         <div

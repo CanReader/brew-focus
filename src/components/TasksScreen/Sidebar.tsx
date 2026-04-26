@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Calendar, CalendarDays, AlignLeft, CloudSun,
-  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2, Inbox
+  CheckCircle2, FolderOpen, Plus, X, ChevronDown, Tag, BarChart2, Inbox, Bookmark,
 } from 'lucide-react';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { Task, PROJECT_COLORS, resolveDueDateToTs } from '../../types';
+import { Task, PROJECT_COLORS, resolveDueDateToTs, SavedView } from '../../types';
 import { useTimerStore } from '../../store/timerStore';
 
 export type SidebarView =
@@ -16,6 +16,7 @@ export type SidebarView =
 interface SidebarProps {
   activeView: SidebarView;
   onViewChange: (view: SidebarView) => void;
+  onLoadSavedView?: (view: SavedView) => void;
 }
 
 function isToday(dueDate: Task['dueDate']) { return dueDate === 'today'; }
@@ -28,15 +29,28 @@ function formatTime(seconds: number) {
   return `${m}m`;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLoadSavedView }) => {
   const { tasks, projects, addProject, deleteProject } = useTaskStore();
-  const { settings } = useSettingsStore();
+  const { settings, updateSettings } = useSettingsStore();
   const { todayFocusSeconds } = useTimerStore();
   const [addingProject, setAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[5]);
   const [showProjects, setShowProjects] = useState(true);
   const [showTags, setShowTags] = useState(true);
+  const [showSavedViews, setShowSavedViews] = useState(true);
+  const [renamingViewId, setRenamingViewId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
+
+  const savedViews = settings.savedViews ?? [];
+
+  const renameSavedView = async (id: string, name: string) => {
+    const next = savedViews.map((v) => v.id === id ? { ...v, name } : v);
+    await updateSettings({ savedViews: next });
+  };
+  const deleteSavedView = async (id: string) => {
+    await updateSettings({ savedViews: savedViews.filter((v) => v.id !== id) });
+  };
 
   const active = tasks.filter((t) => !t.completed);
   const completed = tasks.filter((t) => t.completed);
@@ -59,7 +73,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   })();
 
   const todayEstimate = todayTasks.reduce((s, t) => {
-    const workMin = t.customWorkDuration ?? settings.workDuration;
+    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : undefined;
+    const workMin = t.customWorkDuration ?? proj?.customWorkDuration ?? settings.workDuration;
     return s + t.pomodoroEstimate * workMin * 60;
   }, 0);
 
@@ -167,6 +182,90 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
             </motion.button>
           );
         })}
+
+        {/* Saved Views section */}
+        {savedViews.length > 0 && (
+          <div className="mt-3 px-1">
+            <button
+              onClick={() => setShowSavedViews(!showSavedViews)}
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors mb-1"
+              style={{ color: 'var(--t3)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--t2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+            >
+              <ChevronDown
+                size={10}
+                style={{ transform: showSavedViews ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}
+              />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Views</span>
+              <span className="ml-auto text-[10px] tabular-nums" style={{ color: 'var(--t3)' }}>
+                {savedViews.length}
+              </span>
+            </button>
+            <AnimatePresence>
+              {showSavedViews && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden flex flex-col gap-0.5"
+                >
+                  {savedViews.map((sv) => (
+                    <div
+                      key={sv.id}
+                      className="group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      style={{ color: 'var(--t2)' }}
+                      onClick={() => onLoadSavedView?.(sv)}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <Bookmark size={11} style={{ color: 'var(--blu)' }} />
+                      {renamingViewId === sv.id ? (
+                        <input
+                          autoFocus
+                          value={renameDraft}
+                          onChange={(e) => setRenameDraft(e.target.value)}
+                          onBlur={() => {
+                            const t = renameDraft.trim();
+                            if (t && t !== sv.name) renameSavedView(sv.id, t);
+                            setRenamingViewId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            if (e.key === 'Escape') setRenamingViewId(null);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 text-[12px] bg-transparent focus:outline-none"
+                          style={{ color: 'var(--t)' }}
+                        />
+                      ) : (
+                        <span className="flex-1 text-[12px] truncate">{sv.name}</span>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRenameDraft(sv.name); setRenamingViewId(sv.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: 'var(--t3)' }}
+                        title="Rename"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteSavedView(sv.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: 'var(--t3)' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t3)')}
+                        title="Delete"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Projects section */}
         <div className="mt-3 px-1">

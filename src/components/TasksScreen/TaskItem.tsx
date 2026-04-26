@@ -4,14 +4,19 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   GripVertical, Flag, FileText, Coffee, ListChecks, Hash,
-  Calendar, FolderOpen, RefreshCw,
+  Calendar, FolderOpen, RefreshCw, Clock, Lock,
 } from 'lucide-react';
-import { Task, Priority, isDueDateOverdue, formatDueDateDisplay } from '../../types';
+import { Task, Priority, TASK_STATUS_META, isDueDateOverdue, formatDueDateDisplay } from '../../types';
+import { useTimerStore } from '../../store/timerStore';
+import { useTaskStore } from '../../store/taskStore';
+import { isTaskStale } from '../../utils/staleTask';
+import { blockingTasks } from '../../utils/dependencies';
 
 interface TaskItemProps {
   task: Task;
   isActive: boolean;
   isSelected?: boolean;
+  isMultiSelected?: boolean;
   projectName?: string;
   projectColor?: string;
   onToggle: () => void;
@@ -122,6 +127,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   isActive,
   isSelected,
+  isMultiSelected,
   projectName,
   projectColor,
   onToggle,
@@ -149,6 +155,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     setIsEditing(false);
   };
 
+  const sessions = useTimerStore((s) => s.sessions);
+  const allTasks = useTaskStore((s) => s.tasks);
+  const blockers = task.completed ? [] : blockingTasks(task, allTasks);
+  const stale = isTaskStale(task, sessions);
   const overdue = !task.completed && isDueDateOverdue(task.dueDate);
   const dateLabel = formatDueDateDisplay(task.dueDate);
   const showDate = !!task.dueDate && !task.completed;
@@ -159,7 +169,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     ? new Date(task.reminder).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
     : (showDate ? dateLabel : null);
 
-  const borderLeftColor = isSelected
+  const borderLeftColor = isMultiSelected
+    ? 'var(--blu)'
+    : isSelected
     ? 'var(--accent)'
     : task.completed
     ? 'var(--brd)'
@@ -167,7 +179,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     ? 'rgba(255,77,77,0.6)'
     : priorityLeftBorder[task.priority];
 
-  const bgColor = isSelected
+  const bgColor = isMultiSelected
+    ? 'rgba(91,141,238,0.10)'
+    : isSelected
     ? 'var(--accent-d)'
     : overdue
     ? 'rgba(255,77,77,0.05)'
@@ -297,7 +311,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         {!task.completed && (
           <PlayCircleBtn
             active={isActive}
-            onClick={(e) => { e.stopPropagation(); onPlay?.(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (blockers.length > 0) {
+                const blockerNames = blockers.map((b) => `"${b.title}"`).join(', ');
+                const proceed = window.confirm(
+                  `This task is blocked by ${blockerNames}. Start focus anyway?`
+                );
+                if (!proceed) return;
+              }
+              onPlay?.();
+            }}
           />
         )}
 
@@ -305,6 +329,50 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         {task.priority !== 'p4' && (
           <span className="shrink-0" style={{ color: flagColor }}>
             <Flag size={12} fill={flagColor} strokeWidth={2} />
+          </span>
+        )}
+
+        {/* Status dot — only when in_progress or blocked, since todo/done are
+            already conveyed by the checkbox state */}
+        {!task.completed && (task.status === 'in_progress' || task.status === 'blocked') && (
+          <span
+            className="shrink-0 flex items-center"
+            title={TASK_STATUS_META[task.status].label}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: TASK_STATUS_META[task.status].dot,
+                boxShadow: task.status === 'in_progress'
+                  ? `0 0 6px ${TASK_STATUS_META[task.status].dot}`
+                  : 'none',
+              }}
+            />
+          </span>
+        )}
+
+        {/* Stale indicator — soft, no shame */}
+        {stale && (
+          <span
+            className="shrink-0 flex items-center opacity-50"
+            title="No activity in 14 days"
+            style={{ color: 'var(--t3)' }}
+          >
+            <Clock size={11} />
+          </span>
+        )}
+
+        {/* Blocked-by indicator */}
+        {blockers.length > 0 && (
+          <span
+            className="shrink-0 flex items-center gap-0.5"
+            style={{ color: 'var(--t3)' }}
+            title={blockers.length === 1 ? `Blocked by: ${blockers[0].title}` : `Blocked by ${blockers.length} tasks`}
+          >
+            <Lock size={11} />
+            <span className="text-[10px]">
+              {blockers.length === 1 ? 'Blocked' : `Blocked·${blockers.length}`}
+            </span>
           </span>
         )}
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Trash2, Check, Plus, Flag, GripVertical,
   Clock, Calendar, FolderOpen, Bell, RefreshCw, Edit3, FileText,
+  Tag as TagIcon, Target, Lock, Search,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -13,7 +14,15 @@ import {
   arrayMove, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Task, Priority, DueDate, Project, RepeatType, SubTask, formatDueDateDisplay, isDueDateOverdue } from '../../types';
+import {
+  Task, Priority, DueDate, Project, RepeatType, SubTask,
+  TaskStatus, TASK_STATUS_META, DEFAULT_TASK_TYPES, taskTypeColor,
+  formatDueDateDisplay, isDueDateOverdue,
+} from '../../types';
+import { ActivityTimeline } from '../ActivityTimeline';
+import { dependencyCandidates, blockingTasks } from '../../utils/dependencies';
+import { MarkdownNotes } from '../MarkdownNotes';
+import { preprocessWikiLinks, makeWikiLinkComponent } from '../../utils/wikiLinks';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { ProBadge } from '../ProBadge';
@@ -57,7 +66,7 @@ function isoDatePlusDays(n: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-type ExpandedRow = 'pomodoro' | 'dueDate' | 'project' | 'reminder' | 'repeat' | 'priority' | null;
+type ExpandedRow = 'pomodoro' | 'dueDate' | 'project' | 'reminder' | 'repeat' | 'priority' | 'status' | 'type' | 'milestone' | 'depends' | null;
 
 const DetailRow: React.FC<{
   icon: React.ReactNode;
@@ -193,10 +202,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     setIsEditingTitle(false);
   };
 
-  const handleNotesBlur = () => {
-    if (notesValue !== task.notes) onUpdate({ notes: notesValue });
-  };
-
   const handleAddSubtask = () => {
     const trimmed = newSubtaskValue.trim();
     if (!trimmed) return;
@@ -316,6 +321,34 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             <Flag size={14} fill={task.priority !== 'p4' ? flagColor : 'none'} />
           </button>
         </div>
+
+        {/* Status + type pills row */}
+        <div className="flex items-center gap-1.5 mt-2.5">
+          <button
+            onClick={() => toggleRow('status')}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium uppercase tracking-wider transition-all"
+            style={{
+              color: TASK_STATUS_META[task.status].color,
+              background: TASK_STATUS_META[task.status].color + '18',
+              border: `1px solid ${TASK_STATUS_META[task.status].color}40`,
+            }}
+          >
+            <span className="w-1 h-1 rounded-full" style={{ background: TASK_STATUS_META[task.status].dot }} />
+            {TASK_STATUS_META[task.status].label}
+          </button>
+          <button
+            onClick={() => toggleRow('type')}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium uppercase tracking-wider transition-all"
+            style={{
+              color: taskTypeColor(task.type),
+              background: taskTypeColor(task.type) + '15',
+              border: `1px solid ${taskTypeColor(task.type)}33`,
+            }}
+          >
+            <TagIcon size={9} />
+            {task.type}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -351,6 +384,82 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   );
                 })}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Status picker */}
+        <AnimatePresence>
+          {expanded === 'status' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden px-4 py-3"
+              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--brd)' }}
+            >
+              <div className="flex flex-col gap-1">
+                {(['todo', 'in_progress', 'blocked', 'done'] as TaskStatus[]).map((s) => {
+                  const meta = TASK_STATUS_META[s];
+                  const isSelected = task.status === s;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => { onUpdate({ status: s }); setExpanded(null); }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium transition-all"
+                      style={{
+                        background: isSelected ? meta.color + '18' : 'rgba(255,255,255,0.03)',
+                        color: isSelected ? meta.color : 'var(--t2)',
+                        border: `1px solid ${isSelected ? meta.color + '40' : 'var(--brd)'}`,
+                      }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} />
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Type picker */}
+        <AnimatePresence>
+          {expanded === 'type' && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden px-4 py-3"
+              style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--brd)' }}
+            >
+              <div className="flex flex-wrap gap-1.5">
+                {DEFAULT_TASK_TYPES.map((t) => {
+                  const isSelected = task.type === t.value;
+                  return (
+                    <button
+                      key={t.value}
+                      onClick={() => { onUpdate({ type: t.value }); setExpanded(null); }}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+                      style={{
+                        background: isSelected ? t.color + '20' : 'rgba(255,255,255,0.04)',
+                        color: isSelected ? t.color : 'var(--t3)',
+                        border: `1.5px solid ${isSelected ? t.color : 'var(--brd)'}`,
+                      }}
+                    >
+                      <TagIcon size={10} />
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {!DEFAULT_TASK_TYPES.find((d) => d.value === task.type) && (
+                <div className="mt-2 text-[10.5px]" style={{ color: 'var(--t3)' }}>
+                  Custom: <span style={{ color: taskTypeColor(task.type) }}>{task.type}</span>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -392,27 +501,26 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
           />
         </div>
 
-        {/* Notes */}
+        {/* Notes — markdown */}
         <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--brd)' }}>
           <div className="flex items-center gap-1.5 mb-1.5">
             <FileText size={11} style={{ color: 'var(--t3)' }} />
             <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>Notes</span>
           </div>
-          <div
-            className="rounded-xl p-2.5 focus-glow"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
-          >
-            <textarea
-              ref={notesRef}
-              value={notesValue}
-              onChange={(e) => setNotesValue(e.target.value)}
-              onBlur={handleNotesBlur}
-              placeholder="Add notes…"
-              rows={2}
-              className="w-full text-[12px] bg-transparent resize-none focus:outline-none leading-relaxed"
-              style={{ color: 'var(--t2)', minHeight: 40, caretColor: 'var(--accent)' }}
-            />
-          </div>
+          <MarkdownNotes
+            value={task.notes}
+            onChange={(notes) => onUpdate({ notes })}
+            placeholder="Add notes — markdown supported. Use [[Task name]] to link."
+            minEditHeight={120}
+            preprocess={preprocessWikiLinks}
+            componentOverrides={{
+              a: makeWikiLinkComponent({
+                tasks: useTaskStore.getState().tasks,
+                projects,
+                /* Task notes can't easily route to project pages from here — links resolve, click is a no-op for now. */
+              }) as any,
+            }}
+          />
         </div>
 
         {/* Gradient section divider */}
@@ -550,6 +658,147 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             </div>
           </div>
         </DetailRow>
+
+        {/* Depends on */}
+        {(() => {
+          const allTasks = useTaskStore.getState().tasks;
+          const blockers = blockingTasks(task, allTasks);
+          const dependsOnTasks = (task.dependsOn ?? [])
+            .map((id) => allTasks.find((t) => t.id === id))
+            .filter((t): t is Task => !!t);
+          const candidates = dependencyCandidates(task, allTasks);
+          const valueText = dependsOnTasks.length === 0
+            ? 'None'
+            : blockers.length > 0
+              ? `${blockers.length} blocking`
+              : `${dependsOnTasks.length} done`;
+          return (
+            <DetailRow
+              icon={<Lock size={12} />}
+              label="Depends on"
+              value={valueText}
+              valueColor={blockers.length > 0 ? 'var(--amb)' : dependsOnTasks.length > 0 ? 'var(--grn)' : 'var(--t3)'}
+              expanded={expanded === 'depends'}
+              onClick={() => toggleRow('depends')}
+            >
+              <div className="pt-2 flex flex-col gap-1">
+                {dependsOnTasks.length === 0 && (
+                  <span className="text-[11px]" style={{ color: 'var(--t3)' }}>No dependencies yet.</span>
+                )}
+                {dependsOnTasks.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg group/dep"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--brd)' }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: d.completed ? 'var(--grn)' : 'var(--amb)' }}
+                    />
+                    <span
+                      className="text-[11.5px] flex-1 min-w-0 truncate"
+                      style={{
+                        color: d.completed ? 'var(--t3)' : 'var(--t2)',
+                        textDecoration: d.completed ? 'line-through' : 'none',
+                      }}
+                    >
+                      {d.title}
+                    </span>
+                    <button
+                      onClick={() => onUpdate({ dependsOn: (task.dependsOn ?? []).filter((id) => id !== d.id) })}
+                      className="opacity-0 group-hover/dep:opacity-100 transition-opacity"
+                      style={{ color: 'var(--t3)' }}
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Picker */}
+                {candidates.length > 0 && (
+                  <div className="pt-1">
+                    <div
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed var(--brd2)' }}
+                    >
+                      <Search size={10} style={{ color: 'var(--t3)' }} />
+                      <span className="text-[11px] flex-1" style={{ color: 'var(--t3)' }}>
+                        Add a task this one waits on…
+                      </span>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto mt-1 flex flex-col gap-0.5">
+                      {candidates.slice(0, 12).map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => onUpdate({ dependsOn: [...(task.dependsOn ?? []), c.id] })}
+                          className="flex items-center gap-2 px-2 py-1 rounded-md text-left transition-colors"
+                          style={{ color: 'var(--t2)' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--card-h)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <Plus size={10} style={{ color: 'var(--t3)' }} />
+                          <span className="text-[11.5px] truncate">{c.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DetailRow>
+          );
+        })()}
+
+        {/* Milestone — only when the assigned project has milestones */}
+        {(() => {
+          const proj = projects.find((p) => p.id === task.projectId);
+          if (!proj || proj.milestones.length === 0) return null;
+          const ms = proj.milestones.find((m) => m.id === task.milestoneId);
+          return (
+            <DetailRow
+              icon={<Target size={12} />}
+              label="Milestone"
+              value={ms?.title ?? 'None'}
+              valueColor={ms ? proj.color : 'var(--t3)'}
+              expanded={expanded === 'milestone'}
+              onClick={() => toggleRow('milestone')}
+            >
+              <div className="pt-2 flex flex-col gap-1">
+                <button
+                  onClick={() => { onUpdate({ milestoneId: undefined }); setExpanded(null); }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
+                  style={{ background: !task.milestoneId ? 'rgba(255,255,255,0.05)' : 'transparent', color: !task.milestoneId ? 'var(--t2)' : 'var(--t3)' }}
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brd2)' }} />
+                  <span className="text-[12px]">No milestone</span>
+                </button>
+                {proj.milestones.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => { onUpdate({ milestoneId: m.id }); setExpanded(null); }}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors"
+                    style={{
+                      background: task.milestoneId === m.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                      color: task.milestoneId === m.id ? 'var(--t)' : 'var(--t2)',
+                    }}
+                    onMouseEnter={(e) => { if (task.milestoneId !== m.id) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    onMouseLeave={(e) => { if (task.milestoneId !== m.id) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ background: m.completed ? 'var(--grn)' : proj.color }}
+                    />
+                    <span className="text-[12px] flex-1 min-w-0 truncate">{m.title}</span>
+                    {m.targetDate && (
+                      <span className="text-[10px]" style={{ color: 'var(--t3)' }}>
+                        {new Date(m.targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </DetailRow>
+          );
+        })()}
 
         <DetailRow
           icon={<FolderOpen size={12} />}
@@ -718,6 +967,17 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               </button>
             )}
           </div>
+        </div>
+
+        {/* Activity timeline */}
+        <div className="section-divider mx-0 my-1" />
+        <div className="px-4 pt-3 pb-1">
+          <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>
+            Activity
+          </span>
+        </div>
+        <div className="pb-3">
+          <ActivityTimeline taskId={task.id} compact />
         </div>
       </div>
 
