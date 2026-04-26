@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <linearGradient id="espCup" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#dcdcdc"/>
+    </linearGradient>
+    <linearGradient id="espCrema" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c89870"/>
+      <stop offset="100%" stop-color="#8a5a35"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="90" cy="135" rx="28" ry="3.5" fill="#e8e0d0" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
+  <ellipse cx="90" cy="137" rx="24" ry="2.5" fill="#cfc4b0"/>
+  <path d="M72 92 L76 126 Q76 130 80 130 L100 130 Q104 130 104 126 L108 92 Z" fill="url(#espCup)" stroke="rgba(0,0,0,0.15)" stroke-width="0.8"/>
+  <ellipse cx="90" cy="93" rx="17" ry="3.5" fill="url(#espCrema)"/>
+  <ellipse cx="90" cy="92.5" rx="15" ry="2.5" fill="#7d5030" opacity="0.85"/>
+  <circle cx="84" cy="93" r="1.2" fill="#d4a070" opacity="0.6"/>
+  <circle cx="92" cy="92" r="0.9" fill="#d4a070" opacity="0.55"/>
+  <circle cx="97" cy="93" r="1" fill="#d4a070" opacity="0.5"/>
+  <ellipse cx="90" cy="91.5" rx="18" ry="2.8" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.8"/>
+  <path d="M104 100 Q116 100 116 110 Q116 120 104 120" stroke="rgba(0,0,0,0.18)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <path d="M104 100 Q113 100 113 110 Q113 120 104 120" stroke="#dcdcdc" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M78 100 Q76 113 79 124" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+</svg>

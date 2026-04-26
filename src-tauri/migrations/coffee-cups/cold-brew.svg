@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <linearGradient id="cbGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.20)"/>
+    </linearGradient>
+    <linearGradient id="cbCoffee" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a2310"/>
+      <stop offset="100%" stop-color="#1a0e06"/>
+    </linearGradient>
+    <linearGradient id="cbIce" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(220,235,250,0.85)"/>
+      <stop offset="100%" stop-color="rgba(160,200,235,0.55)"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="90" cy="146" rx="32" ry="3" fill="#1a1410" opacity="0.55"/>
+  <path d="M68 60 L70 140 Q70 144 74 144 L106 144 Q110 144 110 140 L112 60 Z" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+  <path d="M70 78 L71 140 Q71 142 74 142 L106 142 Q109 142 109 140 L110 78 Z" fill="url(#cbCoffee)"/>
+  <ellipse cx="90" cy="78" rx="20" ry="2.5" fill="#5a3520" opacity="0.85"/>
+  <rect x="74" y="86" width="16" height="14" rx="2.5" fill="url(#cbIce)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6"/>
+  <line x1="76" y1="89" x2="83" y2="89" stroke="rgba(255,255,255,0.7)" stroke-width="0.7" stroke-linecap="round"/>
+  <rect x="92" y="92" width="14" height="13" rx="2.5" fill="url(#cbIce)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6"/>
+  <line x1="94" y1="95" x2="100" y2="95" stroke="rgba(255,255,255,0.7)" stroke-width="0.7" stroke-linecap="round"/>
+  <rect x="80" y="106" width="15" height="13" rx="2.5" fill="url(#cbIce)" stroke="rgba(255,255,255,0.5)" stroke-width="0.6"/>
+  <line x1="82" y1="109" x2="88" y2="109" stroke="rgba(255,255,255,0.7)" stroke-width="0.7" stroke-linecap="round"/>
+  <path d="M73 82 Q71 110 73 138" stroke="rgba(255,255,255,0.32)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M107 82 Q109 110 106 138" stroke="rgba(0,0,0,0.18)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+  <circle cx="76" cy="118" r="1" fill="rgba(220,240,255,0.5)"/>
+  <circle cx="78" cy="128" r="0.8" fill="rgba(220,240,255,0.45)"/>
+  <circle cx="105" cy="122" r="0.9" fill="rgba(220,240,255,0.5)"/>
+  <circle cx="103" cy="132" r="0.7" fill="rgba(220,240,255,0.4)"/>
+</svg>

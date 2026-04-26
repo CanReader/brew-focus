@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <linearGradient id="matchaBowl" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8c4b0"/>
+      <stop offset="100%" stop-color="#5e7a68"/>
+    </linearGradient>
+    <radialGradient id="matchaSurface" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#a8d855"/>
+      <stop offset="60%" stop-color="#7eb33a"/>
+      <stop offset="100%" stop-color="#4a7825"/>
+    </radialGradient>
+    <linearGradient id="matchaFoam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d8eba0"/>
+      <stop offset="100%" stop-color="#b5d572"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="90" cy="140" rx="40" ry="3" fill="#000" opacity="0.32"/>
+  <path d="M50 92 Q50 140 90 140 Q130 140 130 92 Z" fill="url(#matchaBowl)" stroke="rgba(0,0,0,0.18)" stroke-width="0.8"/>
+  <path d="M52 92 Q52 138 90 138 Q128 138 128 92" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1.2"/>
+  <ellipse cx="90" cy="92" rx="40" ry="6" fill="url(#matchaSurface)"/>
+  <ellipse cx="90" cy="91.5" rx="38" ry="5" fill="none" stroke="url(#matchaFoam)" stroke-width="2.2" opacity="0.85"/>
+  <circle cx="76" cy="91" r="1.4" fill="#e0f0a8" opacity="0.85"/>
+  <circle cx="84" cy="89" r="1" fill="#e0f0a8" opacity="0.7"/>
+  <circle cx="95" cy="91" r="1.2" fill="#e0f0a8" opacity="0.8"/>
+  <circle cx="103" cy="90" r="1" fill="#e0f0a8" opacity="0.7"/>
+  <circle cx="89" cy="93" r="0.8" fill="#f0fad0" opacity="0.6"/>
+  <ellipse cx="90" cy="89" rx="40" ry="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+  <path d="M58 100 Q56 118 64 134" stroke="rgba(255,255,255,0.2)" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M122 100 Q124 118 116 134" stroke="rgba(0,0,0,0.18)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+</svg>
