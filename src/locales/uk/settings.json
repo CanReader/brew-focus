@@ -135,5 +135,8 @@
     "privacyLinkBody": "Відкрий canreader.github.io/brewfocus-legal/privacy/ у браузері.",
     "termsLinkBody": "Відкрий canreader.github.io/brewfocus-legal/terms/ у браузері.",
     "signOutBody": "Точно вийти з акаунта?"
+  },
+  "about": {
+    "version": "Версія"
   }
 }

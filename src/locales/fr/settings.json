@@ -135,5 +135,8 @@
     "privacyLinkBody": "Ouvre canreader.github.io/brewfocus-legal/privacy/ dans ton navigateur.",
     "termsLinkBody": "Ouvre canreader.github.io/brewfocus-legal/terms/ dans ton navigateur.",
     "signOutBody": "Veux-tu vraiment te déconnecter ?"
+  },
+  "about": {
+    "version": "Version"
   }
 }

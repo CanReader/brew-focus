@@ -135,5 +135,8 @@
     "privacyLinkBody": "请在浏览器中访问 canreader.github.io/brewfocus-legal/privacy/。",
     "termsLinkBody": "请在浏览器中访问 canreader.github.io/brewfocus-legal/terms/。",
     "signOutBody": "确定要退出登录吗？"
+  },
+  "about": {
+    "version": "版本"
   }
 }

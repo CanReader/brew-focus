@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, RotateCcw, Check, Clock, Zap, Target, Volume2, Palette, User, Crown, Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getVersion } from '@tauri-apps/api/app';
 import { useSettingsStore } from '../store/settingsStore';
 import { useLocaleStore } from '../store/localeStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
@@ -26,6 +27,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { language, setLanguage } = useLocaleStore();
   const [activeSection, setActiveSection] = useState<SectionKey>('timer');
+  const [appVersion, setAppVersion] = useState<string>('');
+
+  // Version comes from tauri.conf.json at runtime — never hardcode it here.
+  // Outside the Tauri shell (vite-only dev) this rejects; we just leave the row hidden.
+  useEffect(() => {
+    let cancelled = false;
+    getVersion()
+      .then((v) => { if (!cancelled) setAppVersion(v); })
+      .catch(() => { /* not in Tauri shell — hide the row */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
     { key: 'timer',      label: t('sections.timer'),      icon: <Clock size={15} /> },
@@ -159,6 +171,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                     </button>
                   );
                 })}
+
+                {appVersion && (
+                  <div
+                    className="mt-auto px-3 pt-3 pb-1 text-[10.5px] tabular-nums select-text"
+                    style={{ color: 'var(--t3)', borderTop: '1px solid var(--brd)' }}
+                    title={`Brew Focus ${appVersion}`}
+                  >
+                    {t('about.version')} {appVersion}
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-4">
