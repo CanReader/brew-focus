@@ -35,7 +35,7 @@
       }
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVFM0E2QjhFQzdDQzQ0NjIKUldSaVJNekhqbXM2WHBNaGpLN3djNkMrYUFXYTdtejhlOUZYWnNwNEZiWXIvWmp2Y2pXNG10aE8K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQyODZBQjQwMUEyMTY5MUYKUldRZmFTRWFRS3VHMHQrRlkxUHFXNDc1a2o0MlNpZzBST2lKWFhzS2czeTh1cHJmRjMvTm14TFIK",
       "endpoints": [
         "https://github.com/CanReader/brew-focus/releases/latest/download/latest.json"
       ],
