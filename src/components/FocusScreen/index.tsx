@@ -241,8 +241,11 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           <PanelRight size={15} />
         </button>
 
-        {/* Task Selector */}
-        <div className="w-full max-w-xs px-4 relative z-10">
+        {/* Task Selector — z-30 (higher than the coffee cup + timer wrapper at
+            z-10) so its open dropdown overlays the cup instead of being
+            painted behind it. The dropdown's own `z-50` only escapes within
+            this parent's stacking context. */}
+        <div className="w-full max-w-xs px-4 relative z-30">
           <TaskSelector />
         </div>
 
