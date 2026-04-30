@@ -1,7 +1,7 @@
 export interface AppTheme {
   id: string;
   name: string;
-  category: 'dark' | 'neutral' | 'warm' | 'colorful';
+  category: 'dark' | 'neutral' | 'warm' | 'colorful' | 'light';
   bg: string;
   bg2: string;
   card: string;
@@ -73,14 +73,6 @@ export const THEMES: AppTheme[] = [
     t: '#eceff4', t2: '#9aa3b2', t3: '#4c566a',
   },
   // ── Warm ─────────────────────────────────────────────────────────────────
-  {
-    id: 'volcanic',
-    name: 'Volcanic',
-    category: 'warm',
-    bg: '#100805', bg2: '#18100a', card: '#201510', cardH: '#281b14',
-    brd: 'rgba(255,200,150,0.07)', brd2: 'rgba(255,200,150,0.13)',
-    t: '#f5ede8', t2: '#b09080', t3: '#6a5048',
-  },
   {
     id: 'coffee',
     name: 'Coffee',
@@ -179,14 +171,6 @@ export const THEMES: AppTheme[] = [
     t: '#ffe8dc', t2: '#c8907a', t3: '#885850',
   },
   {
-    id: 'lavender',
-    name: 'Lavender',
-    category: 'colorful',
-    bg: '#110e18', bg2: '#171422', card: '#1f1a2c', cardH: '#272036',
-    brd: 'rgba(200,170,255,0.07)', brd2: 'rgba(200,170,255,0.15)',
-    t: '#e8dcff', t2: '#a888e0', t3: '#605080',
-  },
-  {
     id: 'strawberry',
     name: 'Strawberry',
     category: 'colorful',
@@ -218,21 +202,62 @@ export const THEMES: AppTheme[] = [
     brd: 'rgba(255,160,220,0.07)', brd2: 'rgba(255,160,220,0.14)',
     t: '#ffd6f0', t2: '#d070b0', t3: '#805068',
   },
-  {
-    id: 'cyber',
-    name: 'Cyber',
-    category: 'colorful',
-    bg: '#020c10', bg2: '#041418', card: '#071c22', cardH: '#0a242c',
-    brd: 'rgba(0,240,255,0.07)', brd2: 'rgba(0,240,255,0.13)',
-    t: '#e0f8ff', t2: '#6ab8c8', t3: '#326878',
-  },
+  // ── Light ────────────────────────────────────────────────────────────────
   {
     id: 'blossom',
     name: 'Blossom',
-    category: 'colorful',
+    category: 'light',
     bg: '#fff5f9', bg2: '#ffe9f2', card: '#ffffff', cardH: '#ffdfeb',
     brd: 'rgba(210,80,130,0.13)', brd2: 'rgba(210,80,130,0.22)',
     t: '#3a0e22', t2: '#8a4868', t3: '#c488a4',
+  },
+  {
+    id: 'daylight',
+    name: 'Daylight',
+    category: 'light',
+    bg: '#ffffff', bg2: '#f6f7fa', card: '#ffffff', cardH: '#eef0f4',
+    brd: 'rgba(0,0,0,0.08)', brd2: 'rgba(0,0,0,0.14)',
+    t: '#1a1a22', t2: '#5a6070', t3: '#9aa0b0',
+  },
+  {
+    id: 'cream',
+    name: 'Cream',
+    category: 'light',
+    bg: '#fdfaf3', bg2: '#f7f1e6', card: '#ffffff', cardH: '#f0e8d6',
+    brd: 'rgba(120,80,40,0.10)', brd2: 'rgba(120,80,40,0.18)',
+    t: '#2a1c10', t2: '#7a5a3a', t3: '#b89880',
+  },
+  {
+    id: 'mist',
+    name: 'Mist',
+    category: 'light',
+    bg: '#f4f7fa', bg2: '#e9eef4', card: '#ffffff', cardH: '#dde4ec',
+    brd: 'rgba(60,90,130,0.10)', brd2: 'rgba(60,90,130,0.18)',
+    t: '#14202e', t2: '#4a6080', t3: '#8898ac',
+  },
+  {
+    id: 'sage',
+    name: 'Sage',
+    category: 'light',
+    bg: '#f3f7f1', bg2: '#e6efe2', card: '#ffffff', cardH: '#d9e6d4',
+    brd: 'rgba(80,130,80,0.10)', brd2: 'rgba(80,130,80,0.18)',
+    t: '#1a2818', t2: '#5a7858', t3: '#98b09a',
+  },
+  {
+    id: 'lilac',
+    name: 'Lilac',
+    category: 'light',
+    bg: '#f8f4fc', bg2: '#efe6f5', card: '#ffffff', cardH: '#e3d6ed',
+    brd: 'rgba(140,100,180,0.10)', brd2: 'rgba(140,100,180,0.18)',
+    t: '#2a1640', t2: '#6e5a90', t3: '#b09cc8',
+  },
+  {
+    id: 'petal',
+    name: 'Petal',
+    category: 'light',
+    bg: '#faf3f7', bg2: '#f2e6ed', card: '#ffffff', cardH: '#ead6e0',
+    brd: 'rgba(180,90,150,0.10)', brd2: 'rgba(180,90,150,0.18)',
+    t: '#2c1024', t2: '#7a4868', t3: '#b894a8',
   },
 ];
 

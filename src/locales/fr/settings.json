@@ -41,7 +41,8 @@
       "dark": "Sombre",
       "neutral": "Neutre",
       "warm": "Chaud",
-      "colorful": "Coloré"
+      "colorful": "Coloré",
+      "light": "Clair"
     },
     "accents": {
       "red": "Rouge",

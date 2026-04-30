@@ -54,6 +54,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
     { key: 'neutral',  label: t('appearance.categories.neutral') },
     { key: 'warm',     label: t('appearance.categories.warm') },
     { key: 'colorful', label: t('appearance.categories.colorful') },
+    { key: 'light',    label: t('appearance.categories.light') },
   ];
 
   const ACCENT_OPTIONS: { key: AccentColor; name: string }[] = ACCENT_KEYS.map((key) => ({

@@ -41,7 +41,8 @@
       "dark": "Oscuro",
       "neutral": "Neutro",
       "warm": "Cálido",
-      "colorful": "Colorido"
+      "colorful": "Colorido",
+      "light": "Claro"
     },
     "accents": {
       "red": "Rojo",

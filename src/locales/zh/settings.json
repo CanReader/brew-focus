@@ -41,7 +41,8 @@
       "dark": "深色",
       "neutral": "中性",
       "warm": "暖色",
-      "colorful": "彩色"
+      "colorful": "彩色",
+      "light": "浅色"
     },
     "accents": {
       "red": "红",

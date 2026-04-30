@@ -41,7 +41,8 @@
       "dark": "داكن",
       "neutral": "محايد",
       "warm": "دافئ",
-      "colorful": "ملوّن"
+      "colorful": "ملوّن",
+      "light": "فاتح"
     },
     "accents": {
       "red": "أحمر",

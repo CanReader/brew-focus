@@ -89,12 +89,18 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             letterSpacing: '-4px',
             fontVariantNumeric: 'tabular-nums',
             lineHeight: 1,
-            background: `linear-gradient(180deg, var(--t) 0%, rgba(240,240,255,0.7) 100%)`,
+            // Theme-aware gradient: goes from primary text color to secondary,
+            // which means subtle highlight on dark themes AND subtle fade on
+            // light themes (instead of fading to near-white on light = invisible).
+            background: `linear-gradient(180deg, var(--t) 0%, var(--t2) 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             textShadow: 'none',
-            filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9)) drop-shadow(0 0 48px rgba(0,0,0,0.6))',
+            // Light, neutral shadow that works on both light and dark backgrounds.
+            // The old heavy black drop-shadows were a "glow on dark" hack that
+            // showed up as dark halos around the digits on light themes.
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.12))',
           }}
         >
           {timeString}
@@ -117,7 +123,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                   ? 'var(--accent)'
                   : isActive
                   ? 'var(--accent)'
-                  : 'rgba(255,255,255,0.08)',
+                  : 'var(--brd2)',
                 opacity: isCompleted ? 0.85 : 1,
                 boxShadow: isActive ? '0 0 8px var(--accent-g)' : 'none',
               }}

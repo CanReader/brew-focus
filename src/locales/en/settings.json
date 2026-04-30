@@ -41,7 +41,8 @@
       "dark": "Dark",
       "neutral": "Neutral",
       "warm": "Warm",
-      "colorful": "Colorful"
+      "colorful": "Colorful",
+      "light": "Light"
     },
     "accents": {
       "red": "Red",
