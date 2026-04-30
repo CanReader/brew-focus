@@ -26,24 +26,16 @@ async function notify(title: string, body: string) {
 let _lastSyncedActiveTaskId: string | null | undefined = undefined;
 let _initialTimerSyncDone = false;
 
-export function useTimer() {
-  const {
-    isRunning,
-    secondsLeft,
-    phase,
-    tick,
-    advancePhase,
-    recordSession,
-    addFocusSeconds,
-    totalSeconds,
-    activeTaskId,
-    setPhase,
-  } = useTimerStore();
-
+/**
+ * Pure-derivation helper used by every screen that needs to know the timer's
+ * effective durations or render formatTime/progress. No side effects, no
+ * intervals. Safe to mount from any number of components simultaneously.
+ */
+function useTimerDerived() {
+  const { secondsLeft, totalSeconds, activeTaskId } = useTimerStore();
   const { settings } = useSettingsStore();
-  const { tasks, projects, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
+  const { tasks, projects } = useTaskStore();
 
-  // Derive effective durations: task override → project override → global setting.
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const activeProject = activeTask?.projectId
     ? projects.find((p) => p.id === activeTask.projectId)
@@ -61,10 +53,41 @@ export function useTimer() {
     ? Infinity
     : (activeTask?.customLongBreakInterval ?? activeProject?.customLongBreakInterval ?? settings.longBreakInterval);
 
+  return {
+    secondsLeft,
+    totalSeconds,
+    effectiveWorkDuration,
+    effectiveShortBreakDuration,
+    effectiveLongBreakDuration,
+    effectiveLongBreakInterval,
+  };
+}
+
+/**
+ * Drives the actual ticking of the timer and runs the once-per-phase side
+ * effects (notifications, completion sounds, advancePhase). MUST be mounted
+ * exactly once at the application root — see App.tsx.
+ *
+ * Why not in the screens that show the timer: when the user navigates to
+ * Reports / Settings / Projects, every screen that previously hosted
+ * useTimer() unmounts, which clears its setInterval, which froze the timer.
+ * Hosting the engine at the app root means the timer keeps ticking regardless
+ * of which screen is on display.
+ */
+export function useTimerEngine() {
+  const {
+    isRunning, secondsLeft, phase, tick, advancePhase, recordSession,
+    addFocusSeconds, totalSeconds, activeTaskId, setPhase,
+  } = useTimerStore();
+  const { settings } = useSettingsStore();
+  const { tasks, projects, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
+  const {
+    effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration,
+  } = useTimerDerived();
+
   // Update timer display when:
   // 1. Tasks finish loading for the first time (app init with a pre-selected task)
   // 2. The user genuinely changes the active task
-  // Does NOT fire on component re-mounts (tab switches, fullscreen/widget transitions).
   useEffect(() => {
     if (!tasksLoaded) return;
 
@@ -82,6 +105,26 @@ export function useTimer() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTaskId, tasksLoaded]);
+
+  // Re-sync the displayed timer when the user changes Focus / Short Break /
+  // Long Break duration in Settings. Only fires when the timer is fresh/idle
+  // (not running, and at the full current totalSeconds) — never disrupts a
+  // running timer or a paused mid-session timer.
+  useEffect(() => {
+    if (!_initialTimerSyncDone) return;
+    if (isRunning) return;
+    if (secondsLeft !== totalSeconds) return;
+
+    const expectedTotalSeconds =
+      phase === 'work' ? effectiveWorkDuration * 60 :
+      phase === 'shortBreak' ? effectiveShortBreakDuration * 60 :
+      effectiveLongBreakDuration * 60;
+
+    if (totalSeconds !== expectedTotalSeconds) {
+      setPhase(phase, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, phase]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -151,20 +194,18 @@ export function useTimer() {
 
     return () => clearInterval(interval);
   }, [
-    isRunning,
-    secondsLeft,
-    phase,
-    totalSeconds,
-    settings,
-    activeTaskId,
-    tasks,
-    projects,
-    tick,
-    advancePhase,
-    recordSession,
-    addFocusSeconds,
-    incrementPomodoroCompleted,
+    isRunning, secondsLeft, phase, totalSeconds, settings, activeTaskId, tasks, projects,
+    tick, advancePhase, recordSession, addFocusSeconds, incrementPomodoroCompleted,
   ]);
+}
+
+/**
+ * Read-only helpers for screens that render the timer. Returns formatted
+ * time, progress fraction, and the effective durations resolved from
+ * task → project → settings. Does NOT run any intervals or side effects.
+ */
+export function useTimer() {
+  const derived = useTimerDerived();
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -172,14 +213,14 @@ export function useTimer() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+  const progress = derived.totalSeconds > 0 ? 1 - derived.secondsLeft / derived.totalSeconds : 0;
 
   return {
     formatTime,
     progress,
-    effectiveWorkDuration,
-    effectiveShortBreakDuration,
-    effectiveLongBreakDuration,
-    effectiveLongBreakInterval,
+    effectiveWorkDuration: derived.effectiveWorkDuration,
+    effectiveShortBreakDuration: derived.effectiveShortBreakDuration,
+    effectiveLongBreakDuration: derived.effectiveLongBreakDuration,
+    effectiveLongBreakInterval: derived.effectiveLongBreakInterval,
   };
 }

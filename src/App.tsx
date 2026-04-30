@@ -18,6 +18,7 @@ import { useActivityStore } from './store/activityStore';
 import { useCoffeeCupCatalogStore } from './store/coffeeCupCatalogStore';
 import { useLocaleStore } from './store/localeStore';
 import { useClickSound } from './hooks/useClickSound';
+import { useTimerEngine } from './hooks/useTimer';
 import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -88,6 +89,11 @@ function MainApp() {
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
+  // Mount the timer engine at the app root so it keeps ticking regardless of
+  // which screen is on display. Previously this lived in useTimer() inside
+  // FocusScreen / TasksScreen, which meant the interval was cleared whenever
+  // the user navigated to Reports / Settings / Projects.
+  useTimerEngine();
   const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();
 
   useEffect(() => {
