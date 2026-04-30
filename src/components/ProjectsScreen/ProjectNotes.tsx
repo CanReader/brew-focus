@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { MarkdownNotes } from '../MarkdownNotes';
 import { useTaskStore } from '../../store/taskStore';
@@ -44,30 +43,35 @@ export const ProjectNotes: React.FC<Props> = ({ value, onChange, accentColor, on
         )}
       </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <div className="py-2">
-              <MarkdownNotes
-                value={value}
-                onChange={onChange}
-                placeholder="Click Edit to write — README, decisions, links, anything. Markdown supported. Use [[Task name]] or [[Project name]] to link."
-                accentColor={accentColor}
-                minEditHeight={240}
-                preprocess={preprocessWikiLinks}
-                componentOverrides={{ a: wikiAnchor as any }}
-                /* Full width by default — no centering. */
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Open/close uses opacity + grid-rows trick instead of framer-motion's
+          `animate={{ height: 'auto' }}` because the latter locked the
+          container at the tallest measured height — when the user typed text
+          and then deleted it, the wrapper kept the old height and left an
+          empty padding band below the editor. With the grid-rows technique
+          the wrapper always matches the child's intrinsic height. */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          opacity: open ? 1 : 0,
+          transition: 'grid-template-rows 0.22s ease, opacity 0.18s ease',
+        }}
+      >
+        <div style={{ overflow: 'hidden', minHeight: 0 }}>
+          <div className="py-2">
+            <MarkdownNotes
+              value={value}
+              onChange={onChange}
+              placeholder="Click Edit to write — README, decisions, links, anything. Markdown supported. Use [[Task name]] or [[Project name]] to link."
+              accentColor={accentColor}
+              minEditHeight={240}
+              preprocess={preprocessWikiLinks}
+              componentOverrides={{ a: wikiAnchor as any }}
+              /* Full width by default — no centering. */
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
