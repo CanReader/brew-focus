@@ -7,6 +7,8 @@ import { calculateNextDueDate } from '../utils/repeatUtils';
 import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
 import { useActivityStore } from './activityStore';
+import { useSettingsStore } from './settingsStore';
+import { playTaskComplete } from '../utils/sounds';
 
 // ── Row mappers ───────────────────────────────────────────────────────────────
 // Supabase returns JSONB columns as real JS objects, not strings
@@ -143,12 +145,39 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         supabase.from('settings').select('value').eq('user_id', userId).eq('key', 'activeTaskId').maybeSingle(),
       ]);
 
-      const tasks = (taskRows ?? []).map(rowToTask);
+      const rawTasks = (taskRows ?? []).map(rowToTask);
       const projects = (projectRows ?? []).map(rowToProject);
       let activeTaskId: string | null = null;
       try { activeTaskId = metaRow?.value ? JSON.parse(metaRow.value) : null; } catch { /**/ }
 
+      // Orphan sweep: any task pointing at a projectId that no longer exists
+      // (e.g. a project that failed to persist before this fix landed) gets
+      // its projectId nulled in memory AND in Supabase, so the task surfaces
+      // in Inbox-style views instead of haunting a ghost project.
+      const projectIds = new Set(projects.map((p) => p.id));
+      const orphanIds: string[] = [];
+      const tasks = rawTasks.map((t) => {
+        if (t.projectId && !projectIds.has(t.projectId)) {
+          orphanIds.push(t.id);
+          return { ...t, projectId: undefined };
+        }
+        return t;
+      });
+
       set({ tasks, projects, activeTaskId, isLoaded: true });
+
+      if (orphanIds.length > 0) {
+        console.warn(`Detached ${orphanIds.length} orphaned task(s) from missing project(s).`);
+        // Fire-and-forget — we already updated local state, this just persists.
+        void supabase
+          .from('tasks')
+          .update({ projectId: null })
+          .in('id', orphanIds)
+          .eq('user_id', userId)
+          .then(({ error }) => {
+            if (error) console.warn('Could not persist orphan cleanup:', error);
+          });
+      }
     } catch (e) {
       console.warn('Failed to load tasks:', e);
       set({ isLoaded: true });
@@ -310,6 +339,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       taskId: id, projectId: task.projectId,
       payload: { title: task.title },
     });
+    // Reward sound on incomplete → complete only (never on uncomplete).
+    if (completed) {
+      const s = useSettingsStore.getState().settings;
+      if (s.soundNotifications) {
+        void playTaskComplete(s.soundVolume ?? 70);
+      }
+    }
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
@@ -419,8 +455,15 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       archived: false, priority: 'p3',
     };
     set({ projects: [...get().projects, project] });
+    // Supabase JS client returns { error } instead of throwing on most failures
+    // (RLS, missing column, constraint violation). The previous version only
+    // caught thrown errors and silently ignored response errors — leaving the
+    // project in local state until reload, then orphaning any tasks created in
+    // it. Now we check `error` explicitly, roll back the optimistic add, and
+    // rethrow so the UI can react.
+    const rollback = () => set({ projects: get().projects.filter((p) => p.id !== project.id) });
     try {
-      await supabase.from('projects').insert({
+      const { error } = await supabase.from('projects').insert({
         id: project.id, user_id: userId, name, color,
         description: '', status: 'active', createdAt: project.createdAt,
         targetDate: null, milestones: [],
@@ -430,8 +473,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         customLongBreakDuration: null, customLongBreakInterval: null,
         skipLongBreak: false,
       });
+      if (error) {
+        rollback();
+        console.error('Failed to add project (Supabase rejected insert):', error);
+        throw new Error(`Could not save project "${name}": ${error.message}`);
+      }
     } catch (e) {
-      console.warn('Failed to add project:', e);
+      // network / unexpected
+      rollback();
+      console.error('Failed to add project:', e);
+      throw e;
     }
   },
 
@@ -635,7 +686,15 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   toggleMilestone: async (projectId, milestoneId) => {
     const project = get().projects.find((p) => p.id === projectId);
     if (!project) return;
-    const milestones = project.milestones.map((m) => m.id === milestoneId ? { ...m, completed: !m.completed } : m);
+    const target = project.milestones.find((m) => m.id === milestoneId);
+    if (!target) return;
+    const willBeCompleted = !target.completed;
+    const milestones = project.milestones.map((m) => m.id === milestoneId ? { ...m, completed: willBeCompleted } : m);
+    // Reward sound on incomplete → complete only — same rule as toggleTask.
+    if (willBeCompleted) {
+      const s = useSettingsStore.getState().settings;
+      if (s.soundNotifications) playTaskComplete(s.soundVolume ?? 70);
+    }
     await get().updateProject(projectId, { milestones });
   },
 

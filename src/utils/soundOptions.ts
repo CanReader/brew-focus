@@ -1,59 +1,40 @@
 /**
  * Named sound presets selectable per timer event.
- * All sounds are synthesized via Web Audio API — no audio files needed.
+ *
+ * Backed by pre-rendered WAV files in /public/sounds/, played via
+ * HTMLAudioElement pools (see ./sounds.ts for the rationale — Web Audio
+ * synthesis was unreliable on Linux WebKit).
+ *
+ * To regenerate the WAVs, run `node scripts/generate-sounds.mjs`.
  */
 
-let _ctx: AudioContext | null = null;
+const POOL_SIZE = 3;
+type Pool = { elements: HTMLAudioElement[]; cursor: number };
+const pools = new Map<string, Pool>();
 
-async function getCtx(): Promise<AudioContext> {
-  if (!_ctx) _ctx = new AudioContext();
-  if (_ctx.state === 'suspended') await _ctx.resume();
-  return _ctx;
+function getPool(filename: string): Pool {
+  let pool = pools.get(filename);
+  if (!pool) {
+    const elements: HTMLAudioElement[] = [];
+    for (let i = 0; i < POOL_SIZE; i++) {
+      const el = new Audio(`/sounds/${filename}`);
+      el.preload = 'auto';
+      elements.push(el);
+    }
+    pool = { elements, cursor: 0 };
+    pools.set(filename, pool);
+  }
+  return pool;
 }
 
-function tone(
-  ctx: AudioContext,
-  freq: number,
-  type: OscillatorType,
-  volume: number,
-  startAt: number,
-  duration: number,
-  attack = 0.01,
-) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, startAt);
-  gain.gain.setValueAtTime(0, startAt);
-  gain.gain.linearRampToValueAtTime(volume, startAt + attack);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  osc.start(startAt);
-  osc.stop(startAt + duration + 0.05);
-}
-
-function sweep(
-  ctx: AudioContext,
-  freqFrom: number,
-  freqTo: number,
-  type: OscillatorType,
-  volume: number,
-  startAt: number,
-  duration: number,
-) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = type;
-  osc.frequency.setValueAtTime(freqFrom, startAt);
-  osc.frequency.linearRampToValueAtTime(freqTo, startAt + duration);
-  gain.gain.setValueAtTime(0, startAt);
-  gain.gain.linearRampToValueAtTime(volume, startAt + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  osc.start(startAt);
-  osc.stop(startAt + duration + 0.05);
+function playFile(filename: string, volumePct: number): void {
+  const v = Math.max(0, Math.min(1, volumePct / 100));
+  const pool = getPool(filename);
+  const el = pool.elements[pool.cursor];
+  pool.cursor = (pool.cursor + 1) % pool.elements.length;
+  el.volume = v;
+  try { el.currentTime = 0; } catch { /* not loaded yet */ }
+  void el.play().catch(() => { /* autoplay can reject before first gesture */ });
 }
 
 export interface SoundOption {
@@ -86,58 +67,21 @@ export const SOUND_OPTIONS: SoundOption[] = [
   { id: 'drop',    name: 'Drop',     description: 'Descending tone sweep' },
 ];
 
+const ID_TO_FILE: Record<string, string> = {
+  chime:   'chime.wav',
+  bell:    'bell.wav',
+  ping:    'ping.wav',
+  rise:    'rise.wav',
+  fanfare: 'fanfare.wav',
+  double:  'double.wav',
+  soft:    'soft.wav',
+  pluck:   'pluck.wav',
+  drop:    'drop.wav',
+};
+
 export async function playSoundOption(id: string, volumePct: number): Promise<void> {
   if (id === 'none') return;
-  const ctx = await getCtx();
-  const v = (volumePct / 100);
-  const t = ctx.currentTime;
-
-  switch (id) {
-    case 'chime':
-      tone(ctx, 1047, 'sine', v * 0.30, t,        1.2, 0.01);
-      tone(ctx, 2093, 'sine', v * 0.12, t + 0.08, 0.9, 0.01);
-      break;
-
-    case 'bell':
-      tone(ctx, 523,  'sine', v * 0.32, t,        1.6, 0.01);
-      tone(ctx, 1047, 'sine', v * 0.16, t + 0.05, 1.2, 0.01);
-      tone(ctx, 1568, 'sine', v * 0.08, t + 0.12, 0.9, 0.01);
-      break;
-
-    case 'ping':
-      tone(ctx, 1400, 'sine', v * 0.22, t, 0.20, 0.005);
-      break;
-
-    case 'rise':
-      sweep(ctx, 300, 800, 'sine', v * 0.22, t, 0.35);
-      break;
-
-    case 'fanfare':
-      tone(ctx, 523,  'sine', v * 0.28, t,        0.90, 0.01);
-      tone(ctx, 659,  'sine', v * 0.28, t + 0.14, 0.80, 0.01);
-      tone(ctx, 784,  'sine', v * 0.28, t + 0.28, 1.00, 0.01);
-      tone(ctx, 1047, 'sine', v * 0.18, t + 0.42, 0.80, 0.01);
-      break;
-
-    case 'double':
-      tone(ctx, 880, 'sine', v * 0.25, t,        0.22, 0.005);
-      tone(ctx, 880, 'sine', v * 0.25, t + 0.18, 0.22, 0.005);
-      break;
-
-    case 'soft':
-      tone(ctx, 440, 'sine', v * 0.12, t, 1.0, 0.06);
-      break;
-
-    case 'pluck':
-      tone(ctx, 440, 'triangle', v * 0.28, t,        0.22, 0.003);
-      tone(ctx, 880, 'triangle', v * 0.12, t + 0.01, 0.18, 0.003);
-      break;
-
-    case 'drop':
-      sweep(ctx, 700, 260, 'sine', v * 0.22, t, 0.35);
-      break;
-
-    default:
-      break;
-  }
+  const filename = ID_TO_FILE[id];
+  if (!filename) return;
+  playFile(filename, volumePct);
 }

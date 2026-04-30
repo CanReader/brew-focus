@@ -1,86 +1,71 @@
 /**
- * Synthesized sound effects using Web Audio API.
- * No audio files required — all sounds are generated programmatically.
+ * Plays pre-rendered WAV files from /public/sounds/.
+ *
+ * Why files instead of Web Audio synthesis: WebKit on Linux (Tauri's WebView)
+ * unreliably schedules oscillators — first click distorts, second click drops.
+ * HTMLAudioElement with a small pool per sound is rock-solid in comparison.
+ *
+ * To regenerate the WAVs, run `node scripts/generate-sounds.mjs`.
  */
 
-let _ctx: AudioContext | null = null;
+const POOL_SIZE = 4; // allows up to 4 overlapping instances of the same sound
+type Pool = { elements: HTMLAudioElement[]; cursor: number };
+const pools = new Map<string, Pool>();
 
-async function getCtx(): Promise<AudioContext> {
-  if (!_ctx) {
-    _ctx = new AudioContext();
+function getPool(filename: string): Pool {
+  let pool = pools.get(filename);
+  if (!pool) {
+    const elements: HTMLAudioElement[] = [];
+    for (let i = 0; i < POOL_SIZE; i++) {
+      const el = new Audio(`/sounds/${filename}`);
+      el.preload = 'auto';
+      elements.push(el);
+    }
+    pool = { elements, cursor: 0 };
+    pools.set(filename, pool);
   }
-  // AudioContext starts suspended until a user gesture in WebView environments.
-  // Must await resume() — fire-and-forget causes sounds to silently drop.
-  if (_ctx.state === 'suspended') {
-    await _ctx.resume();
-  }
-  return _ctx;
+  return pool;
 }
 
-function tone(
-  ctx: AudioContext,
-  freq: number,
-  type: OscillatorType,
-  volume: number,
-  startAt: number,
-  duration: number,
-  attack = 0.01,
-) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+function playFile(filename: string, volumePct: number): void {
+  const v = Math.max(0, Math.min(1, volumePct / 100));
+  const pool = getPool(filename);
+  const el = pool.elements[pool.cursor];
+  pool.cursor = (pool.cursor + 1) % pool.elements.length;
 
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, startAt);
-
-  gain.gain.setValueAtTime(0, startAt);
-  gain.gain.linearRampToValueAtTime(volume, startAt + attack);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-
-  osc.start(startAt);
-  osc.stop(startAt + duration + 0.05);
+  el.volume = v;
+  // Rewind so the same element can be re-triggered before its previous play ends.
+  try { el.currentTime = 0; } catch { /* element may not be ready yet — fine */ }
+  // play() returns a promise that rejects if autoplay is blocked; we don't
+  // care — first user click in a Tauri window already counts as a gesture.
+  void el.play().catch(() => { /* swallow autoplay rejection */ });
 }
 
-/** Played when a work (focus) session finishes — rewarding bell chime. */
-export async function playSessionComplete(volumePct: number) {
-  const ctx = await getCtx();
-  const v = (volumePct / 100) * 0.35;
-  const t = ctx.currentTime;
-  tone(ctx, 880,  'sine', v,        t,        1.4, 0.01);
-  tone(ctx, 1320, 'sine', v * 0.55, t + 0.12, 1.1, 0.01);
-  tone(ctx, 1760, 'sine', v * 0.3,  t + 0.25, 0.8, 0.01);
+/** Played when a work (focus) session finishes. */
+export function playSessionComplete(volumePct: number): void {
+  playFile('fanfare.wav', volumePct);
 }
 
-/** Played when a break finishes — gentle nudge to refocus. */
-export async function playBreakComplete(volumePct: number) {
-  const ctx = await getCtx();
-  const v = (volumePct / 100) * 0.28;
-  const t = ctx.currentTime;
-  tone(ctx, 660, 'sine', v,        t,        1.2, 0.01);
-  tone(ctx, 880, 'sine', v * 0.5,  t + 0.18, 0.9, 0.01);
-}
-
-/** Played when the timer starts. */
-export async function playTimerStart(volumePct: number) {
-  const ctx = await getCtx();
-  const v = (volumePct / 100) * 0.18;
-  const t = ctx.currentTime;
-  tone(ctx, 528, 'sine', v, t, 0.22, 0.01);
+/** Played when a break finishes. */
+export function playBreakComplete(volumePct: number): void {
+  playFile('bell.wav', volumePct);
 }
 
 /** Played when the timer pauses. */
-export async function playTimerPause(volumePct: number) {
-  const ctx = await getCtx();
-  const v = (volumePct / 100) * 0.15;
-  const t = ctx.currentTime;
-  tone(ctx, 396, 'sine', v, t, 0.18, 0.01);
+export function playTimerPause(volumePct: number): void {
+  playFile('pause.wav', volumePct);
 }
 
 /** Short UI click tick for button interactions. */
-export async function playClick(volumePct: number) {
-  const ctx = await getCtx();
-  const v = (volumePct / 100) * 0.12;
-  const t = ctx.currentTime;
-  tone(ctx, 1400, 'sine', v, t, 0.055, 0.004);
+export function playClick(volumePct: number): void {
+  // Click is much quieter than other sounds — scale it down further.
+  playFile('click.wav', volumePct * 0.6);
+}
+
+/**
+ * Bright rising major arpeggio when a task or milestone is checked off.
+ * ~0.5s, mid-volume so back-to-back completions don't fatigue the ear.
+ */
+export function playTaskComplete(volumePct: number): void {
+  playFile('taskComplete.wav', volumePct);
 }
