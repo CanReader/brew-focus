@@ -28,6 +28,14 @@ import { parseQuickTask } from '../../utils/quickCapture';
 import { QuickCapturePreview } from '../QuickCapturePreview';
 import { ProjectNotes } from './ProjectNotes';
 import { ProjectActivityTimeline } from './ProjectActivityTimeline';
+import { ProjectIconPicker } from './ProjectIconPicker';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable';
 
 interface Props {
   project: Project;
@@ -512,7 +520,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     tasks, projects, updateProject, deleteProject, archiveProject,
     addMilestone, toggleMilestone, deleteMilestone,
     addTask, updateTask, deleteTask, toggleTask, setActiveTask,
-    addProjectLink, removeProjectLink,
+    addProjectLink, removeProjectLink, reorderTasks,
   } = useTaskStore();
   const { sessions, reset, start, setActiveTask: setTimerActiveTask } = useTimerStore();
   const { settings } = useSettingsStore();
@@ -533,6 +541,8 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
   const [linkUrl, setLinkUrl] = useState('');
   const [newTaskInput, setNewTaskInput] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [iconPickerRect, setIconPickerRect] = useState<DOMRect | null>(null);
+  const iconAnchorRef = useRef<HTMLButtonElement | null>(null);
 
   const [statusFilter, setStatusFilter] = useState<TaskStatus[] | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<Priority[] | null>(null);
@@ -666,6 +676,27 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     [projectTasksListFiltered, selectedTaskIds]
   );
   const anyIncompleteSelected = selectedTasksArr.some((t) => !t.completed);
+
+  // Drag-and-drop reorder for the project's task list. Same shape as the
+  // TasksScreen handler: arrayMove the visible subset, then splice it back
+  // into the full task list at the original positions of the visible items
+  // (so non-visible tasks stay where they are).
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const handleTaskDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = projectTasksListFiltered.findIndex((t) => t.id === active.id);
+    const newIdx = projectTasksListFiltered.findIndex((t) => t.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const reordered = arrayMove(projectTasksListFiltered, oldIdx, newIdx);
+    const viewIds = new Set(projectTasksListFiltered.map((t) => t.id));
+    let vi = 0;
+    const merged = tasks.map((t) => (viewIds.has(t.id) ? reordered[vi++]! : t));
+    reorderTasks(merged);
+  };
 
   const bulkSetPriority = async (priority: Priority) => {
     await Promise.all(selectedTasksArr.map((t) => updateTask(t.id, { priority })));
@@ -886,11 +917,27 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
 
           {/* Identity row */}
           <div className="flex items-start gap-3.5">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 mt-1"
+            <button
+              ref={iconAnchorRef}
+              onClick={() => {
+                if (iconAnchorRef.current) {
+                  setIconPickerRect(iconAnchorRef.current.getBoundingClientRect());
+                }
+              }}
+              title="Change project icon"
+              className="group relative w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 mt-1 transition-all"
               style={{
                 background: `linear-gradient(135deg, ${project.color}33, ${project.color}11)`,
                 border: `1px solid ${project.color}55`,
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = `linear-gradient(135deg, ${project.color}55, ${project.color}22)`;
+                e.currentTarget.style.borderColor = `${project.color}99`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = `linear-gradient(135deg, ${project.color}33, ${project.color}11)`;
+                e.currentTarget.style.borderColor = `${project.color}55`;
               }}
             >
               {project.icon ? (
@@ -898,7 +945,18 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               ) : (
                 <div className="w-4 h-4 rounded-md" style={{ background: project.color }} />
               )}
-            </div>
+              <span
+                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--brd2)',
+                  fontSize: 9,
+                  color: 'var(--t2)',
+                }}
+              >
+                ✎
+              </span>
+            </button>
 
             <div className="flex-1 min-w-0">
               {editingName ? (
@@ -1573,61 +1631,66 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   {projectTasksMilestoneFiltered.length === 0 ? t('detail.noTasksYet') : t('detail.noTasksMatch')}
                 </div>
               ) : (
-                <AnimatePresence mode="popLayout">
-                  {projectTasksListFiltered.map((task) => {
-                    const isChecked = selectedTaskIds.has(task.id);
-                    return (
-                      <div
-                        key={task.id}
-                        className="mb-1.5 flex items-center gap-2"
-                        onClick={(e) => {
-                          if (selectionMode) {
-                            e.stopPropagation();
-                            toggleTaskSelection(task.id, e.shiftKey);
-                          } else {
-                            setSelectedTaskId(task.id);
-                          }
-                        }}
-                      >
-                        {selectionMode && (
-                          <button
+                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleTaskDragEnd}>
+                  <SortableContext items={projectTasksListFiltered.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                    <AnimatePresence mode="popLayout">
+                      {projectTasksListFiltered.map((task) => {
+                        const isChecked = selectedTaskIds.has(task.id);
+                        return (
+                          <div
+                            key={task.id}
+                            className="mb-1.5 flex items-center gap-2"
                             onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskSelection(task.id, e.shiftKey);
+                              if (selectionMode) {
+                                e.stopPropagation();
+                                toggleTaskSelection(task.id, e.shiftKey);
+                              } else {
+                                setSelectedTaskId(task.id);
+                              }
                             }}
-                            className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all"
-                            style={{
-                              background: isChecked ? 'var(--accent)' : 'transparent',
-                              border: `1px solid ${isChecked ? 'var(--accent)' : 'var(--brd2)'}`,
-                            }}
-                            title={t('detail.selectTaskTitle')}
                           >
-                            {isChecked && (
-                              <svg width="9" height="8" viewBox="0 0 7 6">
-                                <path d="M1 3L2.5 4.5L6 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                            {selectionMode && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTaskSelection(task.id, e.shiftKey);
+                                }}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all"
+                                style={{
+                                  background: isChecked ? 'var(--accent)' : 'transparent',
+                                  border: `1px solid ${isChecked ? 'var(--accent)' : 'var(--brd2)'}`,
+                                }}
+                                title={t('detail.selectTaskTitle')}
+                              >
+                                {isChecked && (
+                                  <svg width="9" height="8" viewBox="0 0 7 6">
+                                    <path d="M1 3L2.5 4.5L6 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </button>
                             )}
-                          </button>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <TaskItem
-                            task={task}
-                            isActive={false}
-                            isSelected={task.id === selectedTaskId}
-                            isMultiSelected={isChecked}
-                            projectName={project.name}
-                            projectColor={project.color}
-                            onToggle={() => toggleTask(task.id)}
-                            onUpdate={(partial) => updateTask(task.id, partial)}
-                            onSetActive={() => {}}
-                            onPlay={() => handlePlay(task)}
-                            onContextMenu={() => {}}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </AnimatePresence>
+                            <div className="flex-1 min-w-0">
+                              <TaskItem
+                                task={task}
+                                isActive={false}
+                                isSelected={task.id === selectedTaskId}
+                                isMultiSelected={isChecked}
+                                projectName={project.name}
+                                projectColor={project.color}
+                                onToggle={() => toggleTask(task.id)}
+                                onUpdate={(partial) => updateTask(task.id, partial)}
+                                onSetActive={() => {}}
+                                onPlay={() => handlePlay(task)}
+                                onContextMenu={() => {}}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </SortableContext>
+                </DndContext>
               )}
 
               {selectionMode && selectedTaskIds.size > 0 && (
@@ -1782,6 +1845,22 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
             onClose={() => setSelectedTaskId(null)}
             onUpdate={(partial) => updateTask(selectedTask.id, partial)}
             onDelete={() => { deleteTask(selectedTask.id); setSelectedTaskId(null); }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Icon picker popover */}
+      <AnimatePresence>
+        {iconPickerRect && (
+          <ProjectIconPicker
+            current={project.icon}
+            projectColor={project.color}
+            anchorRect={iconPickerRect}
+            onPick={(emoji) => {
+              updateProject(project.id, { icon: emoji });
+              setIconPickerRect(null);
+            }}
+            onClose={() => setIconPickerRect(null)}
           />
         )}
       </AnimatePresence>
