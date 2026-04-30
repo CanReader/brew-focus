@@ -11,6 +11,7 @@
   "tasks": "Tasks",
   "tasksHeader": "Tasks",
   "completedHeader": "Completed ({count})",
+  "noProject": "No project",
   "overdue": "Overdue",
   "today": "Today",
   "views": {

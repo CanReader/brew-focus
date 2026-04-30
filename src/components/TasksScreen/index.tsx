@@ -7,7 +7,7 @@ import {
 import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
-import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target, Bookmark } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Play, Pause, SkipForward, FolderOpen, Search, SortAsc, X, Target, Bookmark, Folders } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
@@ -392,6 +392,9 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [lastClickedId, setLastClickedId] = useState<string | null>(null);
   const addTaskInputRef = useRef<HTMLInputElement>(null);
+  // Group-by-project view mode (applies to both Tasks and Completed lists).
+  const [groupByProject, setGroupByProject] = useState(false);
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
 
   const {
     tasks, projects, addTask, updateTask, deleteTask, toggleTask,
@@ -583,6 +586,84 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     return s + t.pomodoroEstimate * workMin;
   }, 0);
 
+  // Render the given task list grouped by project. Sections in the order
+  // projects appear in `projects`, with a "No project" section last for any
+  // tasks lacking a projectId. Each section header is a chevron toggle.
+  const renderGroupedTasks = (sectionTasks: Task[], showPlay = true) => {
+    const NO_PROJECT_KEY = '__none__';
+    const groups = new Map<string, Task[]>();
+    for (const task of sectionTasks) {
+      const key = task.projectId ?? NO_PROJECT_KEY;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(task);
+    }
+    const orderedKeys: string[] = [];
+    for (const p of projects) if (groups.has(p.id)) orderedKeys.push(p.id);
+    if (groups.has(NO_PROJECT_KEY)) orderedKeys.push(NO_PROJECT_KEY);
+
+    return orderedKeys.map((key) => {
+      const tasksInGroup = groups.get(key)!;
+      const project = key === NO_PROJECT_KEY ? null : projects.find((p) => p.id === key);
+      const isCollapsed = collapsedProjects.has(key);
+      const groupName = project?.name ?? t('noProject');
+      const groupColor = project?.color ?? 'var(--t3)';
+      const toggleCollapse = () => {
+        setCollapsedProjects((prev) => {
+          const next = new Set(prev);
+          if (next.has(key)) next.delete(key); else next.add(key);
+          return next;
+        });
+      };
+      return (
+        <div key={key} className="mb-3">
+          <button
+            onClick={toggleCollapse}
+            className="flex items-center gap-2 w-full mb-2 transition-colors"
+            style={{ color: 'var(--t2)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--t)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--t2)')}
+          >
+            {isCollapsed
+              ? <ChevronRight size={11} style={{ color: 'var(--t3)' }} className="rtl:scale-x-[-1]" />
+              : <ChevronDown size={11} style={{ color: 'var(--t3)' }} />}
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: groupColor }} />
+            <span className="text-[12px] font-medium">{groupName}</span>
+            <span className="text-[11px] tabular-nums" style={{ color: 'var(--t3)' }}>{tasksInGroup.length}</span>
+          </button>
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                {tasksInGroup.map((task) => (
+                  <div key={task.id} className="mb-1.5" onClick={(e) => handleTaskClick(task, e)}>
+                    <TaskItem
+                      task={task}
+                      isActive={task.id === activeTaskId}
+                      isSelected={task.id === selectedTaskId}
+                      isMultiSelected={bulkSelected.has(task.id)}
+                      projectName={projects.find((p) => p.id === task.projectId)?.name}
+                      projectColor={projects.find((p) => p.id === task.projectId)?.color}
+                      onToggle={() => toggleTask(task.id)}
+                      onUpdate={(partial) => updateTask(task.id, partial)}
+                      onSetActive={() => handleSetActive(task)}
+                      onPlay={showPlay ? () => handlePlayTask(task) : undefined}
+                      onContextMenu={(e) => handleContextMenu(e, task)}
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="flex h-full relative" style={{ background: 'var(--bg)' }}>
       {/* Sidebar */}
@@ -710,6 +791,23 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                 </button>
               )}
             </div>
+
+            {/* Group by project toggle */}
+            <button
+              onClick={() => setGroupByProject((v) => !v)}
+              className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+              style={{
+                color: groupByProject ? 'var(--accent)' : 'var(--t3)',
+                background: groupByProject ? 'var(--card-h)' : 'rgba(255,255,255,0.04)',
+                border: '1px solid var(--brd)',
+              }}
+              onMouseEnter={(e) => { if (!groupByProject) { e.currentTarget.style.background = 'var(--card-h)'; e.currentTarget.style.color = 'var(--t2)'; } }}
+              onMouseLeave={(e) => { if (!groupByProject) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--t3)'; } }}
+              title={groupByProject ? 'Flat list' : 'Group by project'}
+              aria-pressed={groupByProject}
+            >
+              <Folders size={12} />
+            </button>
 
             {/* Save view bookmark */}
             <div className="relative">
@@ -990,7 +1088,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                           )}
                         </>
                       );
-                    })() : viewTasks.map((task) => (
+                    })() : groupByProject ? renderGroupedTasks(viewTasks) : viewTasks.map((task) => (
                       <div key={task.id} className="mb-1.5" onClick={(e) => handleTaskClick(task, e)}>
                         <TaskItem
                           task={task}
@@ -1033,7 +1131,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                         className="overflow-hidden"
                       >
                         <AnimatePresence mode="popLayout">
-                          {completedTasks.map((task) => (
+                          {groupByProject ? renderGroupedTasks(completedTasks, false) : completedTasks.map((task) => (
                             <div key={task.id} className="mb-1.5">
                               <TaskItem
                                 task={task}
