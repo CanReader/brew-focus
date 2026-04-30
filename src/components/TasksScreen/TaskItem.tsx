@@ -54,16 +54,18 @@ const PlayCircleBtn: React.FC<{ active: boolean; onClick: (e: React.MouseEvent) 
   return (
     <button
       onClick={onClick}
+      onPointerDown={(e) => e.stopPropagation() /* don't drag the row when clicking play */}
       className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-150"
       style={{
-        background: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)',
-        border: `1px solid ${active ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
+        background: active ? 'var(--accent)' : 'var(--brd2)',
+        border: `1px solid ${active ? 'var(--accent-g)' : 'var(--brd2)'}`,
         boxShadow: active ? '0 0 8px var(--accent-g)' : 'none',
+        color: active ? '#fff' : 'var(--t2)',
       }}
       title={t('taskItem.startTimerForThis')}
     >
       <svg width="7" height="8" viewBox="0 0 7 8" fill="none">
-        <path d="M1.5 1L6 4L1.5 7V1Z" fill="white" />
+        <path d="M1.5 1L6 4L1.5 7V1Z" fill="currentColor" />
       </svg>
     </button>
   );
@@ -80,7 +82,7 @@ const PomodoroDots: React.FC<{ completed: number; estimate: number }> = ({ compl
           key={i}
           className="w-[6px] h-[6px] rounded-full"
           style={{
-            background: i < completed ? 'var(--accent)' : 'rgba(255,255,255,0.08)',
+            background: i < completed ? 'var(--accent)' : 'var(--brd2)',
             boxShadow: i < completed ? '0 0 4px var(--accent-g)' : 'none',
           }}
           initial={false}
@@ -244,9 +246,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           : isActive && !isSelected
           ? '0 0 20px rgba(255,77,77,0.06)'
           : 'none',
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
       onContextMenu={onContextMenu}
       onDoubleClick={() => !task.completed && setIsEditing(true)}
+      // Whole-row drag: applying dnd-kit's listeners here means the user can
+      // grab any non-button area of the task to reorder it (Notion / Linear
+      // style). With `activationConstraint: { distance: 5 }` on the sensor,
+      // tiny clicks still register as clicks — drag only kicks in after the
+      // pointer has actually moved 5 pixels. Inner interactive elements stop
+      // their own pointer-down so they don't trigger drag tracking.
+      {...attributes}
+      {...listeners}
     >
       {/* Active task breathing glow overlay */}
       {isActive && !task.completed && (
@@ -281,28 +292,30 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           }
         }}
       >
-        {/* Drag handle */}
+        {/* Visual drag affordance only — the whole row is the drag target now.
+            The icon is here purely so users see a "grab me" hint. */}
         <div
-          {...attributes}
-          {...listeners}
-          className="shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-60 transition-opacity duration-150"
+          className="shrink-0 opacity-40 group-hover:opacity-80 transition-opacity duration-150 pointer-events-none"
           style={{ color: 'var(--t3)' }}
+          aria-hidden
         >
-          <GripVertical size={12} />
+          <GripVertical size={14} />
         </div>
 
         {/* Checkbox */}
         <button
           onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          onPointerDown={(e) => e.stopPropagation() /* don't start a drag from the checkbox */}
           className="w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 group-hover:border-opacity-100"
           style={{
             borderColor: task.completed
               ? 'var(--grn)'
               : overdue
               ? 'rgba(255,77,77,0.5)'
-              : 'rgba(255,255,255,0.14)',
+              : 'var(--t3)',
             background: task.completed ? 'var(--grn)' : 'transparent',
             boxShadow: task.completed ? '0 0 8px rgba(34,211,165,0.3)' : 'none',
+            opacity: task.completed || overdue ? 1 : 0.65,
           }}
         >
           {task.completed && (
@@ -396,6 +409,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 if (e.key === 'Escape') { setEditValue(task.title); setIsEditing(false); }
               }}
               onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation() /* allow text selection in the input */}
               className="w-full text-[13px] bg-transparent border-b focus:outline-none"
               style={{ color: 'var(--t)', borderColor: 'var(--accent)' }}
             />
