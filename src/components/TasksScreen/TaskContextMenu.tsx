@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
@@ -59,11 +59,38 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
     };
   }, [onClose]);
 
-  // Clamp position so menu doesn't go off screen (both axes, and never negative).
-  const menuWidth = 240;
-  const menuHeight = 340;
-  const x = Math.max(8, Math.min(position.x, window.innerWidth - menuWidth - 8));
-  const y = Math.max(8, Math.min(position.y, window.innerHeight - menuHeight - 8));
+  // Smart-flip positioning: measure the actual rendered menu, then anchor it
+  // to whichever corner of the cursor has room. So a click near the bottom-right
+  // pops *up-left* from the cursor instead of getting clamped to the edge far
+  // from where you clicked. First paint is hidden until measured to avoid flicker.
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: position.x, y: position.y });
+  const [measured, setMeasured] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    const margin = 8;
+
+    let nx = position.x;
+    let ny = position.y;
+
+    // Flip horizontally if the menu would overflow to the right.
+    if (nx + w + margin > window.innerWidth) {
+      nx = position.x - w;
+    }
+    // Flip vertically if the menu would overflow below.
+    if (ny + h + margin > window.innerHeight) {
+      ny = position.y - h;
+    }
+    // Last-resort clamp for tiny windows where neither side fits.
+    nx = Math.max(margin, Math.min(nx, window.innerWidth - w - margin));
+    ny = Math.max(margin, Math.min(ny, window.innerHeight - h - margin));
+
+    setPos({ x: nx, y: ny });
+    setMeasured(true);
+  }, [position.x, position.y]);
 
   const workDur = task.customWorkDuration;
   const shortDur = task.customShortBreakDuration;
@@ -77,13 +104,14 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
       transition={{ duration: 0.12, ease: 'easeOut' }}
       className="fixed z-[999] rounded-2xl overflow-hidden select-none"
       style={{
-        left: x,
-        top: y,
-        width: menuWidth,
+        left: pos.x,
+        top: pos.y,
+        width: 240,
         background: 'var(--card)',
         border: '1px solid rgba(255,255,255,0.1)',
         boxShadow: '0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
         backdropFilter: 'blur(20px)',
+        visibility: measured ? 'visible' : 'hidden',
       }}
     >
       {/* Estimated Pomodoros */}
