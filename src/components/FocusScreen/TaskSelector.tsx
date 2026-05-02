@@ -98,8 +98,8 @@ export const TaskSelector: React.FC = () => {
             style={{
               transformOrigin: 'top',
               background: 'var(--card)',
-              borderColor: 'rgba(255,255,255,0.1)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
+              borderColor: 'var(--brd2)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
               backdropFilter: 'blur(20px)',
             }}
           >

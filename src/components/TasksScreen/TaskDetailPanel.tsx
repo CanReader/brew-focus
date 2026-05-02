@@ -947,7 +947,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             </SortableContext>
           </DndContext>
           <div className="flex items-center gap-2 pt-2">
-            <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+            <div className="w-4 h-4 rounded-full border-2 shrink-0" style={{ borderColor: 'var(--brd2)' }} />
             <input
               value={newSubtaskValue}
               onChange={(e) => setNewSubtaskValue(e.target.value)}
@@ -1060,7 +1060,10 @@ const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
         onClick={onToggle}
         className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
         style={{
-          borderColor: subtask.completed ? 'var(--grn)' : 'rgba(255,255,255,0.14)',
+          // Use the theme's border token so the unchecked checkbox stays
+          // visible on light themes (was rgba(255,255,255,0.14) — invisible
+          // on a white card).
+          borderColor: subtask.completed ? 'var(--grn)' : 'var(--brd2)',
           background: subtask.completed ? 'var(--grn)' : 'transparent',
         }}
       >

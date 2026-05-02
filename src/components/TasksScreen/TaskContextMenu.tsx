@@ -108,8 +108,8 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
         top: pos.y,
         width: 240,
         background: 'var(--card)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
+        border: '1px solid var(--brd2)',
+        boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
         backdropFilter: 'blur(20px)',
         visibility: measured ? 'visible' : 'hidden',
       }}
