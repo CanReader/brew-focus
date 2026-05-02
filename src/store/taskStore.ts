@@ -148,7 +148,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const rawTasks = (taskRows ?? []).map(rowToTask);
       const projects = (projectRows ?? []).map(rowToProject);
       let activeTaskId: string | null = null;
-      try { activeTaskId = metaRow?.value ? JSON.parse(metaRow.value) : null; } catch { /**/ }
+      // Two-shape parse: a TEXT column gives back the stringified JSON
+      // (`"abc"`), while a JSONB column gives back the already-parsed value.
+      // The previous version tried JSON.parse only, so JSONB rows would always
+      // throw and silently lose the persisted active task across reloads.
+      const raw = metaRow?.value;
+      if (typeof raw === 'string') {
+        try { activeTaskId = JSON.parse(raw); }
+        catch { activeTaskId = raw || null; }
+      } else if (raw !== null && raw !== undefined) {
+        activeTaskId = raw as string;
+      }
 
       // Orphan sweep: any task pointing at a projectId that no longer exists
       // (e.g. a project that failed to persist before this fix landed) gets
