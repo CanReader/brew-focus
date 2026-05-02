@@ -225,7 +225,7 @@ const ProjectDetailCard: React.FC<{
               onUpdate({ targetDate: val ? parseLocalDateInput(val) : undefined });
             }}
             className="text-[11px] bg-transparent focus:outline-none"
-            style={{ color: targetOverdue ? 'var(--accent)' : 'var(--t3)', colorScheme: 'dark', width: 90 }}
+            style={{ color: targetOverdue ? 'var(--accent)' : 'var(--t3)', width: 90 }}
           />
         </div>
       </div>
@@ -363,7 +363,7 @@ const ProjectDetailCard: React.FC<{
               value={newMilestoneDate}
               onChange={(e) => setNewMilestoneDate(e.target.value)}
               className="text-[11px] bg-transparent focus:outline-none"
-              style={{ color: 'var(--t3)', colorScheme: 'dark', width: 100 }}
+              style={{ color: 'var(--t3)', width: 100 }}
             />
           )}
         </div>

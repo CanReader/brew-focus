@@ -655,7 +655,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                   onUpdate({ dueDate: val || undefined });
                 }}
                 className="w-full text-[12px] bg-transparent focus:outline-none border rounded-xl px-2 py-1.5"
-                style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
+                style={{ color: 'var(--t)', borderColor: 'var(--brd)' }}
               />
             </div>
           </div>
@@ -858,7 +858,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
                 onUpdate({ reminder: val ? new Date(val).getTime() : undefined });
               }}
               className="w-full text-[12px] bg-transparent focus:outline-none border rounded-xl px-2 py-1.5"
-              style={{ color: 'var(--t)', borderColor: 'var(--brd)', colorScheme: 'dark' }}
+              style={{ color: 'var(--t)', borderColor: 'var(--brd)' }}
             />
             {task.reminder && (
               <button

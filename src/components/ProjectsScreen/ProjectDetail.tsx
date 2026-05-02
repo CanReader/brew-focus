@@ -1020,7 +1020,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     value={msToDateInput(project.targetDate)}
                     onChange={(e) => updateProject(project.id, { targetDate: e.target.value ? parseLocalDateInput(e.target.value) : undefined })}
                     className="text-[11px] bg-transparent focus:outline-none"
-                    style={{ color: overdue ? 'var(--accent)' : 'var(--t3)', colorScheme: 'dark', width: 100 }}
+                    style={{ color: overdue ? 'var(--accent)' : 'var(--t3)', width: 100 }}
                   />
                 </div>
               </div>
@@ -1250,7 +1250,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                     value={newMilestoneDate}
                     onChange={(e) => setNewMilestoneDate(e.target.value)}
                     className="text-[10.5px] bg-transparent focus:outline-none"
-                    style={{ color: 'var(--t3)', colorScheme: 'dark' }}
+                    style={{ color: 'var(--t3)' }}
                   />
                 )}
               </div>

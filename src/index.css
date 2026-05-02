@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  /* color-scheme is set dynamically by applyTheme() in utils/themes.ts based on
+     whether the active theme is light or dark. Hardcoding `dark` here forced
+     native form controls (date pickers, scrollbars) to render dark on light
+     themes, which clashed with the page background. */
   --bg: #080810;
   --bg2: #0e0e1a;
   --card: #13131f;

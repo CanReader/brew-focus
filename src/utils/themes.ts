@@ -281,4 +281,8 @@ export function applyTheme(id: string): void {
   root.setProperty('--t', theme.t);
   root.setProperty('--t2', theme.t2);
   root.setProperty('--t3', theme.t3);
+  // Drive the color-scheme so native widgets (date pickers, scrollbars) match
+  // the active theme. Without this, native controls render dark on light
+  // themes (and vice-versa) and look broken.
+  root.setProperty('color-scheme', theme.category === 'light' ? 'light' : 'dark');
 }
