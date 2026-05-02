@@ -106,7 +106,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
-      await supabase.from('settings').delete().eq('user_id', userId);
+      // Scope the wipe to AppSettings keys only — the `settings` table also
+      // holds non-settings rows (activeTaskId, language) that a "reset
+      // settings" action must not touch.
+      const settingsKeys = Object.keys(defaultSettings);
+      await supabase.from('settings').delete().eq('user_id', userId).in('key', settingsKeys);
       const rows = Object.entries(defaultSettings).map(([key, value]) => ({
         user_id: userId,
         key,
