@@ -22,6 +22,7 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(PROJECT_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const reset = () => {
     setStep('template');
@@ -29,6 +30,7 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
     setName('');
     setColor(PROJECT_COLORS[0]);
     setSubmitting(false);
+    setSubmitError(null);
   };
 
   if (!open) return null;
@@ -43,7 +45,11 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
     const trimmed = name.trim();
     if (!trimmed || submitting) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
+      // addProject rolls back the optimistic add and rethrows when the
+      // Supabase insert is rejected — surface the message instead of leaving
+      // the modal hung with no feedback.
       await addProject(trimmed, color);
       // The new project is the last in the list — re-read from store rather
       // than the captured `projects` (stale).
@@ -75,6 +81,8 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
       }
       reset();
       onClose();
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : String(e));
     } finally {
       setSubmitting(false);
     }
@@ -272,6 +280,19 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {submitError && (
+                  <div
+                    className="mb-3 rounded-xl px-3 py-2 text-[11.5px]"
+                    style={{
+                      background: 'rgba(255,77,77,0.08)',
+                      border: '1px solid rgba(255,77,77,0.25)',
+                      color: '#ff8888',
+                    }}
+                  >
+                    {submitError}
                   </div>
                 )}
 
