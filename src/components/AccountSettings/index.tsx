@@ -126,6 +126,13 @@ function AvatarSection({ user }: { user: User }) {
 
   const displayUrl = preview ?? (imgFailed ? null : avatarUrl ?? null);
 
+  // Revoke any blob URL we minted for the preview when it changes or the
+  // component unmounts — without this each file picked leaks the previous URL.
+  useEffect(() => {
+    if (!preview || !preview.startsWith('blob:')) return;
+    return () => { URL.revokeObjectURL(preview); };
+  }, [preview]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
