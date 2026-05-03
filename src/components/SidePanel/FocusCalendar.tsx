@@ -159,7 +159,7 @@ export const FocusCalendar: React.FC = () => {
                 className="absolute left-0 right-0 flex items-center justify-center text-[10px]"
                 style={{ top: '40%', color: 'var(--t3)' }}
               >
-                No sessions yet
+                {t('history.noSessions')}
               </div>
             )}
           </div>

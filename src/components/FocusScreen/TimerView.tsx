@@ -70,7 +70,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
               e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.color = 'var(--t3)';
             }}
-            title="Expand"
+            title={t('widget.expand')}
           >
             <Minimize2 size={12} />
           </button>
@@ -86,7 +86,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
               e.currentTarget.style.background = 'transparent';
               e.currentTarget.style.color = 'var(--t3)';
             }}
-            title="Close widget"
+            title={t('widget.close')}
           >
             <X size={12} />
           </button>
@@ -168,7 +168,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
               className="text-[11px]"
               style={{ color: 'var(--t3)' }}
             >
-              No task selected
+              {t('widget.noTaskSelected')}
             </div>
           )}
         </div>
@@ -235,7 +235,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
           e.currentTarget.style.background = 'var(--card)';
           e.currentTarget.style.color = 'var(--t2)';
         }}
-        title="Exit fullscreen (Esc)"
+        title={t('exitFullscreen')}
       >
         <X size={18} />
       </button>
@@ -253,7 +253,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
           e.currentTarget.style.background = 'var(--card)';
           e.currentTarget.style.color = 'var(--t2)';
         }}
-        title="Widget mode"
+        title={t('controls.widget')}
       >
         <Minimize2 size={16} />
       </button>
