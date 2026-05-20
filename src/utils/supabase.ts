@@ -22,7 +22,10 @@ export async function verifyPasswordWithoutSessionSwap(email: string, password: 
   });
   const { error } = await ephemeral.auth.signInWithPassword({ email, password });
   if (!error) {
-    await ephemeral.auth.signOut().catch(() => {});
+    // scope: 'local' tears down only this ephemeral session. The default
+    // 'global' scope revokes every refresh token for the user server-side,
+    // which would silently log the real app session out on its next refresh.
+    await ephemeral.auth.signOut({ scope: 'local' }).catch(() => {});
   }
   return !error;
 }
