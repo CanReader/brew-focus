@@ -249,6 +249,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       if (!merged.completed) merged.completedAt = undefined;
     } else if (partial.completed !== undefined && partial.status === undefined) {
       merged.status = partial.completed ? 'done' : 'todo';
+      if (partial.completed && !partial.completedAt) merged.completedAt = Date.now();
+      if (!partial.completed) merged.completedAt = undefined;
     }
     const tasks = get().tasks.map((t) => t.id === id ? { ...t, ...merged } : t);
     set({ tasks });
