@@ -73,11 +73,22 @@ function filterTasks(tasks: Task[], view: SidebarView): Task[] {
       return tasks.filter((t) => {
         if (t.completed) return false;
         if (t.dueDate === 'today') return true;
+        // `<=` so an ISO date equal to today (e.g. set via the date picker) is
+        // included, not just strictly-overdue dates. With `<` a task you dated
+        // "today" in the calendar silently never appeared under Today.
         const ts = resolveDueDateToTs(t.dueDate);
-        return ts !== null && ts < now.getTime();
+        return ts !== null && ts <= now.getTime();
       });
     }
-    case 'tomorrow': return tasks.filter((t) => !t.completed && t.dueDate === 'tomorrow');
+    case 'tomorrow': {
+      const tmw = new Date(); tmw.setHours(0, 0, 0, 0); tmw.setDate(tmw.getDate() + 1);
+      return tasks.filter((t) => {
+        if (t.completed) return false;
+        if (t.dueDate === 'tomorrow') return true;
+        // Match an ISO date equal to tomorrow, same gap as the Today view.
+        return resolveDueDateToTs(t.dueDate) === tmw.getTime();
+      });
+    }
     case 'week': {
       const now = new Date();
       const dow = now.getDay();
@@ -1033,7 +1044,10 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
                         const ts = resolveDueDateToTs(t.dueDate);
                         return ts !== null && ts < nowMidnight.getTime();
                       });
-                      const todayGroup = viewTasks.filter((t) => t.dueDate === 'today');
+                      const todayGroup = viewTasks.filter((t) =>
+                        t.dueDate === 'today' ||
+                        resolveDueDateToTs(t.dueDate) === nowMidnight.getTime()
+                      );
                       return (
                         <>
                           {overdueGroup.length > 0 && (
