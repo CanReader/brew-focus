@@ -126,7 +126,9 @@ export const TaskSelector: React.FC = () => {
 
                 {incompleteTasks.map((task) => {
                   const isSelected = task.id === activeTaskId;
-                  const hasCustomTimer = task.customWorkDuration || task.customShortBreakDuration;
+                  // Badge shows the custom *work* minutes, so only surface it
+                  // when that override is set — otherwise it rendered a bare "m".
+                  const hasCustomTimer = !!task.customWorkDuration;
                   return (
                     <button
                       key={task.id}
