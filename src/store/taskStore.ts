@@ -286,27 +286,25 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
     const userId = await getCurrentUserId();
     if (!userId) return;
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+    if (!tasks.find((t) => t.id === id)) return;
+    // Partial write: persist ONLY the columns this call actually changed (the
+    // keys in `merged`), never the whole row. The previous full-row writer
+    // clobbered fields owned by other code paths — e.g. a title edit overwrote
+    // pomodoroCompleted with a stale value, silently losing a concurrent
+    // timer-driven increment. Column names match Task keys 1:1.
+    const dbPatch: Record<string, unknown> = {};
+    for (const k of Object.keys(merged) as (keyof Task)[]) {
+      const v = merged[k];
+      dbPatch[k] = v === undefined ? null : v;
+    }
+    if ('notes' in dbPatch && dbPatch.notes == null) dbPatch.notes = '';
+    if (Object.keys(dbPatch).length === 0) return;
     try {
-      await supabase.from('tasks').update({
-        title: task.title, completed: task.completed, priority: task.priority,
-        pomodoroEstimate: task.pomodoroEstimate, pomodoroCompleted: task.pomodoroCompleted,
-        tags: task.tags, subtasks: task.subtasks, notes: task.notes ?? '',
-        completedAt: task.completedAt ?? null, dueDate: task.dueDate ?? null,
-        projectId: task.projectId ?? null, reminder: task.reminder ?? null,
-        repeatType: task.repeatType ?? 'none',
-        status: task.status,
-        type: task.type,
-        milestoneId: task.milestoneId ?? null,
-        dependsOn: task.dependsOn ?? [],
-        boardPosition: task.boardPosition ?? null,
-        customWorkDuration: task.customWorkDuration ?? null,
-        customShortBreakDuration: task.customShortBreakDuration ?? null,
-        customLongBreakDuration: task.customLongBreakDuration ?? null,
-        skipLongBreak: task.skipLongBreak ?? false,
-        customLongBreakInterval: task.customLongBreakInterval ?? null,
-      }).eq('id', id).eq('user_id', userId);
+      // supabase-js resolves with { error } instead of throwing, so check it
+      // explicitly — a silently-swallowed RLS/constraint failure looked like a
+      // successful edit that then vanished on the next load.
+      const { error } = await supabase.from('tasks').update(dbPatch).eq('id', id).eq('user_id', userId);
+      if (error) console.warn('Failed to update task:', error.message);
     } catch (e) {
       console.warn('Failed to update task:', e);
     }
