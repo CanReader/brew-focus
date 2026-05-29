@@ -8,6 +8,7 @@ import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
 import { useActivityStore } from './activityStore';
 import { useSettingsStore } from './settingsStore';
+import { useTimerStore } from './timerStore';
 import { playTaskComplete } from '../utils/sounds';
 
 // ── Row mappers ───────────────────────────────────────────────────────────────
@@ -322,6 +323,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const prevActive = get().activeTaskId;
     const activeTaskId = prevActive === id ? null : prevActive;
     set({ tasks: get().tasks.filter((t) => t.id !== id), activeTaskId });
+    // Keep the timer store's active-task reference in sync — otherwise the
+    // timer keeps pointing at a deleted task id and records the next completed
+    // session against it. taskStore.activeTaskId and timerStore.activeTaskId
+    // are normally synced by callers; deletion is the one path that isn't.
+    if (prevActive === id) useTimerStore.getState().setActiveTask(null);
     useActivityStore.getState().clearForTask(id);
     const userId = await getCurrentUserId();
     if (!userId) return;
