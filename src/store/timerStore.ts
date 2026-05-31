@@ -4,7 +4,16 @@ import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
 
 function todayStr() {
-  return new Date().toISOString().split('T')[0];
+  // LOCAL calendar day, not UTC. The daily-goal ring resets at local midnight
+  // and focus_days rows are keyed by the user's own day — matching how the
+  // Reports screen buckets sessions (getDate/setHours). Using toISOString()
+  // here keyed by UTC, so for non-UTC users "today" reset at the wrong hour
+  // and focus logged late evening / early morning landed on the wrong day.
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 interface TimerStore {
