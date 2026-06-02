@@ -13,6 +13,28 @@ function mapError(msg: string): string {
   return msg;
 }
 
+// Username→email and username-availability go through SECURITY DEFINER RPCs so
+// the `profiles` table can be locked to own-row reads (otherwise the anon role
+// could enumerate everyone's email). We try the RPC first and fall back to a
+// direct select when it isn't deployed yet, so the client is safe regardless
+// of backend deploy order. NOTE: backend must deploy the RPCs BEFORE locking
+// the RLS policy, or both paths return null and login/signup break.
+async function resolveEmailForUsername(uname: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('email_for_username', { p_username: uname });
+  if (!error) return typeof data === 'string' ? data : null;
+  // RPC not deployed yet — fall back to the direct read (works pre-RLS-lock).
+  const { data: profile } = await supabase.from('profiles').select('email').eq('username', uname).single();
+  return (profile?.email as string | undefined) ?? null;
+}
+
+async function isUsernameTaken(uname: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_username_taken', { p_username: uname });
+  if (!error) return data === true;
+  // Fallback until the RPC is deployed.
+  const { data: existing } = await supabase.from('profiles').select('username').eq('username', uname).maybeSingle();
+  return !!existing;
+}
+
 interface AuthStore {
   user: User | null;
   session: Session | null;
@@ -63,19 +85,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
   signIn: async (usernameOrEmail, password) => {
     set({ isLoading: true, error: null });
 
-    // If input doesn't look like an email, look up email by username
+    // If input doesn't look like an email, resolve email by username (via RPC,
+    // falling back to a direct read until the RPC is deployed).
     let email = usernameOrEmail;
     if (!usernameOrEmail.includes('@')) {
-      const { data: profile, error: lookupErr } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('username', usernameOrEmail.toLowerCase().trim())
-        .single();
-      if (lookupErr || !profile) {
+      const resolved = await resolveEmailForUsername(usernameOrEmail.toLowerCase().trim());
+      if (!resolved) {
         set({ error: 'No account found with that username.', isLoading: false });
         return false;
       }
-      email = profile.email;
+      email = resolved;
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -90,13 +109,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
   signUp: async (email, password, username) => {
     set({ isLoading: true, error: null });
 
-    // Check username availability before creating account
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', username.toLowerCase().trim())
-      .maybeSingle();
-    if (existing) {
+    // Check username availability before creating account (via RPC, with a
+    // direct-read fallback until the RPC is deployed).
+    if (await isUsernameTaken(username.toLowerCase().trim())) {
       set({ error: 'That username is already taken.', isLoading: false });
       return { success: false, needsConfirmation: false };
     }
