@@ -185,14 +185,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
     if (!currentUser) return { success: false, error: 'Not authenticated.' };
 
     const cleaned = newUsername.toLowerCase().trim();
+    const currentUsername = (currentUser.user_metadata?.username as string | undefined)?.toLowerCase();
 
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', cleaned)
-      .neq('id', currentUser.id)
-      .maybeSingle();
-    if (existing) return { success: false, error: 'That username is already taken.' };
+    // Skip the availability check on a no-op self-rename so is_username_taken
+    // (which can't express the old .neq(self) exclusion) doesn't false-positive.
+    // Matches the mobile client's rename flow.
+    if (cleaned !== currentUsername && await isUsernameTaken(cleaned)) {
+      return { success: false, error: 'That username is already taken.' };
+    }
 
     const { error: profileErr } = await supabase
       .from('profiles')
