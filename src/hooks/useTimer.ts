@@ -10,13 +10,19 @@ import {
 } from '@tauri-apps/plugin-notification';
 
 async function notify(title: string, body: string) {
-  let granted = await isPermissionGranted();
-  if (!granted) {
-    const perm = await requestPermission();
-    granted = perm === 'granted';
-  }
-  if (granted) {
-    sendNotification({ title, body });
+  // Never let a notification permission/IPC failure surface as an unhandled
+  // promise rejection — this runs fire-and-forget from inside the tick loop.
+  try {
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      const perm = await requestPermission();
+      granted = perm === 'granted';
+    }
+    if (granted) {
+      sendNotification({ title, body });
+    }
+  } catch (e) {
+    console.warn('Notification failed:', e);
   }
 }
 
@@ -77,7 +83,7 @@ function useTimerDerived() {
 export function useTimerEngine() {
   const {
     isRunning, secondsLeft, phase, tick, advancePhase, recordSession,
-    addFocusSeconds, totalSeconds, activeTaskId, setPhase,
+    addFocusSeconds, totalSeconds, activeTaskId, setPhase, start, checkDateReset,
   } = useTimerStore();
   const { settings } = useSettingsStore();
   const { tasks, projects, incrementPomodoroCompleted, isLoaded: tasksLoaded } = useTaskStore();
@@ -187,6 +193,14 @@ export function useTimerEngine() {
           : (currentActiveTask?.customLongBreakInterval
               ?? currentActiveProject?.customLongBreakInterval ?? settings.longBreakInterval);
         advancePhase(taskWork, taskShort, taskLong, taskSkipLong);
+
+        // Honor the auto-start settings. advancePhase always pauses; if the
+        // user opted into continuous flow, kick the next phase off here.
+        // work → break uses autoStartBreaks; break → work uses autoStartPomodoros.
+        const autoStartNext = completedPhase === 'work'
+          ? settings.autoStartBreaks
+          : settings.autoStartPomodoros;
+        if (autoStartNext) start();
       } else {
         tick();
       }
@@ -195,8 +209,18 @@ export function useTimerEngine() {
     return () => clearInterval(interval);
   }, [
     isRunning, secondsLeft, phase, totalSeconds, settings, activeTaskId, tasks, projects,
-    tick, advancePhase, recordSession, addFocusSeconds, incrementPomodoroCompleted,
+    tick, advancePhase, recordSession, addFocusSeconds, incrementPomodoroCompleted, start,
   ]);
+
+  // Roll the local "today focus" counter over at local midnight even when the
+  // app is left open. checkDateReset is a no-op until the calendar day actually
+  // changes, so a coarse 60s poll is plenty and cheap. Without this the daily
+  // goal ring kept showing yesterday's total until a manual sync/reload.
+  useEffect(() => {
+    checkDateReset();
+    const id = setInterval(() => checkDateReset(), 60_000);
+    return () => clearInterval(id);
+  }, [checkDateReset]);
 }
 
 /**
