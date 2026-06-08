@@ -30,8 +30,23 @@ export async function verifyPasswordWithoutSessionSwap(email: string, password: 
   return !error;
 }
 
-/** Returns the current authenticated user's ID, or null if not signed in. */
+/**
+ * Returns the current authenticated user's ID, or null if not signed in.
+ *
+ * Uses the locally-cached session rather than getUser(). getUser() makes a
+ * network round-trip on every call — and there is one call per store mutation
+ * (~36 sites) — which adds latency and, worse, resolves to null whenever the
+ * device is offline. That made every write silently bail (optimistic update
+ * stays in memory, never persists, then vanishes on next load) even though a
+ * perfectly valid session existed. getSession() reads from local storage and
+ * transparently refreshes an expired token, so writes survive offline / flaky
+ * networks. Row-Level Security still enforces real authorization server-side.
+ */
 export async function getCurrentUserId(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
 }
