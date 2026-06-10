@@ -72,6 +72,7 @@
     "upload": "Subir",
     "photoUpdated": "Foto actualizada correctamente.",
     "photoFailed": "No se pudo subir la foto.",
+    "photoTooLarge": "La foto debe pesar menos de 2 MB.",
     "username": "Nombre de usuario",
     "currentUsername": "Actual: {username}",
     "newUsernamePlaceholder": "nuevo_usuario",

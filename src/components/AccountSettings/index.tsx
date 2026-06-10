@@ -133,9 +133,21 @@ function AvatarSection({ user }: { user: User }) {
     return () => { URL.revokeObjectURL(preview); };
   }, [preview]);
 
+  const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // matches the "up to 2 MB" copy
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset the input so picking the same file again re-fires onChange.
+    e.target.value = '';
     if (!file) return;
+    // Enforce the size limit the UI promises — otherwise an oversized upload
+    // either stalls or fails server-side with an opaque error.
+    if (file.size > MAX_AVATAR_BYTES) {
+      setSelectedFile(null);
+      setPreview(null);
+      setFeedback({ type: 'error', text: t('account.photoTooLarge') });
+      return;
+    }
     setSelectedFile(file);
     setFeedback(null);
     const objectUrl = URL.createObjectURL(file);
@@ -285,6 +297,15 @@ function UsernameSection({ user }: { user: User }) {
     setAvailStatus('checking');
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      // Use the SECURITY DEFINER RPC, not a direct profiles read: once the
+      // profiles table is RLS-locked to own-row reads, the old .neq(self) query
+      // can never see anyone else's row and would report every taken name as
+      // "available". Fall back to the direct read until the RPC is deployed.
+      const { data: taken, error } = await supabase.rpc('is_username_taken', { p_username: cleaned });
+      if (!error) {
+        setAvailStatus(taken === true ? 'taken' : 'available');
+        return;
+      }
       const { data } = await supabase
         .from('profiles')
         .select('id')

@@ -72,6 +72,7 @@
     "upload": "Téléverser",
     "photoUpdated": "Photo mise à jour avec succès.",
     "photoFailed": "Échec du téléversement de la photo.",
+    "photoTooLarge": "La photo doit faire moins de 2 Mo.",
     "username": "Nom d'utilisateur",
     "currentUsername": "Actuel : {username}",
     "newUsernamePlaceholder": "nouveau_pseudo",

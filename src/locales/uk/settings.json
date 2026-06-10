@@ -72,6 +72,7 @@
     "upload": "Завантажити",
     "photoUpdated": "Фото успішно оновлено.",
     "photoFailed": "Не вдалося завантажити фото.",
+    "photoTooLarge": "Фото має бути меншим за 2 МБ.",
     "username": "Ім'я користувача",
     "currentUsername": "Поточне: {username}",
     "newUsernamePlaceholder": "new_username",

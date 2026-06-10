@@ -72,6 +72,7 @@
     "upload": "Upload",
     "photoUpdated": "Photo updated successfully.",
     "photoFailed": "Failed to upload photo.",
+    "photoTooLarge": "Photo must be under 2 MB.",
     "username": "Username",
     "currentUsername": "Current: {username}",
     "newUsernamePlaceholder": "new_username",

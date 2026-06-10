@@ -72,6 +72,7 @@
     "upload": "رفع",
     "photoUpdated": "تم تحديث الصورة بنجاح.",
     "photoFailed": "فشل رفع الصورة.",
+    "photoTooLarge": "يجب أن تكون الصورة أقل من 2 ميجابايت.",
     "username": "اسم المستخدم",
     "currentUsername": "الحالي: {username}",
     "newUsernamePlaceholder": "اسم_جديد",

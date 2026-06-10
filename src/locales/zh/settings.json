@@ -72,6 +72,7 @@
     "upload": "上传",
     "photoUpdated": "头像已成功更新。",
     "photoFailed": "上传头像失败。",
+    "photoTooLarge": "头像必须小于 2 MB。",
     "username": "用户名",
     "currentUsername": "当前：{username}",
     "newUsernamePlaceholder": "new_username",

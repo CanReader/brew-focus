@@ -72,6 +72,7 @@
     "upload": "Yükle",
     "photoUpdated": "Fotoğraf başarıyla güncellendi.",
     "photoFailed": "Fotoğraf yüklenemedi.",
+    "photoTooLarge": "Fotoğraf 2 MB'den küçük olmalı.",
     "username": "Kullanıcı Adı",
     "currentUsername": "Mevcut: {username}",
     "newUsernamePlaceholder": "yeni_kullanici",
