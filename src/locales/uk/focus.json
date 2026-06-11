@@ -96,6 +96,8 @@
       "breakCompleteDesc": "Коли перерва завершується"
     },
     "upload": "Завантажити",
+    "imageTooLarge": "Зображення має бути меншим за 2 МБ.",
+    "soundTooLarge": "Звук має бути меншим за 1 МБ.",
     "uploadHint": "Завантаж аудіофайл (MP3, WAV, OGG)",
     "myFile": "Мій файл",
     "noiseVolume": "Гучність шуму",

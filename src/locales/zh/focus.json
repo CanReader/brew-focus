@@ -38,6 +38,8 @@
       "breakCompleteDesc": "当休息结束时"
     },
     "upload": "上传",
+    "imageTooLarge": "图片必须小于 2 MB。",
+    "soundTooLarge": "音频必须小于 1 MB。",
     "uploadHint": "上传声音文件 (MP3、WAV、OGG)",
     "myFile": "我的文件",
     "noiseVolume": "白噪音量",

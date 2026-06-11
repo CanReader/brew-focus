@@ -38,6 +38,8 @@
       "breakCompleteDesc": "When a break ends"
     },
     "upload": "Upload",
+    "imageTooLarge": "Image must be under 2 MB.",
+    "soundTooLarge": "Sound must be under 1 MB.",
     "uploadHint": "Upload a sound file (MP3, WAV, OGG)",
     "myFile": "My File",
     "noiseVolume": "Noise Volume",

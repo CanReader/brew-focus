@@ -96,6 +96,8 @@
       "breakCompleteDesc": "عند انتهاء الاستراحة"
     },
     "upload": "رفع",
+    "imageTooLarge": "يجب أن تكون الصورة أقل من 2 ميجابايت.",
+    "soundTooLarge": "يجب أن يكون الصوت أقل من 1 ميجابايت.",
     "uploadHint": "ارفع ملف صوت (MP3 أو WAV أو OGG)",
     "myFile": "ملفي",
     "noiseVolume": "مستوى الضوضاء",

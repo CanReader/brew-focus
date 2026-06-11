@@ -38,6 +38,8 @@
       "breakCompleteDesc": "Mola sona erdiğinde"
     },
     "upload": "Yükle",
+    "imageTooLarge": "Görsel 2 MB'den küçük olmalı.",
+    "soundTooLarge": "Ses 1 MB'den küçük olmalı.",
     "uploadHint": "Bir ses dosyası yükle (MP3, WAV, OGG)",
     "myFile": "Dosyam",
     "noiseVolume": "Gürültü Seviyesi",

@@ -38,6 +38,8 @@
       "breakCompleteDesc": "Quand une pause se termine"
     },
     "upload": "Téléverser",
+    "imageTooLarge": "L'image doit faire moins de 2 Mo.",
+    "soundTooLarge": "Le son doit faire moins de 1 Mo.",
     "uploadHint": "Téléverse un fichier audio (MP3, WAV, OGG)",
     "myFile": "Mon fichier",
     "noiseVolume": "Volume du bruit",

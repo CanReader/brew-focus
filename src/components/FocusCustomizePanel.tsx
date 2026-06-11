@@ -28,8 +28,14 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation('focus');
   const { settings, updateSettings } = useSettingsStore();
   const [tab, setTab] = useState<Tab>('sounds');
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const soundFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Custom backgrounds/sounds are base64-inlined into the settings JSONB row,
+  // so an unbounded file bloats every settings read and sync. Cap them.
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+  const MAX_SOUND_BYTES = 1 * 1024 * 1024;
 
   useEffect(() => {
     if (!open) return;
@@ -42,18 +48,23 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
 
   const handleCustomImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) { setUploadError(t('customize.imageTooLarge')); return; }
+    setUploadError(null);
     const reader = new FileReader();
     reader.onload = (ev) => {
       updateSettings({ backgroundId: 'custom', customBackgroundDataUrl: ev.target?.result as string } as Partial<AppSettings>);
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
   const handleCustomSound = (eventKey: SoundEventKey, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (file.size > MAX_SOUND_BYTES) { setUploadError(t('customize.soundTooLarge')); return; }
+    setUploadError(null);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
@@ -117,6 +128,22 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                 <X size={15} />
               </button>
             </div>
+
+            {/* Upload error banner */}
+            <AnimatePresence>
+              {uploadError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="px-5 py-2.5 text-[12px] shrink-0"
+                  style={{ background: 'rgba(255,77,77,0.08)', borderBottom: '1px solid rgba(255,77,77,0.2)', color: '#ff6b6b' }}
+                  role="alert"
+                >
+                  {uploadError}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Tab bar */}
             <div
