@@ -76,7 +76,6 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
       playCustomSoundFile(dataUrl, settings.soundVolume ?? 70);
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
   return (
