@@ -249,24 +249,41 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
       return;
     }
+    const today = todayStr();
     try {
-      const today = todayStr();
-      const { data: existing } = await supabase
-        .from('focus_days')
-        .select('seconds')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .maybeSingle();
-      const currentServer = existing?.seconds ?? 0;
-      const newTotal = currentServer + seconds;
-      await supabase.from('focus_days').upsert(
-        { user_id: userId, date: today, seconds: newTotal },
-        { onConflict: 'user_id,date' }
-      );
-      set({ todayFocusSeconds: newTotal });
+      // Atomic server-side increment. Desktop and mobile share one focus_days
+      // row per local day, so the old read-modify-write upsert lost increments
+      // when both clients (or two desktop windows) wrote concurrently. The RPC
+      // does INSERT ... ON CONFLICT DO UPDATE seconds = seconds + EXCLUDED so
+      // the add happens in a single statement under a row lock.
+      const { data, error } = await supabase.rpc('increment_focus_seconds', {
+        p_date: today,
+        p_seconds: seconds,
+      });
+      if (error) throw error;
+      set({ todayFocusSeconds: typeof data === 'number' ? data : get().todayFocusSeconds + seconds });
     } catch (e) {
-      console.warn('Failed to save focus time:', e);
-      set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
+      // Fallback until the RPC is deployed: the non-atomic upsert still
+      // persists (it just isn't race-proof), so focus time is never silently
+      // dropped during the migration window.
+      console.warn('increment_focus_seconds RPC unavailable, falling back to upsert:', e);
+      try {
+        const { data: existing } = await supabase
+          .from('focus_days')
+          .select('seconds')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .maybeSingle();
+        const newTotal = (existing?.seconds ?? 0) + seconds;
+        await supabase.from('focus_days').upsert(
+          { user_id: userId, date: today, seconds: newTotal },
+          { onConflict: 'user_id,date' }
+        );
+        set({ todayFocusSeconds: newTotal });
+      } catch (e2) {
+        console.warn('Failed to save focus time:', e2);
+        set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
+      }
     }
   },
 }));
