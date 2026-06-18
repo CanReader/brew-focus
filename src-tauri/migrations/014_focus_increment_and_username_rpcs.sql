@@ -46,9 +46,10 @@ BEGIN
 END;
 $$;
 
--- Postgres grants EXECUTE to PUBLIC by default, which would let anon call this
--- (it'd hit the auth.uid() guard and error, but revoke for least-privilege).
-REVOKE EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) FROM PUBLIC;
+-- Supabase default privileges grant EXECUTE to PUBLIC *and* anon; revoke both so
+-- this authenticated-only RPC can't even be invoked by anon (the auth.uid() guard
+-- would reject it anyway, but this is least-privilege by construction).
+REVOKE EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) TO authenticated;
 
 -- ============================================================
@@ -79,7 +80,7 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) TO authenticated;
 
 -- ============================================================
