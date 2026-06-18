@@ -1,11 +1,16 @@
--- 014: server-side RPCs the client already calls, plus defensive
--- username uniqueness + signup-profile RLS convergence.
+-- 014: server-side RPCs the client already calls but no migration ever created.
 --
 -- Why a new migration instead of editing 001/006: those already ran on the
 -- live database, so edits to them are inert. The desktop and mobile clients
 -- ship code that calls these RPCs (with in-app fallbacks) — this file is what
--- actually creates them. Everything here is idempotent so it is safe to run on
--- a fresh database and on the existing one.
+-- actually creates them. Every function uses CREATE OR REPLACE so a re-run is
+-- safe on both a fresh database and the existing one.
+--
+-- Security note: is_username_taken and email_for_username run pre-auth (during
+-- signup / username login) and must see profiles rows even when the profiles
+-- SELECT/email columns are RLS-locked — hence SECURITY DEFINER + an `anon`
+-- grant. They expose only a boolean (taken/not) and the email for a known
+-- username, which the login flow needs anyway; no other columns leak.
 
 -- ============================================================
 -- increment_focus_seconds: atomic per-day focus accumulation.
@@ -111,21 +116,5 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.email_for_username(TEXT) TO anon, authenticated;
 
--- ============================================================
--- Defensive username uniqueness. 006 declared the column UNIQUE, but a
--- case-insensitive index also blocks 'Bob' vs 'bob' duplicates (the client
--- lowercases, but a stray direct write or legacy row could collide).
--- Idempotent.
--- ============================================================
-CREATE UNIQUE INDEX IF NOT EXISTS profiles_username_lower_key
-  ON public.profiles (lower(username));
-
--- ============================================================
--- Signup-profile insert policy convergence. The handle_new_user trigger is
--- authoritative, but the client also upserts its own profile right after
--- signUp; that write needs an INSERT policy. Recreate it idempotently so a
--- fresh DB matches the live one.
--- ============================================================
-DROP POLICY IF EXISTS "profiles_insert" ON public.profiles;
-CREATE POLICY "profiles_insert" ON public.profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+-- Note: UNIQUE(username) and the signup-profile INSERT RLS policy already live
+-- in 006_profiles.sql, so they are intentionally NOT duplicated here.
