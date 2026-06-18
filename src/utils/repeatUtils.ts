@@ -10,7 +10,14 @@ export function calculateNextDueDate(_dueDate: DueDate, repeatType: RepeatType):
   const next = new Date(base);
   if (repeatType === 'daily') next.setDate(base.getDate() + 1);
   else if (repeatType === 'weekly') next.setDate(base.getDate() + 7);
-  else if (repeatType === 'monthly') next.setMonth(base.getMonth() + 1);
+  else if (repeatType === 'monthly') {
+    // Clamp to the target month's last day so e.g. Jan 31 -> Feb 28, not Mar 3.
+    // setMonth on a day that overflows the shorter month rolls into the next one.
+    next.setDate(1);
+    next.setMonth(base.getMonth() + 1);
+    const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+    next.setDate(Math.min(base.getDate(), lastDay));
+  }
 
   // Check if it's tomorrow
   const tomorrow = new Date(base);
