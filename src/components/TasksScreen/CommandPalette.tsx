@@ -39,6 +39,7 @@ const PRIORITY_KEYS: { priority: Priority; key: 'high' | 'medium' | 'low' | 'non
 ];
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
+  open,
   onClose,
   onNavigate,
   onCreateTask,
@@ -174,8 +175,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [selectedIndex]);
 
-  // Keyboard navigation
+  // Keyboard navigation. Gate on `open` so the window listener detaches
+  // immediately on close rather than lingering through the AnimatePresence exit
+  // animation — otherwise an Enter pressed during the exit fires a stale command.
   useEffect(() => {
+    if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -193,7 +197,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [flatCommands, selectedIndex, onClose]);
+  }, [open, flatCommands, selectedIndex, onClose]);
 
   // Build a flat index map so we can look up absolute index per group item
   let flatIdx = 0;
