@@ -68,6 +68,7 @@ export interface Task {
   type: TaskType;              // task | feature | bug | chore | idea | custom
   milestoneId?: string;        // optional link to a project milestone
   dependsOn: string[];         // task ids that must be done first
+  sortOrder?: number;          // list-view manual order (DB column; see reorderTasks)
   boardPosition?: number;      // float for drag-reorder within a board column
   // Per-task timer overrides (undefined = use global settings)
   customWorkDuration?: number;       // minutes

@@ -47,6 +47,7 @@ function rowToTask(row: Record<string, unknown>): Task {
     type: ((row.type as string) || 'task') as TaskType,
     milestoneId: row.milestoneId as string | undefined,
     dependsOn: (row.dependsOn as string[]) ?? [],
+    sortOrder: row.sortOrder as number | undefined,
     boardPosition: row.boardPosition as number | undefined,
     customWorkDuration: row.customWorkDuration as number | undefined,
     customShortBreakDuration: row.customShortBreakDuration as number | undefined,
@@ -200,7 +201,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (!userId) return;
     const id = nanoid();
     const createdAt = Date.now();
-    const maxOrder = get().tasks.reduce((m, t) => Math.max(m, (t as unknown as { sortOrder?: number }).sortOrder ?? 0), 0);
+    const maxOrder = get().tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
     // Append at the end of the 'todo' column on the board.
     const maxBoardPos = get().tasks
       .filter((t) => t.status === 'todo' && t.projectId === projectId)
@@ -213,6 +214,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       milestoneId: opts?.milestoneId,
       dependsOn: [],
       boardPosition: maxBoardPos + 1024,
+      sortOrder: maxOrder + 1,
     };
     set({ tasks: [newTask, ...get().tasks] });
     try {
@@ -372,14 +374,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         const newId = nanoid();
         const newCreatedAt = Date.now();
         const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
-        const maxOrder = get().tasks.reduce((m, t) => Math.max(m, (t as unknown as { sortOrder?: number }).sortOrder ?? 0), 0);
+        const maxOrder = get().tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
         const maxBoardPos = get().tasks
           .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
           .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
         const newTask: Task = {
           ...task, id: newId, createdAt: newCreatedAt, completed: false,
           completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
-          status: 'todo', boardPosition: maxBoardPos + 1024,
+          status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
         };
         await supabase.from('tasks').insert({
           id: newId, user_id: userId, title: newTask.title, completed: false,
