@@ -92,6 +92,10 @@ export function useWindowMode() {
       setMode('fullscreen');
     } catch (err) {
       console.error('Failed to enter fullscreen:', err);
+      // If the transition failed while we just saved normal-mode geometry, drop
+      // it — leaving a stale save makes the next enter skip saving (guard at top
+      // of saveWindowState) and restore to the wrong size/position later.
+      if (mode === 'normal') savedStateRef.current = null;
     }
   }, [mode, saveWindowState]);
 
@@ -147,6 +151,7 @@ export function useWindowMode() {
       setMode('widget');
     } catch (err) {
       console.error('Failed to enter widget mode:', err);
+      if (mode === 'normal') savedStateRef.current = null;
     }
   }, [mode, saveWindowState]);
 
