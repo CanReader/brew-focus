@@ -46,6 +46,9 @@ BEGIN
 END;
 $$;
 
+-- Postgres grants EXECUTE to PUBLIC by default, which would let anon call this
+-- (it'd hit the auth.uid() guard and error, but revoke for least-privilege).
+REVOKE EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) TO authenticated;
 
 -- ============================================================
@@ -76,6 +79,7 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) TO authenticated;
 
 -- ============================================================
@@ -96,6 +100,9 @@ AS $$
   );
 $$;
 
+-- Revoke the default PUBLIC grant, then re-grant explicitly. anon is required
+-- because this runs pre-auth during signup.
+REVOKE EXECUTE ON FUNCTION public.is_username_taken(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_username_taken(TEXT) TO anon, authenticated;
 
 -- ============================================================
@@ -114,6 +121,9 @@ AS $$
   LIMIT 1;
 $$;
 
+-- Revoke the default PUBLIC grant, then re-grant explicitly. anon is required
+-- because username login resolves the email before a session exists.
+REVOKE EXECUTE ON FUNCTION public.email_for_username(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.email_for_username(TEXT) TO anon, authenticated;
 
 -- Note: UNIQUE(username) and the signup-profile INSERT RLS policy already live
