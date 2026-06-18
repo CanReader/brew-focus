@@ -197,6 +197,18 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
     }
   }, [notesValue]);
 
+  // Escape collapses an open inline picker first, otherwise closes the panel —
+  // unless the user is mid-edit (title/subtask handle their own Escape).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (expanded) setExpanded(null);
+      else if (!isEditingTitle && editingSubtaskId === null) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expanded, isEditingTitle, editingSubtaskId, onClose]);
+
   const handleTitleBlur = () => {
     const trimmed = titleValue.trim();
     if (trimmed && trimmed !== task.title) onUpdate({ title: trimmed });
