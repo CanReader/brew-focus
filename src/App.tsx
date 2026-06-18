@@ -207,22 +207,26 @@ function AppContent() {
   const { user, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
-    initialize();
-
     let unlisten: (() => void) | undefined;
     (async () => {
+      // Await initialize() first so onAuthStateChange is subscribed before any
+      // deep-link session exchange fires — otherwise a cold-start magic-link
+      // callback can resolve before the listener exists and the login silently
+      // does nothing. initialize() is idempotent (guarded by _authInitialized).
+      await initialize();
+
       try {
         const initial = await getCurrentDeepLink();
         if (initial) {
           for (const url of initial) await handleAuthUrl(url);
         }
-      } catch {}
+      } catch (e) { console.error('Initial deep link handling failed:', e); }
 
       try {
         unlisten = await onOpenUrl(async (urls) => {
           for (const url of urls) await handleAuthUrl(url);
         });
-      } catch {}
+      } catch (e) { console.error('onOpenUrl registration failed:', e); }
     })();
 
     return () => { unlisten?.(); };
