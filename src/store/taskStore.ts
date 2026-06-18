@@ -557,8 +557,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
-      await supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
-      await supabase.from('tasks').update({ projectId: null }).eq('projectId', id).eq('user_id', userId);
+      const { error: delErr } = await supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
+      if (delErr) console.warn('Failed to delete project:', delErr.message);
+      // Supabase returns errors in the result rather than throwing, so this
+      // detach was previously silent on failure. loadTasks' orphan sweep
+      // self-heals it, but surface the error so it isn't invisible.
+      const { error: detachErr } = await supabase.from('tasks').update({ projectId: null }).eq('projectId', id).eq('user_id', userId);
+      if (detachErr) console.warn('Failed to detach tasks from deleted project:', detachErr.message);
     } catch (e) {
       console.warn('Failed to delete project:', e);
     }
