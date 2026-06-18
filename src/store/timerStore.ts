@@ -246,7 +246,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   addFocusSeconds: async (seconds) => {
     const userId = await getCurrentUserId();
     if (!userId) {
-      set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
+      set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: todayStr() });
       return;
     }
     const today = todayStr();
@@ -261,7 +261,10 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
         p_seconds: seconds,
       });
       if (error) throw error;
-      set({ todayFocusSeconds: typeof data === 'number' ? data : get().todayFocusSeconds + seconds });
+      set({
+        todayFocusSeconds: typeof data === 'number' ? data : get().todayFocusSeconds + seconds,
+        lastResetDate: today,
+      });
     } catch (e) {
       // Fallback until the RPC is deployed: the non-atomic upsert still
       // persists (it just isn't race-proof), so focus time is never silently
@@ -279,10 +282,10 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
           { user_id: userId, date: today, seconds: newTotal },
           { onConflict: 'user_id,date' }
         );
-        set({ todayFocusSeconds: newTotal });
+        set({ todayFocusSeconds: newTotal, lastResetDate: today });
       } catch (e2) {
         console.warn('Failed to save focus time:', e2);
-        set({ todayFocusSeconds: get().todayFocusSeconds + seconds });
+        set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: today });
       }
     }
   },
