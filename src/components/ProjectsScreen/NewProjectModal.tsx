@@ -33,6 +33,18 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
     setSubmitError(null);
   };
 
+  // Close on Escape — the modal is a full overlay and otherwise traps keyboard
+  // users on the customize step (only the X / backdrop click could dismiss it).
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { reset(); onClose(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   if (!open) return null;
 
   const pickTemplate = (t: ProjectTemplate) => {
