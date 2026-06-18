@@ -123,6 +123,15 @@ export const AuthScreen: React.FC = () => {
 
   const passwordsMatch = mode !== 'signUp' || !confirmPassword || password === confirmPassword;
 
+  // Keep the submit button's enabled state in lockstep with handleSubmit's
+  // guards, so it doesn't look clickable while silently no-op'ing on an empty
+  // required field (e.g. empty email on sign-up, or empty creds on sign-in).
+  const submitDisabled =
+    isLoading ||
+    (mode === 'signUp' && (!email || !password || !confirmPassword || !passwordsMatch || !isValidUsername(username))) ||
+    (mode === 'signIn' && (!usernameOrEmail || !password)) ||
+    (mode === 'forgot' && !email);
+
   return (
     <div
       className="w-full h-full flex items-center justify-center relative overflow-hidden"
@@ -365,17 +374,17 @@ export const AuthScreen: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isLoading || (mode === 'signUp' && (!passwordsMatch || !isValidUsername(username)))}
+                disabled={submitDisabled}
                 className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-semibold mt-1 transition-all duration-150"
                 style={{
                   background: isLoading ? 'rgba(255,77,77,0.4)' : 'linear-gradient(135deg, var(--accent) 0%, rgba(255,77,77,0.75) 100%)',
                   color: '#fff',
-                  boxShadow: isLoading ? 'none' : '0 4px 16px rgba(255,77,77,0.3)',
-                  opacity: isLoading ? 0.7 : 1,
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: submitDisabled ? 'none' : '0 4px 16px rgba(255,77,77,0.3)',
+                  opacity: submitDisabled ? 0.6 : 1,
+                  cursor: submitDisabled ? 'not-allowed' : 'pointer',
                 }}
-                onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255,77,77,0.4)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = isLoading ? 'none' : '0 4px 16px rgba(255,77,77,0.3)'; }}
+                onMouseEnter={(e) => { if (!submitDisabled) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255,77,77,0.4)'; } }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = submitDisabled ? 'none' : '0 4px 16px rgba(255,77,77,0.3)'; }}
               >
                 {isLoading ? (
                   <motion.div
