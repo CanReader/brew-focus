@@ -44,6 +44,36 @@ $$;
 GRANT EXECUTE ON FUNCTION public.increment_focus_seconds(TEXT, INTEGER) TO authenticated;
 
 -- ============================================================
+-- increment_pomodoro_completed: atomic per-task pomodoro counter.
+-- The client used to SELECT then UPDATE, which lost an increment when two
+-- pomodoros completed concurrently (two windows, or fullscreen + widget).
+-- Scoped to the caller's own row via auth.uid(); returns the new count.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.increment_pomodoro_completed(p_task_id TEXT)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count INTEGER;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  UPDATE public.tasks
+  SET "pomodoroCompleted" = COALESCE("pomodoroCompleted", 0) + 1
+  WHERE id = p_task_id AND user_id = auth.uid()
+  RETURNING "pomodoroCompleted" INTO v_count;
+
+  RETURN v_count; -- NULL if the row doesn't exist / isn't the caller's
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.increment_pomodoro_completed(TEXT) TO authenticated;
+
+-- ============================================================
 -- is_username_taken: existence check that works even when the profiles
 -- SELECT policy is locked down. Called pre-auth during signup, so it is
 -- granted to anon as well. Case-insensitive to match the client, which

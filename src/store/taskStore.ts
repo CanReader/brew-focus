@@ -446,21 +446,38 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return;
     }
     try {
-      const { data: row } = await supabase
-        .from('tasks')
-        .select('pomodoroCompleted')
-        .eq('id', id)
-        .eq('user_id', userId)
-        .maybeSingle();
-      const next = (row?.pomodoroCompleted ?? 0) + 1;
-      await supabase.from('tasks').update({ pomodoroCompleted: next })
-        .eq('id', id).eq('user_id', userId);
+      // Atomic server-side increment (migration 014). The old read-then-write
+      // lost an increment when two pomodoros completed concurrently (two windows,
+      // or fullscreen + widget) — both read N and wrote N+1. The RPC does the
+      // add in one statement under a row lock and returns the new total.
+      const { data, error } = await supabase.rpc('increment_pomodoro_completed', { p_task_id: id });
+      if (error) throw error;
+      const next = typeof data === 'number'
+        ? data
+        : (get().tasks.find((t) => t.id === id)?.pomodoroCompleted ?? 0) + 1;
       const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: next } : t);
       set({ tasks });
     } catch (e) {
-      console.warn('Failed to increment pomodoro count:', e);
-      const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: t.pomodoroCompleted + 1 } : t);
-      set({ tasks });
+      // Fallback until the RPC is deployed: non-atomic read-modify-write still
+      // persists (just isn't race-proof), so counts are never silently dropped.
+      console.warn('increment_pomodoro_completed RPC unavailable, falling back to read-modify-write:', e);
+      try {
+        const { data: row } = await supabase
+          .from('tasks')
+          .select('pomodoroCompleted')
+          .eq('id', id)
+          .eq('user_id', userId)
+          .maybeSingle();
+        const next = (row?.pomodoroCompleted ?? 0) + 1;
+        await supabase.from('tasks').update({ pomodoroCompleted: next })
+          .eq('id', id).eq('user_id', userId);
+        const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: next } : t);
+        set({ tasks });
+      } catch (e2) {
+        console.warn('Failed to increment pomodoro count:', e2);
+        const tasks = get().tasks.map((t) => t.id === id ? { ...t, pomodoroCompleted: t.pomodoroCompleted + 1 } : t);
+        set({ tasks });
+      }
     }
   },
 
