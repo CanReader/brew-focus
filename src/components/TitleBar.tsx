@@ -424,6 +424,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
 
         <button
           onClick={handleMinimize}
+          aria-label={tCommon('minimize', { defaultValue: 'Minimize' })}
+          title={tCommon('minimize', { defaultValue: 'Minimize' })}
           className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--t2)'; }}
@@ -433,6 +435,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
         </button>
         <button
           onClick={handleMaximize}
+          aria-label={tCommon('maximize', { defaultValue: 'Maximize' })}
+          title={tCommon('maximize', { defaultValue: 'Maximize' })}
           className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--t2)'; }}
@@ -442,6 +446,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
         </button>
         <button
           onClick={handleClose}
+          aria-label={tCommon('close')}
+          title={tCommon('close')}
           className="w-6 h-6 flex items-center justify-center rounded-md transition-all"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.boxShadow = '0 0 12px var(--accent-g)'; }}
