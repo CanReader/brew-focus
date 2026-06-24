@@ -80,6 +80,7 @@ export interface Task {
 
 export interface Project {
   id: string;
+  boardPosition?: number;      // float for drag-reorder within a board column
   name: string;
   color: string; // hex
   description: string;

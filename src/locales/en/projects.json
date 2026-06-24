@@ -56,6 +56,8 @@
     "newMilestoneTitle": "New milestone",
     "newMilestonePlaceholder": "e.g. MVP shippable",
     "tasksLabel": "Tasks",
+    "projectLabel": "Project",
+    "priorityLabel": "Priority",
     "filteredSuffix": " (filtered)",
     "quickAddPlaceholder": "Try \"Fix login !today #bug *3\"",
     "noTasksYet": "No tasks yet",

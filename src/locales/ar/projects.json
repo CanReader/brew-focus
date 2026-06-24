@@ -44,6 +44,8 @@
     "tileThisWeek": "هذا الأسبوع",
     "tileTotal": "الإجمالي",
     "tileTasks": "المهام",
+    "projectLabel": "المشروع",
+    "priorityLabel": "الأولوية",
     "tileDeadline": "الموعد النهائي",
     "goalMet": "تحقّق الهدف",
     "goalRemaining": "تبقّى {remaining}",

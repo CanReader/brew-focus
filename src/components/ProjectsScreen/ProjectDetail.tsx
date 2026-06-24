@@ -36,6 +36,7 @@ import {
 import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
+import { PriorityIcon } from '../PriorityIcon';
 
 interface Props {
   project: Project;
@@ -803,6 +804,86 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
   const pillLabel = t(`detail.${STATUS_PILL_KEY[project.status]}`);
   const overdue = dToDeadline !== null && dToDeadline < 0;
 
+
+function updatePriority(p: Priority): void {
+  updateProject(project.id,{priority:p});
+  console.log(`${project.name}'s priority has been changed! to ${p}`);
+}
+
+// Map colors for the active sliding background capsule
+const priorityColors = new Map<Priority, string>([
+  ["p1", "rgba(239, 68, 68, 0.15)"],  // Soft Red
+  ["p2", "rgba(245, 158, 11, 0.15)"], // Soft Amber
+  ["p3", "rgba(59, 130, 246, 0.15)"],  // Soft Blue
+  ["p4", "rgba(16, 185, 129, 0.15)"],  // Soft Green
+]);
+
+const priorityBorders = new Map<Priority, string>([
+  ["p1", "var(--accent)"],
+  ["p2", "var(--amb)"],
+  ["p3", "var(--t2)"],
+  ["p4", "var(--t3)"],
+]);
+
+function PrioritySelection() {
+  const currentPriority: Priority = project.priority || 'p4';
+  const priorities: Priority[] = ['p1', 'p2', 'p3', 'p4'];
+
+  return (
+    <div 
+      className="flex items-center gap-4 px-4 py-2 rounded-2xl transition-all"
+      style={{ 
+        background: 'var(--card)', 
+        border: '1px solid var(--brd)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
+      }}
+    >
+      {/* Prominent Label Section */}
+      <div className="flex flex-col select-none text-left min-w-[50px]">
+        <span className="text-[10px] font-bold uppercase tracking-wider leading-none" style={{ color: 'var(--t3)' }}>
+          {t('detail.projectLabel')}
+        </span>
+        <span className="text-[13px] font-bold leading-normal mt-0.5" style={{ color: 'var(--t1)' }}>
+          {t('detail.priorityLabel')}
+        </span>
+      </div>
+
+      {/* Separator Divider */}
+      <div className="h-6 w-px" style={{ background: 'var(--brd)' }} />
+
+      {/* Button Group Container */}
+      <div className="flex items-center gap-1.5 relative">
+        {priorities.map((pKey) => {
+          const isSelected = currentPriority === pKey;
+          
+          return (
+            <div key={pKey} className="relative flex items-center justify-center">
+              <PriorityIcon 
+                priority={pKey} 
+                active={isSelected}
+                onClick={() => updatePriority(pKey)} 
+              />
+
+              {isSelected && (
+                <motion.div
+                  layoutId="activePill"
+                  className="absolute inset-0 rounded-xl"
+                  style={{
+                    background: priorityColors.get(pKey),
+                    border: `1px solid ${priorityBorders.get(pKey)}`,
+                    zIndex: 1,
+                  }}
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
   return (
     <div className="flex h-full overflow-hidden" style={{ background: 'var(--bg)' }}>
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
@@ -958,7 +1039,9 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
               </span>
             </button>
 
+            
             <div className="flex-1 min-w-0">
+              <span>
               {editingName ? (
                 <input
                   autoFocus
@@ -992,7 +1075,9 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                   </h1>
                   <Edit3 size={11} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--t3)' }} />
                 </button>
+                
               )}
+              </span>
 
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span
@@ -1048,6 +1133,7 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
                 </p>
               )}
             </div>
+            <PrioritySelection/>
           </div>
         </div>
 
@@ -1867,3 +1953,4 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     </div>
   );
 };
+

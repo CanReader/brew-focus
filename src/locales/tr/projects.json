@@ -44,6 +44,8 @@
     "tileThisWeek": "Bu Hafta",
     "tileTotal": "Toplam",
     "tileTasks": "Görevler",
+    "projectLabel": "Proje",
+    "priorityLabel": "Öncelik",
     "tileDeadline": "Son Tarih",
     "goalMet": "Hedef tutturuldu",
     "goalRemaining": "{remaining} kaldı",

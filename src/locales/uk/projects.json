@@ -44,6 +44,8 @@
     "tileThisWeek": "Цього тижня",
     "tileTotal": "Усього",
     "tileTasks": "Завдання",
+    "projectLabel": "Проєкт",
+    "priorityLabel": "Пріоритет",
     "tileDeadline": "Дедлайн",
     "goalMet": "Ціль досягнута",
     "goalRemaining": "Залишилось {remaining}",

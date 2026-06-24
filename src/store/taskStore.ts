@@ -61,6 +61,7 @@ function rowToProject(row: Record<string, unknown>): Project {
   return {
     id: row.id as string,
     name: row.name as string,
+    boardPosition: row.boardPosition as number | undefined,
     color: row.color as string,
     description: (row.description as string) || '',
     status: ((row.status as string) || 'active') as ProjectStatus,
@@ -507,6 +508,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         customWorkDuration: null, customShortBreakDuration: null,
         customLongBreakDuration: null, customLongBreakInterval: null,
         skipLongBreak: false,
+        boardPosition: -1,
       });
       if (error) {
         rollback();
@@ -544,6 +546,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         customLongBreakDuration: proj.customLongBreakDuration ?? null,
         customLongBreakInterval: proj.customLongBreakInterval ?? null,
         skipLongBreak: proj.skipLongBreak ?? false,
+        boardPosition: proj.boardPosition ?? null,
       }).eq('id', id).eq('user_id', userId);
     } catch (e) {
       console.warn('Failed to update project:', e);

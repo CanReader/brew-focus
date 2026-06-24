@@ -11,6 +11,7 @@ import { GraphView } from './GraphView';
 import { visibleProjects } from './projectMetrics';
 import { TaskDetailPanel } from '../TasksScreen/TaskDetailPanel';
 
+
 type Filter = 'all' | 'active' | 'on_hold' | 'completed' | 'archived';
 
 interface Props {
@@ -26,7 +27,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
     { id: 'completed', label: t('filter.completed') },
     { id: 'archived',  label: t('filter.archived')  },
   ];
-  const { projects, tasks, updateTask, deleteTask } = useTaskStore();
+  const { projects, tasks, updateTask, deleteTask, updateProject } = useTaskStore();
   const { sessions } = useTimerStore();
   const [graphSelectedTaskId, setGraphSelectedTaskId] = useState<string | null>(null);
   const graphSelectedTask = graphSelectedTaskId ? tasks.find((t) => t.id === graphSelectedTaskId) : null;
@@ -49,6 +50,13 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
     return list.slice().sort((a, b) => {
       const pri = (a.priority ?? 'p3').localeCompare(b.priority ?? 'p3');
       if (pri !== 0) return pri;
+      
+      const aPos = a.boardPosition ?? -1;
+      const bPos = b.boardPosition ?? -1;
+
+      if(aPos !== bPos)
+        return bPos - aPos;
+
       return b.createdAt - a.createdAt;
     });
   }, [projects, filter, search]);

@@ -44,6 +44,8 @@
     "tileThisWeek": "Esta Semana",
     "tileTotal": "Total",
     "tileTasks": "Tareas",
+    "projectLabel": "Proyecto",
+    "priorityLabel": "Prioridad",
     "tileDeadline": "Fecha límite",
     "goalMet": "Meta alcanzada",
     "goalRemaining": "Faltan {remaining}",

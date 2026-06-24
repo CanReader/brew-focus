@@ -44,6 +44,8 @@
     "tileThisWeek": "本周",
     "tileTotal": "总计",
     "tileTasks": "任务",
+    "projectLabel": "项目",
+    "priorityLabel": "优先级",
     "tileDeadline": "截止",
     "goalMet": "目标完成",
     "goalRemaining": "还差 {remaining}",
