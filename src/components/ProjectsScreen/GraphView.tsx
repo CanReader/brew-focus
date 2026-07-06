@@ -45,6 +45,9 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
   const simRef = useRef<Sim | null>(null);
   const dragStateRef = useRef<{ kind: 'pan' | 'node'; nodeId?: string; lastX: number; lastY: number; totalMove: number } | null>(null);
   const suppressNextClickRef = useRef(false);
+  // Restarts the animation loop after it has self-terminated (e.g. when a node
+  // drag reheats the sim). Set by the sim effect; called from drag handlers.
+  const kickRef = useRef<(() => void) | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
 
   // Resize observer.
@@ -112,11 +115,13 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
     });
 
     let cancelled = false;
+    let running = false;
+    let rafId = 0;
     let lastTime = performance.now();
     const loop = (now: number) => {
-      if (cancelled) return;
+      if (cancelled) { running = false; return; }
       const sim = simRef.current;
-      if (!sim) return;
+      if (!sim) { running = false; return; }
       const stillSimmering = sim.step();
       // Persist once cooled (per-level).
       if (!stillSimmering) {
@@ -127,11 +132,28 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
       setRenderTick((t) => (t + 1) & 0xffff);
       if (stillSimmering || performance.now() - lastTime < 800) {
         if (stillSimmering) lastTime = now;
-        requestAnimationFrame(loop);
+        rafId = requestAnimationFrame(loop);
+      } else {
+        running = false;
       }
     };
-    requestAnimationFrame(loop);
-    return () => { cancelled = true; };
+    // Restart the loop on demand — a settled loop stops scheduling frames, so a
+    // drag that reheats the sim would otherwise never re-render. Idempotent via
+    // the `running` guard so repeated mousemove reheats don't stack loops.
+    const kick = () => {
+      if (cancelled || running) return;
+      running = true;
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(loop);
+    };
+    kickRef.current = kick;
+    running = true;
+    rafId = requestAnimationFrame(loop);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      if (kickRef.current === kick) kickRef.current = null;
+    };
   }, [zoomedProjectId, projects, tasks]);
 
   // Reset camera on level change.
@@ -167,6 +189,8 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
         const n = sim.nodes.find((x) => x.id === nodeId);
         if (n) n.fixed = true;
       }
+      // Wake the loop so the drag renders even if the layout had settled.
+      kickRef.current?.();
     } else {
       dragStateRef.current = { kind: 'pan', lastX: e.clientX, lastY: e.clientY, totalMove: 0 };
     }
@@ -190,6 +214,8 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
         n.y += dy / camera.scale;
       }
       sim.reheat(0.4);
+      // reheat only raises alpha; if the loop had stopped, restart it.
+      kickRef.current?.();
     }
   };
 
