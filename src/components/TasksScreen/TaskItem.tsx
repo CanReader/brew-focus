@@ -199,8 +199,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const hasRepeat = task.repeatType && task.repeatType !== 'none';
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const dueDateStyle = getDueDateStyle(task);
+  // A reminder-only task (no due date) with a past reminder still needs a chip.
+  // getDueDateStyle returns null without a due date, which left the computed
+  // overdue-reminder `displayDate` with no style and thus unrendered. Fall back
+  // to the overdue (red) style and surface it in the always-visible section.
+  const reminderOnlyOverdue = reminderOverdue && !dueDateStyle;
+  const dateChipStyle = dueDateStyle ?? (reminderOnlyOverdue
+    ? { bg: 'rgba(255,77,77,0.12)', border: 'rgba(255,77,77,0.25)', color: '#ff6b5a' }
+    : null);
 
-  const alwaysVisibleMeta = overdue || (task.dueDate === 'today' && !task.completed) ||
+  const alwaysVisibleMeta = overdue || reminderOnlyOverdue || (task.dueDate === 'today' && !task.completed) ||
     (task.subtasks.length > 0 && !task.completed);
   const hasHiddenMeta = !task.completed && (
     projectName || task.tags.length > 0 || hasRepeat ||
@@ -468,10 +476,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           }}
         >
           {/* Always visible: overdue/today dates and subtask progress */}
-          {displayDate && dueDateStyle && (overdue || task.dueDate === 'today') && (
+          {displayDate && dateChipStyle && (overdue || reminderOnlyOverdue || task.dueDate === 'today') && (
             <span
               className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-[2px] rounded-md"
-              style={{ background: dueDateStyle.bg, color: dueDateStyle.color, border: `1px solid ${dueDateStyle.border}` }}
+              style={{ background: dateChipStyle.bg, color: dateChipStyle.color, border: `1px solid ${dateChipStyle.border}` }}
             >
               <Calendar size={9} strokeWidth={2} />
               {displayDate}
