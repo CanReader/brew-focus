@@ -167,6 +167,10 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   const { t } = useTranslation('tasks');
 
   const { addSubtask, toggleSubtask, updateSubtask, deleteSubtask, reorderSubtasks, addTag, removeTag } = useTaskStore();
+  // Subscribe to the tasks array (not getState()) so the dependency/blocker
+  // section below re-renders when a blocking task is completed or renamed from
+  // another surface while this panel is open.
+  const allTasks = useTaskStore((s) => s.tasks);
 
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -529,7 +533,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             preprocess={preprocessWikiLinks}
             componentOverrides={{
               a: makeWikiLinkComponent({
-                tasks: useTaskStore.getState().tasks,
+                tasks: allTasks,
                 projects,
                 /* Task notes can't easily route to project pages from here — links resolve, click is a no-op for now. */
               }) as any,
@@ -675,7 +679,6 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
 
         {/* Depends on */}
         {(() => {
-          const allTasks = useTaskStore.getState().tasks;
           const blockers = blockingTasks(task, allTasks);
           const dependsOnTasks = (task.dependsOn ?? [])
             .map((id) => allTasks.find((t) => t.id === id))
