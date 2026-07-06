@@ -99,7 +99,7 @@ interface TaskStore {
   reorderTasks: (tasks: Task[]) => Promise<void>;
   setActiveTask: (id: string | null) => Promise<void>;
   incrementPomodoroCompleted: (id: string) => Promise<void>;
-  addProject: (name: string, color: string) => Promise<void>;
+  addProject: (name: string, color: string) => Promise<string | null>;
   updateProject: (id: string, partial: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   archiveProject: (id: string, archived?: boolean) => Promise<void>;
@@ -484,7 +484,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   addProject: async (name, color) => {
     const userId = await getCurrentUserId();
-    if (!userId) return;
+    if (!userId) return null;
     const project: Project = {
       id: nanoid(), name, color, description: '', status: 'active',
       createdAt: Date.now(), milestones: [], links: [], notes: '',
@@ -515,6 +515,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         console.error('Failed to add project (Supabase rejected insert):', error);
         throw new Error(`Could not save project "${name}": ${error.message}`);
       }
+      // Return the id so callers (e.g. the template seeder) address THIS project
+      // directly instead of re-finding it by name+color — a lookup that resolves
+      // to the wrong pre-existing project when a duplicate name+color exists.
+      return project.id;
     } catch (e) {
       // network / unexpected
       rollback();

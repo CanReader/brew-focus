@@ -62,11 +62,11 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
       // addProject rolls back the optimistic add and rethrows when the
       // Supabase insert is rejected — surface the message instead of leaving
       // the modal hung with no feedback.
-      await addProject(trimmed, color);
-      // The new project is the last in the list — re-read from store rather
-      // than the captured `projects` (stale).
-      const created = useTaskStore.getState().projects.find((p) => p.name === trimmed && p.color === color);
-      if (created && template && template.id !== 'blank') {
+      // addProject returns the created project's id — address it directly so a
+      // duplicate name+color can't misroute the template seed into an older
+      // project (a name+color re-lookup returned the wrong match).
+      const createdId = await addProject(trimmed, color);
+      if (createdId && template && template.id !== 'blank') {
         const localizedMilestones = localizeTemplateMilestones(template);
         const localizedTasks = localizeTemplateTasks(template);
         const milestones = localizedMilestones.map((m) => ({
@@ -82,14 +82,12 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
           skipLongBreak: dd.skipLongBreak,
         } : undefined;
         await _seedProjectFromTemplate(
-          created.id,
+          createdId,
           template.emoji === '·' ? undefined : template.emoji,
           milestones,
           localizedTasks,
           defaults,
         );
-      } else if (created && template && template.emoji !== '·') {
-        // Blank template still gets the fallback (no emoji).
       }
       reset();
       onClose();
