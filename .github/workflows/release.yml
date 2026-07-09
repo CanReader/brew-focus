@@ -6,7 +6,57 @@ on:
       - 'v*.*.*'
 
 jobs:
+  # Fail fast before any expensive build if the tag and the two version sources
+  # disagree, and prepare the release body from CHANGELOG.md.
+  preflight:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      body: ${{ steps.changelog.outputs.body }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify version alignment
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          CONF="$(node -p "require('./src-tauri/tauri.conf.json').version")"
+          CARGO="$(grep -m1 '^version' src-tauri/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')"
+          echo "tag=$TAG  package.json=$PKG  tauri.conf.json=$CONF  Cargo.toml=$CARGO"
+          FAIL=0
+          [ "$TAG" = "$PKG" ]   || { echo "::error::tag ($TAG) != package.json ($PKG)"; FAIL=1; }
+          [ "$TAG" = "$CONF" ]  || { echo "::error::tag ($TAG) != tauri.conf.json ($CONF)"; FAIL=1; }
+          [ "$TAG" = "$CARGO" ] || { echo "::error::tag ($TAG) != Cargo.toml ($CARGO)"; FAIL=1; }
+          [ "$FAIL" = "0" ] || exit 1
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SECTION="$(awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            flag && /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md | sed -e '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')"
+          if [ -z "$SECTION" ]; then
+            SECTION="See [\`CHANGELOG.md\`](https://github.com/CanReader/brew-focus/blob/main/CHANGELOG.md) for details."
+          fi
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "## What's new in ${GITHUB_REF_NAME}"
+            echo ""
+            echo "$SECTION"
+            echo ""
+            echo "---"
+            echo "🍺 Full changelog: https://github.com/CanReader/brew-focus/blob/main/CHANGELOG.md"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
   release:
+    needs: preflight
     permissions:
       contents: write
     strategy:
@@ -14,9 +64,9 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-22.04
-            args: ''
+            args: '--bundles appimage,deb,rpm'
           - platform: windows-latest
-            args: ''
+            args: '--bundles nsis,msi'
           - platform: macos-latest
             args: '--target universal-apple-darwin'
 
@@ -30,6 +80,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -65,18 +116,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Brew Focus ${{ github.ref_name }}'
-          releaseBody: |
-            ## What's new
-
-            See the full changelog on GitHub.
-
-            ## Downloads
-
-            | Platform | File |
-            |----------|------|
-            | Windows  | `.msi` or `.exe` installer |
-            | macOS    | `.dmg` |
-            | Linux    | `.AppImage` or `.deb` |
+          releaseBody: ${{ needs.preflight.outputs.body }}
           releaseDraft: true
           prerelease: false
           updaterJsonKeepUniversal: true
