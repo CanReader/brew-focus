@@ -1,0 +1,72 @@
+name: Nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly, Monday 06:00 UTC — smoke-test that a full bundle still builds.
+    - cron: '0 6 * * 1'
+
+# Only one nightly at a time; a manual dispatch supersedes a queued cron run.
+concurrency:
+  group: nightly
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Debug bundle (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            args: '--bundles appimage,deb'
+          - platform: windows-latest
+            args: '--bundles nsis'
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            pkg-config
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # Debug bundle only — no signing, no release, artifacts kept for 7 days.
+      - name: Build debug bundle
+        run: npx tauri build --debug ${{ matrix.args }}
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: brew-focus-nightly-${{ matrix.platform }}
+          path: |
+            src-tauri/target/debug/bundle/**/*.AppImage
+            src-tauri/target/debug/bundle/**/*.deb
+            src-tauri/target/debug/bundle/**/*.exe
+          if-no-files-found: warn
+          retention-days: 7
