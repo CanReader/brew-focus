@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
@@ -39,8 +39,16 @@ export function useUpdater() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Synchronous re-entrancy guard. `state.downloading` is captured per-render,
+  // so a fast double-click (both clicks in the same frame) would read it as
+  // false and launch two concurrent downloadAndInstall + relaunch passes. A ref
+  // updates synchronously and blocks the second call.
+  const installingRef = useRef(false);
+
   const installUpdate = useCallback(async () => {
     if (!state.update) return;
+    if (installingRef.current) return;
+    installingRef.current = true;
     setState((s) => ({ ...s, downloading: true, progress: 0, error: null }));
     try {
       let downloaded = 0;
@@ -60,6 +68,8 @@ export function useUpdater() {
       });
       await relaunch();
     } catch (e) {
+      // Allow a retry after a failed install.
+      installingRef.current = false;
       setState((s) => ({
         ...s,
         downloading: false,
