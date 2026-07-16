@@ -309,6 +309,17 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // successful edit that then vanished on the next load.
       const { error } = await supabase.from('tasks').update(dbPatch).eq('id', id).eq('user_id', userId);
       if (error) console.warn('Failed to update task:', error.message);
+
+      // Recurrence on every completion path, not just the checkbox: a repeating
+      // task completed via the Kanban drag-to-Done or the status dropdown flows
+      // through here (setTaskBoardPosition/setTaskStatus → updateTask), and must
+      // still spawn its next occurrence. The `!before.completed → true`
+      // transition guard (plus a live re-check for a double-complete) prevents
+      // both a no-op re-completion and a duplicate clone.
+      if (before && !before.completed && merged.completed === true) {
+        const after = get().tasks.find((t) => t.id === id);
+        if (after?.completed) await spawnNextOccurrence(after, userId);
+      }
     } catch (e) {
       console.warn('Failed to update task:', e);
     }
@@ -376,48 +387,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // this guard the first call still inserts a clone for a task that is no
       // longer completed, leaving a phantom duplicate that survives reload.
       const stillCompleted = get().tasks.find((t) => t.id === id)?.completed ?? false;
-      if (completed && stillCompleted && task.repeatType && task.repeatType !== 'none') {
-        const newId = nanoid();
-        const newCreatedAt = Date.now();
-        const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
-        const maxOrder = get().tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
-        const maxBoardPos = get().tasks
-          .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
-          .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
-        // A fresh occurrence starts unfinished: reset each subtask's completed
-        // flag. Spreading `...task` otherwise carries the prior occurrence's
-        // checked subtasks, so the new task renders as "3/3 done" immediately.
-        const resetSubtasks = task.subtasks.map((s) => ({ ...s, completed: false }));
-        const newTask: Task = {
-          ...task, id: newId, createdAt: newCreatedAt, completed: false,
-          completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
-          subtasks: resetSubtasks,
-          // Drop the prior occurrence's absolute reminder timestamp — it's now in
-          // the past, so carrying it forward makes the fresh occurrence render as
-          // reminder-overdue immediately (TaskItem: reminder < Date.now()).
-          reminder: undefined,
-          status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
-        };
-        await supabase.from('tasks').insert({
-          id: newId, user_id: userId, title: newTask.title, completed: false,
-          priority: newTask.priority, pomodoroEstimate: newTask.pomodoroEstimate, pomodoroCompleted: 0,
-          tags: newTask.tags, subtasks: newTask.subtasks, notes: newTask.notes ?? '',
-          createdAt: newCreatedAt, completedAt: null, dueDate: newDueDate ?? null,
-          projectId: newTask.projectId ?? null, reminder: newTask.reminder ?? null,
-          repeatType: newTask.repeatType ?? 'none',
-          status: 'todo',
-          type: newTask.type,
-          milestoneId: newTask.milestoneId ?? null,
-          dependsOn: newTask.dependsOn,
-          boardPosition: newTask.boardPosition,
-          customWorkDuration: newTask.customWorkDuration ?? null,
-          customShortBreakDuration: newTask.customShortBreakDuration ?? null,
-          customLongBreakDuration: newTask.customLongBreakDuration ?? null,
-          skipLongBreak: newTask.skipLongBreak ?? false,
-          customLongBreakInterval: newTask.customLongBreakInterval ?? null,
-          sortOrder: maxOrder + 1,
-        });
-        set({ tasks: [newTask, ...get().tasks] });
+      if (completed && stillCompleted) {
+        await spawnNextOccurrence(task, userId);
       }
     } catch (e) {
       console.warn('Failed to toggle task:', e);
@@ -763,3 +734,52 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     await get().updateProject(projectId, { milestones: project.milestones.filter((m) => m.id !== milestoneId) });
   },
 }));
+
+/**
+ * Spawn the next occurrence of a completed repeating task. Shared by ALL
+ * completion paths (`toggleTask` checkbox, and `updateTask`/`setTaskStatus`/
+ * `setTaskBoardPosition` — the Kanban drag-to-Done and status-dropdown paths)
+ * so the "a completed repeating task begets its successor" invariant no longer
+ * depends on HOW the task was completed. No-op for non-repeating tasks. The
+ * caller is responsible for re-checking the task is still completed (double-
+ * toggle guard) before calling. Resets per-occurrence fields: completion,
+ * pomodoro count, subtask checks, and the stale absolute reminder.
+ */
+async function spawnNextOccurrence(task: Task, userId: string): Promise<void> {
+  if (!task.repeatType || task.repeatType === 'none') return;
+  const tasks = useTaskStore.getState().tasks;
+  const newId = nanoid();
+  const newCreatedAt = Date.now();
+  const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
+  const maxOrder = tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
+  const maxBoardPos = tasks
+    .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
+    .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
+  const resetSubtasks = task.subtasks.map((s) => ({ ...s, completed: false }));
+  const newTask: Task = {
+    ...task, id: newId, createdAt: newCreatedAt, completed: false,
+    completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
+    subtasks: resetSubtasks, reminder: undefined,
+    status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
+  };
+  await supabase.from('tasks').insert({
+    id: newId, user_id: userId, title: newTask.title, completed: false,
+    priority: newTask.priority, pomodoroEstimate: newTask.pomodoroEstimate, pomodoroCompleted: 0,
+    tags: newTask.tags, subtasks: newTask.subtasks, notes: newTask.notes ?? '',
+    createdAt: newCreatedAt, completedAt: null, dueDate: newDueDate ?? null,
+    projectId: newTask.projectId ?? null, reminder: null,
+    repeatType: newTask.repeatType ?? 'none',
+    status: 'todo',
+    type: newTask.type,
+    milestoneId: newTask.milestoneId ?? null,
+    dependsOn: newTask.dependsOn,
+    boardPosition: newTask.boardPosition,
+    customWorkDuration: newTask.customWorkDuration ?? null,
+    customShortBreakDuration: newTask.customShortBreakDuration ?? null,
+    customLongBreakDuration: newTask.customLongBreakDuration ?? null,
+    skipLongBreak: newTask.skipLongBreak ?? false,
+    customLongBreakInterval: newTask.customLongBreakInterval ?? null,
+    sortOrder: maxOrder + 1,
+  });
+  useTaskStore.setState({ tasks: [newTask, ...useTaskStore.getState().tasks] });
+}
