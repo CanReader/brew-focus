@@ -49,8 +49,13 @@ export const Preview: React.FC<Props> = ({
   const cbCursor = useRef(0);
   cbCursor.current = 0;
 
-  // Slug counter (per render) so duplicate headings still get unique ids.
-  const slugCounts = useMemo(() => new Map<string, number>(), [source]);
+  // Slug counter, reset every render (like cbCursor above) so duplicate
+  // headings get deterministic ids. A useMemo'd Map would persist across
+  // re-renders of the same source while each Heading mutates it during render,
+  // so a heading "Overview" (id "overview") would drift to "overview-1",
+  // "overview-2"… on subsequent re-renders — breaking the Outline's
+  // getElementById(slug) jump, which always targets the un-suffixed slug.
+  const slugCounts = new Map<string, number>();
 
   return (
     <div
