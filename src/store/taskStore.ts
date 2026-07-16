@@ -288,6 +288,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         });
       }
     }
+    // Reward sound on incomplete → complete, mirroring toggleTask — so the
+    // Kanban drag-to-Done, status dropdown, and bulk-complete paths (which all
+    // route through updateTask, not toggleTask) play it too, not just the
+    // checkbox. Optimistic like toggleTask; never on uncomplete.
+    if (before && !before.completed && merged.completed === true) {
+      const s = useSettingsStore.getState().settings;
+      if (s.soundNotifications) void playTaskComplete(s.soundVolume ?? 70);
+    }
     const userId = await getCurrentUserId();
     if (!userId) return;
     if (!tasks.find((t) => t.id === id)) return;
