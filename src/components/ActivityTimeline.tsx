@@ -23,7 +23,13 @@ export function relativeTime(ts: number): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // Include the year for events outside the current calendar year, otherwise a
+  // 400-day-old "Jul 16" is indistinguishable from one five days ago.
+  const d = new Date(ts);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString('en-US', sameYear
+    ? { month: 'short', day: 'numeric' }
+    : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const PRIORITY_RANK: Record<Priority, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
