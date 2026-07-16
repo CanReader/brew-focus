@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -32,6 +32,10 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
   const { t } = useTranslation('tasks');
   const [popover, setPopover] = useState<Popover>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Track the "click again to confirm" timeout so it's cleared on unmount
+  // (deleteAll unmounts this bar) and never stacks across repeated first-clicks.
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (confirmTimer.current) clearTimeout(confirmTimer.current); }, []);
 
   const count = selectedIds.size;
   const selectedTasks = tasks.filter((t) => selectedIds.has(t.id));
@@ -307,8 +311,9 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
       {/* Delete with inline confirm */}
       <button
         onClick={() => {
+          if (confirmTimer.current) clearTimeout(confirmTimer.current);
           if (confirmDelete) deleteAll();
-          else { setConfirmDelete(true); setTimeout(() => setConfirmDelete(false), 3000); }
+          else { setConfirmDelete(true); confirmTimer.current = setTimeout(() => setConfirmDelete(false), 3000); }
         }}
         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium transition-colors"
         style={{ color: 'var(--accent)', background: confirmDelete ? 'rgba(255,77,77,0.12)' : 'transparent' }}
