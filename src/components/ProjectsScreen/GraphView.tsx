@@ -219,7 +219,11 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
     }
   };
 
-  const onMouseUp = () => {
+  // End a drag: release the pinned node back into the layout, then clear state.
+  // Both mouseup and mouseleave must run this — otherwise releasing the button
+  // (or letting the cursor leave the canvas) mid-drag leaves the node `fixed`,
+  // and forceSim permanently excludes fixed nodes, so it never rejoins the sim.
+  const endDrag = () => {
     const ds = dragStateRef.current;
     if (ds?.kind === 'node' && ds.nodeId) {
       const sim = simRef.current;
@@ -228,8 +232,13 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
         if (n) n.fixed = false;
       }
     }
-    if (ds && ds.totalMove > 6) suppressNextClickRef.current = true;
     dragStateRef.current = null;
+  };
+
+  const onMouseUp = () => {
+    const ds = dragStateRef.current;
+    if (ds && ds.totalMove > 6) suppressNextClickRef.current = true;
+    endDrag();
   };
 
   // Empty-area click: zoom out if zoomed, otherwise no-op. Node clicks are
@@ -286,7 +295,7 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={() => { dragStateRef.current = null; }}
+      onMouseLeave={endDrag}
       onClick={onCanvasClick}
     >
       {/* Subtle grid */}
