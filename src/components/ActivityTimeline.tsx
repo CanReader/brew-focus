@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Plus, ArrowRight, Check, Target, Flag, ArrowUp, ArrowDown, Flame, FolderOpen,
 } from 'lucide-react';
@@ -92,6 +92,10 @@ export const ActivityTimeline: React.FC<Props> = ({ taskId, compact }) => {
     [allEvents, taskId]
   );
   const [expanded, setExpanded] = useState(false);
+  // Collapse back to the 5-item summary when the panel switches tasks — the
+  // component is reused (no key) across task selections, so "Show all" on task A
+  // would otherwise leave task B's timeline expanded.
+  useEffect(() => { setExpanded(false); }, [taskId]);
   const visible = expanded ? events : events.slice(0, 5);
   const more = events.length - visible.length;
 
