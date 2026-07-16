@@ -311,7 +311,11 @@ function extractCalloutFromBlockquote(children: React.ReactNode): CalloutInfo | 
     const node = arr[i];
     const text = childrenToText(node).trim();
     if (!text) continue;
-    const m = text.match(/^<!--callout:(\w+):([^-]*)-->/);
+    // Title is non-greedy up to the marker close, NOT `[^-]*`: encodeURIComponent
+    // preserves `-`, so a hyphenated title ("Follow-up") would otherwise truncate
+    // the group at the first hyphen and fail the whole match. The encoded title
+    // can't contain `-->` because `>` is always percent-encoded.
+    const m = text.match(/^<!--callout:(\w+):(.*?)-->/);
     if (m) {
       const title = decodeURIComponent(m[2] || '');
       info = { type: m[1].toLowerCase(), title, body: null };
