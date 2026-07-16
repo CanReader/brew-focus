@@ -252,6 +252,11 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   addFocusSeconds: async (seconds) => {
+    // Roll the live ring over first: if the app sat idle across local midnight,
+    // `todayFocusSeconds`/`lastResetDate` may still hold yesterday's total. The
+    // offline and double-failure branches below ADD to the ring, so without this
+    // a new day's first session would be summed onto yesterday's number.
+    get().checkDateReset();
     // START-day attribution: a focus session counts toward the local day it
     // BEGAN, matching how sessions/streaks bucket by startedAt (Reports keys off
     // dayKey(startedAt)). Derive the start day from completion-time minus the
