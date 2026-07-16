@@ -202,12 +202,22 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
   }, [notesValue]);
 
   // Escape collapses an open inline picker first, otherwise closes the panel —
-  // unless the user is mid-edit (title/subtask handle their own Escape).
+  // unless a child editing surface owns this Escape. This is a window-level
+  // listener, so an Escape a child already handled (notes edit, slash menu,
+  // inline tag/subtask inputs — which call preventDefault but not
+  // stopPropagation) would otherwise bubble up here and slam the whole panel
+  // shut on top of the child's intended action. Bail on defaultPrevented AND
+  // when focus is in any editable field within the panel.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (expanded) setExpanded(null);
-      else if (!isEditingTitle && editingSubtaskId === null) onClose();
+      if (e.defaultPrevented) return;
+      if (expanded) { setExpanded(null); return; }
+      const el = document.activeElement;
+      const editing = el instanceof HTMLElement &&
+        (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if (editing || isEditingTitle || editingSubtaskId !== null) return;
+      onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
