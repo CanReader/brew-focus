@@ -532,26 +532,24 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set({ projects });
     const userId = await getCurrentUserId();
     if (!userId) return;
-    const proj = projects.find((p) => p.id === id);
-    if (!proj) return;
+    if (!projects.find((p) => p.id === id)) return;
+    // Partial write: persist ONLY the columns this call changed, mirroring
+    // updateTask. The previous full-row writer rewrote every column from local
+    // state, so a mutation in one window (e.g. a milestone toggle) clobbered a
+    // concurrent edit in another (e.g. a notes change) with its stale snapshot.
+    // Column names match Project keys 1:1.
+    const dbPatch: Record<string, unknown> = {};
+    for (const k of Object.keys(partial) as (keyof Project)[]) {
+      const v = partial[k];
+      dbPatch[k] = v === undefined ? null : v;
+    }
+    // description / notes are non-null text columns — never write null.
+    if ('description' in dbPatch && dbPatch.description == null) dbPatch.description = '';
+    if ('notes' in dbPatch && dbPatch.notes == null) dbPatch.notes = '';
+    if (Object.keys(dbPatch).length === 0) return;
     try {
-      await supabase.from('projects').update({
-        name: proj.name, color: proj.color, description: proj.description ?? '',
-        status: proj.status ?? 'active', targetDate: proj.targetDate ?? null,
-        milestones: proj.milestones ?? [],
-        links: proj.links ?? [],
-        notes: proj.notes ?? '',
-        archived: proj.archived ?? false,
-        priority: proj.priority ?? 'p3',
-        icon: proj.icon ?? null,
-        weeklyFocusGoalHrs: proj.weeklyFocusGoalHrs ?? null,
-        customWorkDuration: proj.customWorkDuration ?? null,
-        customShortBreakDuration: proj.customShortBreakDuration ?? null,
-        customLongBreakDuration: proj.customLongBreakDuration ?? null,
-        customLongBreakInterval: proj.customLongBreakInterval ?? null,
-        skipLongBreak: proj.skipLongBreak ?? false,
-        boardPosition: proj.boardPosition ?? null,
-      }).eq('id', id).eq('user_id', userId);
+      const { error } = await supabase.from('projects').update(dbPatch).eq('id', id).eq('user_id', userId);
+      if (error) console.warn('Failed to update project:', error.message);
     } catch (e) {
       console.warn('Failed to update project:', e);
     }
