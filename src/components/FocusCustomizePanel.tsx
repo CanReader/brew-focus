@@ -68,7 +68,12 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
-      const newCustomFiles = { ...(settings.customSoundFiles ?? {}), [eventKey]: { name: file.name, dataUrl } };
+      // Merge onto the FRESHEST store state, not the render-time `settings`
+      // closure: two custom-sound uploads whose FileReaders resolve out of order
+      // would otherwise each rebuild the map from the same stale snapshot, and
+      // the later write would drop the earlier upload's file.
+      const latestFiles = useSettingsStore.getState().settings.customSoundFiles ?? {};
+      const newCustomFiles = { ...latestFiles, [eventKey]: { name: file.name, dataUrl } };
       updateSettings({
         [eventKey]: 'custom',
         customSoundFiles: newCustomFiles,
