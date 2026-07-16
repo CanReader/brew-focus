@@ -225,7 +225,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return { success: false, error: 'Not authenticated.' };
 
-    const ext = file.name.split('.').pop() || 'jpg';
+    // Derive the extension from the MIME type, not the (untrusted) filename — an
+    // extensionless name like "photo" made split('.').pop() return the whole
+    // string, producing a garbage path "avatar.photo". jpeg/jpg collapse to one
+    // key so re-uploads of the same format overwrite instead of orphaning.
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
+      'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
+    };
+    const ext = mimeToExt[file.type] ?? 'jpg';
     const path = `${currentUser.id}/avatar.${ext}`;
     const { error: uploadErr } = await supabase.storage
       .from('Avatars')
