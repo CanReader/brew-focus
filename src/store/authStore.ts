@@ -23,7 +23,9 @@ async function resolveEmailForUsername(uname: string): Promise<string | null> {
   const { data, error } = await supabase.rpc('email_for_username', { p_username: uname });
   if (!error) return typeof data === 'string' ? data : null;
   // RPC not deployed yet — fall back to the direct read (works pre-RLS-lock).
-  const { data: profile } = await supabase.from('profiles').select('email').eq('username', uname).single();
+  // Use maybeSingle (like isUsernameTaken's fallback): the common "no such
+  // username" path returns a clean null instead of single()'s PGRST116/406 error.
+  const { data: profile } = await supabase.from('profiles').select('email').eq('username', uname).maybeSingle();
   return (profile?.email as string | undefined) ?? null;
 }
 
