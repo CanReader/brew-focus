@@ -371,7 +371,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       await supabase.from('tasks').update({ completed, completedAt: completedAt ?? null, status })
         .eq('id', id).eq('user_id', userId);
 
-      if (completed && task.repeatType && task.repeatType !== 'none') {
+      // Re-check the live state before spawning a recurrence: a rapid re-toggle
+      // (double-click) can un-complete the task during the awaits above. Without
+      // this guard the first call still inserts a clone for a task that is no
+      // longer completed, leaving a phantom duplicate that survives reload.
+      const stillCompleted = get().tasks.find((t) => t.id === id)?.completed ?? false;
+      if (completed && stillCompleted && task.repeatType && task.repeatType !== 'none') {
         const newId = nanoid();
         const newCreatedAt = Date.now();
         const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
