@@ -1,4 +1,4 @@
-import { DueDate, Priority, Project, TaskType, DEFAULT_TASK_TYPES } from '../types';
+import { DueDate, Priority, Project, TaskType, DEFAULT_TASK_TYPES, isValidIsoDate } from '../types';
 
 export interface ParsedTask {
   title: string;
@@ -128,7 +128,7 @@ export function parseQuickTask(
         const v = DATE_KEYWORDS[lc];
         out.dueDate = v;
         out.chips.push({ kind: 'date', raw: full, value: v, label: typeof v === 'string' ? v[0].toUpperCase() + v.slice(1) : '' });
-      } else if (ISO_DATE_RE.test(body)) {
+      } else if (ISO_DATE_RE.test(body) && isValidIsoDate(body)) {
         out.dueDate = body;
         out.chips.push({ kind: 'date', raw: full, value: body, label: body });
       } else {

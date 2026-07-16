@@ -106,6 +106,19 @@ export interface Project {
 
 // ── Due date helpers ──────────────────────────────────────────────────────────
 
+/**
+ * True only for a real calendar date in YYYY-MM-DD form. Rejects overflow like
+ * `2024-13-45` — `new Date(2024, 12, 45)` silently normalizes to Feb 14 2025,
+ * so parsing such strings without validation corrupts the displayed due date.
+ */
+export function isValidIsoDate(s: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return false;
+  const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+  const dt = new Date(y, mo - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d;
+}
+
 /** Returns midnight timestamp for a DueDate, or null if not date-specific. */
 export function resolveDueDateToTs(dueDate: DueDate | undefined): number | null {
   if (!dueDate || dueDate === 'someday') return null;
@@ -117,8 +130,9 @@ export function resolveDueDateToTs(dueDate: DueDate | undefined): number | null 
     t.setDate(t.getDate() + 1);
     return t.getTime();
   }
-  // ISO date string YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+  // ISO date string YYYY-MM-DD — reject calendar-invalid dates rather than
+  // letting the Date constructor overflow-normalize them to a wrong day.
+  if (isValidIsoDate(dueDate)) {
     const [y, mo, d] = dueDate.split('-').map(Number);
     return new Date(y, mo - 1, d).getTime();
   }
@@ -141,7 +155,7 @@ export function formatDueDateDisplay(dueDate: DueDate | undefined): string {
   if (dueDate === 'today') return 'Today';
   if (dueDate === 'tomorrow') return 'Tomorrow';
   if (dueDate === 'someday') return 'Someday';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+  if (isValidIsoDate(dueDate)) {
     const [y, mo, d] = dueDate.split('-').map(Number);
     return new Date(y, mo - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
