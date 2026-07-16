@@ -11,8 +11,9 @@ import { supabase } from '../../utils/supabase';
 
 function getInitials(user: User): string {
   const name = (user.user_metadata?.full_name || user.user_metadata?.name) as string | undefined;
-  if (name) {
-    const parts = name.trim().split(/\s+/);
+  const trimmedName = name?.trim();
+  if (trimmedName) {
+    const parts = trimmedName.split(/\s+/);
     return parts.length >= 2
       ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
       : parts[0][0].toUpperCase();
