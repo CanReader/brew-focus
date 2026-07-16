@@ -28,7 +28,7 @@ function getPool(filename: string): Pool {
 }
 
 function playFile(filename: string, volumePct: number): void {
-  const v = Math.max(0, Math.min(1, volumePct / 100));
+  const v = Number.isFinite(volumePct) ? Math.max(0, Math.min(1, volumePct / 100)) : 0;
   const pool = getPool(filename);
   const el = pool.elements[pool.cursor];
   pool.cursor = (pool.cursor + 1) % pool.elements.length;
@@ -47,7 +47,7 @@ export interface SoundOption {
 export async function playCustomSoundFile(dataUrl: string, volumePct: number): Promise<void> {
   return new Promise((resolve) => {
     const audio = new Audio(dataUrl);
-    audio.volume = Math.min(1, Math.max(0, volumePct / 100));
+    audio.volume = Number.isFinite(volumePct) ? Math.min(1, Math.max(0, volumePct / 100)) : 0;
     audio.onended = () => resolve();
     audio.onerror = () => resolve();
     audio.play().catch(() => resolve());
