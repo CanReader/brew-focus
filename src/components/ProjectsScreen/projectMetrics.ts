@@ -36,7 +36,9 @@ export function daysToDeadline(targetDate?: number): number | null {
   if (!targetDate) return null;
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const diff = targetDate - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  // Both endpoints are local midnights, so round (not ceil) the whole-day span:
+  // across a DST fall-back a 7-day gap is 7*24h+1h and ceil would report 8 days.
+  return Math.round(diff / (1000 * 60 * 60 * 24));
 }
 
 export function startOfWeekMs(): number {

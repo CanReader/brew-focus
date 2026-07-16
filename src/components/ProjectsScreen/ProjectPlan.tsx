@@ -25,7 +25,9 @@ function dropTargetStyle(active: boolean): React.CSSProperties {
 
 function daysUntil(targetMs: number): number {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  return Math.ceil((targetMs - today.getTime()) / (1000 * 60 * 60 * 24));
+  // Round, not ceil: both ends are local midnights, so a DST fall-back day
+  // (25h) would otherwise inflate the whole-day count by one.
+  return Math.round((targetMs - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function MilestoneSection({
