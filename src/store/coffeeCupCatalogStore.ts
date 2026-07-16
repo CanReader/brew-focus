@@ -343,17 +343,22 @@ export const useCoffeeCupCatalogStore = create<CatalogStore>((set, get) => ({
   },
 
   getSvgFor: async (id: string) => {
-    // 1) In-memory cache.
-    const mem = memSvgCache.get(id);
-    if (mem) return mem;
-
     const variant = get().catalog.find((v) => v.id === id);
+    // Key the in-memory cache by id + updatedAt (like localStorage), not by id
+    // alone: otherwise a variant first resolved from the bundled fallback
+    // (updatedAt=0) stayed pinned in memory, so a later catalog refresh with a
+    // real svgUrl/updatedAt could never override the stale art this session.
+    const memKey = `${id}:${variant?.updatedAt ?? 0}`;
+
+    // 1) In-memory cache.
+    const mem = memSvgCache.get(memKey);
+    if (mem) return mem;
 
     // 2) localStorage cache — only meaningful when we have a real updatedAt.
     if (variant && variant.updatedAt > 0) {
       const cached = readCache(id, variant.updatedAt);
       if (cached) {
-        memSvgCache.set(id, cached);
+        memSvgCache.set(memKey, cached);
         return cached;
       }
     }
@@ -364,7 +369,7 @@ export const useCoffeeCupCatalogStore = create<CatalogStore>((set, get) => ({
         const res = await fetch(variant.svgUrl);
         if (res.ok) {
           const svg = await res.text();
-          memSvgCache.set(id, svg);
+          memSvgCache.set(memKey, svg);
           writeCache(id, variant.updatedAt, svg);
           return svg;
         }
@@ -376,7 +381,7 @@ export const useCoffeeCupCatalogStore = create<CatalogStore>((set, get) => ({
     // 4) Bundled fallback.
     const bundled = BUNDLED_BY_ID.get(id);
     if (bundled) {
-      memSvgCache.set(id, bundled.svg);
+      memSvgCache.set(memKey, bundled.svg);
       return bundled.svg;
     }
 
