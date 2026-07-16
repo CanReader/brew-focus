@@ -3,17 +3,20 @@ import { TimerPhase, TimerSession } from '../types';
 import { supabase, getCurrentUserId } from '../utils/supabase';
 import { nanoid } from '../utils/nanoid';
 
-function todayStr() {
+function localDayStr(d: Date) {
   // LOCAL calendar day, not UTC. The daily-goal ring resets at local midnight
   // and focus_days rows are keyed by the user's own day — matching how the
   // Reports screen buckets sessions (getDate/setHours). Using toISOString()
   // here keyed by UTC, so for non-UTC users "today" reset at the wrong hour
   // and focus logged late evening / early morning landed on the wrong day.
-  const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+function todayStr() {
+  return localDayStr(new Date());
 }
 
 interface TimerStore {
@@ -244,12 +247,25 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
 
   addFocusSeconds: async (seconds) => {
+    // START-day attribution: a focus session counts toward the local day it
+    // BEGAN, matching how sessions/streaks bucket by startedAt (Reports keys off
+    // dayKey(startedAt)). Derive the start day from completion-time minus the
+    // elapsed duration — the same basis recordSession uses for startedAt — so a
+    // session that crosses local midnight credits the day it started, not the
+    // day it finished. Previously focus_days used the write-time day, which
+    // split the daily total from the streak for late-night sessions.
+    const startDay = localDayStr(new Date(Date.now() - seconds * 1000));
+    const currentDay = todayStr();
+    // Only the live "today" ring is day-sensitive: when the credited day is a
+    // previous day (session crossed midnight) we persist it but must not
+    // overwrite today's freshly-reset ring with a prior day's total.
+    const creditsToday = startDay === currentDay;
+
     const userId = await getCurrentUserId();
     if (!userId) {
-      set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: todayStr() });
+      if (creditsToday) set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: currentDay });
       return;
     }
-    const today = todayStr();
     try {
       // Atomic server-side increment. Desktop and mobile share one focus_days
       // row per local day, so the old read-modify-write upsert lost increments
@@ -257,14 +273,16 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       // does INSERT ... ON CONFLICT DO UPDATE seconds = seconds + EXCLUDED so
       // the add happens in a single statement under a row lock.
       const { data, error } = await supabase.rpc('increment_focus_seconds', {
-        p_date: today,
+        p_date: startDay,
         p_seconds: seconds,
       });
       if (error) throw error;
-      set({
-        todayFocusSeconds: typeof data === 'number' ? data : get().todayFocusSeconds + seconds,
-        lastResetDate: today,
-      });
+      if (creditsToday) {
+        set({
+          todayFocusSeconds: typeof data === 'number' ? data : get().todayFocusSeconds + seconds,
+          lastResetDate: currentDay,
+        });
+      }
     } catch (e) {
       // Fallback until the RPC is deployed: the non-atomic upsert still
       // persists (it just isn't race-proof), so focus time is never silently
@@ -275,17 +293,17 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
           .from('focus_days')
           .select('seconds')
           .eq('user_id', userId)
-          .eq('date', today)
+          .eq('date', startDay)
           .maybeSingle();
         const newTotal = (existing?.seconds ?? 0) + seconds;
         await supabase.from('focus_days').upsert(
-          { user_id: userId, date: today, seconds: newTotal },
+          { user_id: userId, date: startDay, seconds: newTotal },
           { onConflict: 'user_id,date' }
         );
-        set({ todayFocusSeconds: newTotal, lastResetDate: today });
+        if (creditsToday) set({ todayFocusSeconds: newTotal, lastResetDate: currentDay });
       } catch (e2) {
         console.warn('Failed to save focus time:', e2);
-        set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: today });
+        if (creditsToday) set({ todayFocusSeconds: get().todayFocusSeconds + seconds, lastResetDate: currentDay });
       }
     }
   },
