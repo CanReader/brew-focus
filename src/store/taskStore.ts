@@ -379,9 +379,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         const maxBoardPos = get().tasks
           .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
           .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
+        // A fresh occurrence starts unfinished: reset each subtask's completed
+        // flag. Spreading `...task` otherwise carries the prior occurrence's
+        // checked subtasks, so the new task renders as "3/3 done" immediately.
+        const resetSubtasks = task.subtasks.map((s) => ({ ...s, completed: false }));
         const newTask: Task = {
           ...task, id: newId, createdAt: newCreatedAt, completed: false,
           completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
+          subtasks: resetSubtasks,
           status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
         };
         await supabase.from('tasks').insert({
