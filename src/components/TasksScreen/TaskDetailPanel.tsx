@@ -526,6 +526,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--t3)' }}>{t('detail.notes')}</span>
           </div>
           <MarkdownNotes
+            key={task.id}
             value={task.notes}
             onChange={(notes) => onUpdate({ notes })}
             placeholder={t('detail.notesPlaceholder')}
