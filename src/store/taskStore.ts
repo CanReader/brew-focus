@@ -387,6 +387,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           ...task, id: newId, createdAt: newCreatedAt, completed: false,
           completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
           subtasks: resetSubtasks,
+          // Drop the prior occurrence's absolute reminder timestamp — it's now in
+          // the past, so carrying it forward makes the fresh occurrence render as
+          // reminder-overdue immediately (TaskItem: reminder < Date.now()).
+          reminder: undefined,
           status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
         };
         await supabase.from('tasks').insert({
