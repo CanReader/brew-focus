@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import ReactMarkdown, { Components } from 'react-markdown';
+import ReactMarkdown, { Components, defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, Info, AlertTriangle, CheckCircle2, AlertOctagon } from 'lucide-react';
 import { HeadingItem, slugify, collectCodeRanges, insideRange } from './preprocessing';
@@ -70,6 +70,12 @@ export const Preview: React.FC<Props> = ({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        // Preserve our internal wiki-link/tag scheme: react-markdown's default
+        // urlTransform only allows http(s)/mailto/etc and rewrites everything
+        // else to '', which would strip every `brewfocus://wiki/…` and
+        // `brewfocus://tag/…` href to '' before the custom `a` renderer can
+        // intercept it — silently killing the pill/resolve feature.
+        urlTransform={(url) => url.startsWith('brewfocus://') ? url : defaultUrlTransform(url)}
         components={{
           h1: (p) => <Heading level={1} accentColor={accentColor} slugCounts={slugCounts} {...p} />,
           h2: (p) => <Heading level={2} accentColor={accentColor} slugCounts={slugCounts} {...p} />,
