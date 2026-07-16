@@ -62,7 +62,7 @@ export function preprocessTags(raw: string): string {
   );
 }
 
-function collectCodeRanges(raw: string): Array<[number, number]> {
+export function collectCodeRanges(raw: string): Array<[number, number]> {
   const ranges: Array<[number, number]> = [];
   // Fenced blocks
   const fence = /```[\s\S]*?```/g;
@@ -74,7 +74,7 @@ function collectCodeRanges(raw: string): Array<[number, number]> {
   return ranges;
 }
 
-function insideRange(ranges: Array<[number, number]>, idx: number): boolean {
+export function insideRange(ranges: Array<[number, number]>, idx: number): boolean {
   for (const [a, b] of ranges) if (idx >= a && idx < b) return true;
   return false;
 }

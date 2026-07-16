@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, Info, AlertTriangle, CheckCircle2, AlertOctagon } from 'lucide-react';
-import { HeadingItem, slugify } from './preprocessing';
+import { HeadingItem, slugify, collectCodeRanges, insideRange } from './preprocessing';
 
 interface Props {
   /** Already-preprocessed markdown source (callouts, tags, wiki-links applied). */
@@ -30,11 +30,17 @@ const CALLOUT_META: Record<string, { color: string; bg: string; icon: React.Comp
  *  rendered checkbox back to its source position so we can flip the right one. */
 function findCheckboxPositions(raw: string): number[] {
   const positions: number[] = [];
+  // Exclude checkboxes inside fenced/inline code: remark-gfm renders interactive
+  // <input>s only for REAL task-list items, so a `- [ ]` inside a code block has
+  // no rendered checkbox. Counting it here would offset every position, mapping a
+  // clicked checkbox to the wrong source line (corrupting the code sample).
+  const codeRanges = collectCodeRanges(raw);
   const re = /(^|\n)([ \t]*)[-*+]\s\[([ xX])\]/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(raw))) {
     // index of `[` in the match
     const idx = m.index + (m[1] ? 1 : 0) + m[2].length + 2;
+    if (insideRange(codeRanges, idx)) continue;
     positions.push(idx);
   }
   return positions;
