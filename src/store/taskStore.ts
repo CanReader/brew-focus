@@ -394,7 +394,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           status: 'todo',
           type: newTask.type,
           milestoneId: newTask.milestoneId ?? null,
-          dependsOn: [],
+          dependsOn: newTask.dependsOn,
           boardPosition: newTask.boardPosition,
           customWorkDuration: newTask.customWorkDuration ?? null,
           customShortBreakDuration: newTask.customShortBreakDuration ?? null,
