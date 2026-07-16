@@ -73,6 +73,7 @@ export const SessionAnimation: React.FC<Props> = ({ type, onDone }) => {
     if (!type) return;
 
     const duration = type === 'session-complete' ? 3200 : 2800;
+    let sideCannons: ReturnType<typeof setTimeout> | undefined;
 
     if (type === 'session-complete') {
       // Center burst
@@ -85,14 +86,17 @@ export const SessionAnimation: React.FC<Props> = ({ type, onDone }) => {
         zIndex: 9999,
       });
       // Side cannons with slight delay
-      setTimeout(() => {
+      sideCannons = setTimeout(() => {
         confetti({ particleCount: 45, angle: 60,  spread: 60, origin: { x: 0.05, y: 0.6 }, zIndex: 9999 });
         confetti({ particleCount: 45, angle: 120, spread: 60, origin: { x: 0.95, y: 0.6 }, zIndex: 9999 });
       }, 180);
     }
 
     const timer = setTimeout(() => doneRef.current(), duration);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (sideCannons) clearTimeout(sideCannons);
+    };
   }, [type]);
 
   return (
