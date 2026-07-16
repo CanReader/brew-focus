@@ -265,7 +265,7 @@ export const MarkdownNotes: React.FC<Props> = ({
     // Slash menu navigation has top priority.
     if (slash) {
       const filteredCount = SLASH_COMMANDS.filter((c) => {
-        const q = slash.query.toLowerCase();
+        const q = slash.query.toLowerCase().trim();
         if (!q) return true;
         return c.label.toLowerCase().includes(q) || c.keywords.some((k) => k.startsWith(q));
       }).length;
@@ -275,7 +275,7 @@ export const MarkdownNotes: React.FC<Props> = ({
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         const filtered = SLASH_COMMANDS.filter((c) => {
-          const q = slash.query.toLowerCase();
+          const q = slash.query.toLowerCase().trim();
           if (!q) return true;
           return c.label.toLowerCase().includes(q) || c.keywords.some((k) => k.startsWith(q));
         });
