@@ -103,7 +103,12 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
       const todayFocusSeconds = focusRow?.seconds ?? 0;
 
-      set(alreadyRunning
+      // Re-read isRunning at commit time, not the value captured before the two
+      // awaits above: the user can press play during the query window, and the
+      // not-running branch would otherwise snap a freshly-started countdown back
+      // to full duration.
+      const runningNow = alreadyRunning || get().isRunning;
+      set(runningNow
         ? { sessions, todayFocusSeconds, lastResetDate: today, isLoaded: true }
         : {
             sessions,
