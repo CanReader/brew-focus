@@ -19,13 +19,11 @@ export function calculateNextDueDate(_dueDate: DueDate, repeatType: RepeatType):
     next.setDate(Math.min(base.getDate(), lastDay));
   }
 
-  // Check if it's tomorrow
-  const tomorrow = new Date(base);
-  tomorrow.setDate(base.getDate() + 1);
-
-  if (next.getTime() === base.getTime()) return 'today';
-  if (next.getTime() === tomorrow.getTime()) return 'tomorrow';
-
+  // Always return a CONCRETE ISO date, never a relative token. This value is
+  // persisted as the successor task's dueDate; the relative tokens 'today' /
+  // 'tomorrow' re-resolve against the current day at every read, so a daily
+  // recurrence stored as 'tomorrow' would drift forward one day every day and
+  // never become due. An anchored YYYY-MM-DD stays fixed to the intended day.
   const y = next.getFullYear();
   const m = String(next.getMonth() + 1).padStart(2, '0');
   const d = String(next.getDate()).padStart(2, '0');
