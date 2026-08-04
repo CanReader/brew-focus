@@ -13,6 +13,7 @@ import { AuthScreen } from './components/AuthScreen';
 import { WindowModeProvider, useWindowModeContext } from './contexts/WindowModeContext';
 import { Celebration } from './components/Celebration';
 import { useSessionCelebration } from './hooks/useSessionCelebration';
+import { useCompletionSideEffects } from './hooks/useCompletionSideEffects';
 import { useAuthStore } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
@@ -109,6 +110,7 @@ function MainApp() {
   const loadLocale = useLocaleStore((s) => s.loadFromSettings);
   const { isFullscreen, isWidget } = useWindowModeContext();
   const { celebration, dismissCelebration } = useSessionCelebration();
+  useCompletionSideEffects();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
   const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRight, Sliders } from 'lucide-react';
@@ -76,8 +76,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const skip = useTimerStore((s) => s.skip);
   const reset = useTimerStore((s) => s.reset);
   const { settings } = useSettingsStore();
-  const { tasks, activeTaskId, setActiveTask } = useTaskStore();
-  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
+  const { tasks, activeTaskId } = useTaskStore();
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const {
     effectiveWorkDuration,
@@ -87,49 +86,9 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
   } = useEffectiveDurations();
   const { enterFullscreen, enterWidget } = useWindowModeContext();
 
-  const prevPhaseRef = useRef(phase);
-
-  // Auto-start next session + trigger animation when phase actually changes (not on mount)
-  useEffect(() => {
-    if (prevPhaseRef.current === phase) {
-      return;
-    }
-    const completedPhase = prevPhaseRef.current;
-    prevPhaseRef.current = phase;
-
-    if (completedPhase === 'work') {
-      // Celebration + mood now live at App level (useSessionCelebration) so they
-      // also fire in fullscreen/widget. This effect keeps only the auto-flow.
-
-      // Auto-flow: pick the next incomplete task from the daily queue, if any.
-      // We don't auto-start the timer — user still presses Play (per design).
-      const queue = settings.dailyQueue?.taskIds ?? [];
-      if (queue.length > 0) {
-        const next = queue
-          .map((id) => tasks.find((t) => t.id === id))
-          .find((t) => t && !t.completed && t.id !== activeTaskId);
-        if (next) {
-          setActiveTask(next.id);
-          setTimerActiveTask(next.id);
-        }
-      }
-    }
-
-    const expectedTotal =
-      phase === 'work'
-        ? effectiveWorkDuration * 60
-        : phase === 'shortBreak'
-        ? effectiveShortBreakDuration * 60
-        : effectiveLongBreakDuration * 60;
-
-    if (!isRunning && useTimerStore.getState().secondsLeft === expectedTotal) {
-      if (phase !== 'work' && settings.autoStartBreaks) {
-        start();
-      } else if (phase === 'work' && settings.autoStartPomodoros) {
-        start();
-      }
-    }
-  }, [phase]);
+  // Completion side effects (queue advance + auto-start) deliberately do NOT
+  // live here: mounted in this screen they only ran in the main window mode.
+  // They are registered once at App level via useCompletionSideEffects.
 
   const activeBg = getBackground(settings.backgroundId ?? 'default');
   const bgImageUrl = settings.backgroundId === 'custom'
