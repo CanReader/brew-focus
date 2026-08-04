@@ -191,7 +191,9 @@ function Column({
 
 export const ProjectBoard: React.FC<Props> = ({ project, tasks, onOpenTask, onSwitchToFocus }) => {
   const { setTaskBoardPosition, setActiveTask } = useTaskStore();
-  const { reset, start, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const reset = useTimerStore((s) => s.reset);
+  const start = useTimerStore((s) => s.start);
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
   const { settings } = useSettingsStore();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [activeId, setActiveId] = React.useState<string | null>(null);

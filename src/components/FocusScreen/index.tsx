@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRight, Sliders } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
-import { useTimer } from '../../hooks/useTimer';
+import { TimerPhase } from '../../types';
+import { useEffectiveDurations, formatTimerTime } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
 import { CoffeeCupPicker } from './CoffeeCupPicker';
@@ -22,6 +24,38 @@ import { FocusCustomizePanel } from '../FocusCustomizePanel';
 
 interface FocusScreenProps {}
 
+// Leaf subscribers — these own the per-second `secondsLeft` subscription so the
+// FocusScreen body (side panel, gradient meshes, task selector, daily queue)
+// does NOT re-render every tick. Only the cup fill and the digits update each
+// second; everything else re-renders only on real state changes.
+const LiveCoffeeCup: React.FC<{
+  isRunning: boolean;
+  phase: TimerPhase;
+  size: number;
+  variantId: string;
+}> = ({ isRunning, phase, size, variantId }) => {
+  const secondsLeft = useTimerStore((s) => s.secondsLeft);
+  const totalSeconds = useTimerStore((s) => s.totalSeconds);
+  const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+  return <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={size} variantId={variantId} />;
+};
+
+const LiveTimerDisplay: React.FC<{
+  phase: TimerPhase;
+  sessionsCompleted: number;
+  sessionsGoal: number;
+}> = ({ phase, sessionsCompleted, sessionsGoal }) => {
+  const secondsLeft = useTimerStore((s) => s.secondsLeft);
+  return (
+    <TimerDisplay
+      timeString={formatTimerTime(secondsLeft)}
+      phase={phase}
+      sessionsCompleted={sessionsCompleted}
+      sessionsGoal={sessionsGoal}
+    />
+  );
+};
+
 export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const { t } = useTranslation('focus');
   const [panelOpen, setPanelOpen] = useState(true);
@@ -29,33 +63,35 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [cupPickerOpen, setCupPickerOpen] = useState(false);
   const [sessionAnim, setSessionAnim] = useState<SessionAnimationType>(null);
   const [moodSessionId, setMoodSessionId] = useState<string | null>(null);
-  const {
-    isRunning,
-    phase,
-    sessionCount,
-    start,
-    pause,
-    skip,
-    reset,
-    secondsLeft,
-    sessions,
-    rateMood,
-  } = useTimerStore();
+  // Narrow selectors — none of these change on a timer tick. `secondsLeft` is
+  // intentionally NOT subscribed here; the live countdown lives in the
+  // LiveCoffeeCup / LiveTimerDisplay leaf components so the rest of the screen
+  // stays still between real state changes.
+  const { isRunning, phase, sessionCount, sessions } = useTimerStore(
+    useShallow((s) => ({
+      isRunning: s.isRunning,
+      phase: s.phase,
+      sessionCount: s.sessionCount,
+      sessions: s.sessions,
+    }))
+  );
+  const start = useTimerStore((s) => s.start);
+  const pause = useTimerStore((s) => s.pause);
+  const skip = useTimerStore((s) => s.skip);
+  const reset = useTimerStore((s) => s.reset);
+  const rateMood = useTimerStore((s) => s.rateMood);
   const { settings } = useSettingsStore();
   const { tasks, activeTaskId, setActiveTask } = useTaskStore();
-  const { setActiveTask: setTimerActiveTask } = useTimerStore();
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const {
-    formatTime,
-    progress,
     effectiveWorkDuration,
     effectiveShortBreakDuration,
     effectiveLongBreakDuration,
     effectiveLongBreakInterval,
-  } = useTimer();
+  } = useEffectiveDurations();
   const { enterFullscreen, enterWidget } = useWindowModeContext();
 
-  const timeString = formatTime(secondsLeft);
   const prevPhaseRef = useRef(phase);
 
   // Auto-start next session + trigger animation when phase actually changes (not on mount)
@@ -94,7 +130,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
         ? effectiveShortBreakDuration * 60
         : effectiveLongBreakDuration * 60;
 
-    if (!isRunning && secondsLeft === expectedTotal) {
+    if (!isRunning && useTimerStore.getState().secondsLeft === expectedTotal) {
       if (phase !== 'work' && settings.autoStartBreaks) {
         start();
       } else if (phase === 'work' && settings.autoStartPomodoros) {
@@ -279,8 +315,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
                 title={t('changeCup')}
                 aria-label={t('changeCupAria')}
               >
-                <CoffeeCup
-                  progress={progress}
+                <LiveCoffeeCup
                   isRunning={isRunning}
                   phase={phase}
                   size={180}
@@ -301,8 +336,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
             </motion.div>
           </div>
 
-          <TimerDisplay
-            timeString={timeString}
+          <LiveTimerDisplay
             phase={phase}
             sessionsCompleted={
               activeTask && activeTask.pomodoroEstimate > 0

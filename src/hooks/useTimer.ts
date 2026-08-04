@@ -224,6 +224,51 @@ export function useTimerEngine() {
 }
 
 /**
+ * Resolves ONLY the effective durations (task → project → settings) without
+ * subscribing to the per-second `secondsLeft`/`totalSeconds` fields. Screens
+ * that need the durations for their handlers but render the live countdown in a
+ * small leaf component use this so they don't re-render every tick. Uses narrow
+ * selectors — none of `activeTaskId`/`settings`/`tasks`/`projects` change on a tick.
+ */
+export function useEffectiveDurations() {
+  const activeTaskId = useTimerStore((s) => s.activeTaskId);
+  const settings = useSettingsStore((s) => s.settings);
+  const tasks = useTaskStore((s) => s.tasks);
+  const projects = useTaskStore((s) => s.projects);
+
+  const activeTask = tasks.find((t) => t.id === activeTaskId);
+  const activeProject = activeTask?.projectId
+    ? projects.find((p) => p.id === activeTask.projectId)
+    : undefined;
+  const effectiveWorkDuration =
+    activeTask?.customWorkDuration ?? activeProject?.customWorkDuration ?? settings.workDuration;
+  const effectiveShortBreakDuration =
+    activeTask?.customShortBreakDuration ?? activeProject?.customShortBreakDuration ?? settings.shortBreakDuration;
+  const effectiveLongBreakDuration =
+    activeTask?.customLongBreakDuration ?? activeProject?.customLongBreakDuration ?? settings.longBreakDuration;
+  const skipLongBreak = activeTask?.skipLongBreak ?? activeProject?.skipLongBreak ?? false;
+  const effectiveLongBreakInterval = skipLongBreak
+    ? Infinity
+    : (activeTask?.customLongBreakInterval ?? activeProject?.customLongBreakInterval ?? settings.longBreakInterval);
+
+  return {
+    effectiveWorkDuration,
+    effectiveShortBreakDuration,
+    effectiveLongBreakDuration,
+    effectiveLongBreakInterval,
+  };
+}
+
+/**
+ * Shared MM:SS formatter. Pure — safe to call from leaf timer-display components.
+ */
+export function formatTimerTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+/**
  * Read-only helpers for screens that render the timer. Returns formatted
  * time, progress fraction, and the effective durations resolved from
  * task → project → settings. Does NOT run any intervals or side effects.

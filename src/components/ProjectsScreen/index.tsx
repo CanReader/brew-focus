@@ -16,9 +16,11 @@ type Filter = 'all' | 'active' | 'on_hold' | 'completed' | 'archived';
 
 interface Props {
   onSwitchToFocus: () => void;
+  openProjectId: string | null;
+  onOpenProject: (id: string | null) => void;
 }
 
-export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
+export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus, openProjectId, onOpenProject }) => {
   const { t } = useTranslation('projects');
   const FILTER_TABS: { id: Filter; label: string }[] = [
     { id: 'all',       label: t('filter.all')       },
@@ -27,13 +29,14 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
     { id: 'completed', label: t('filter.completed') },
     { id: 'archived',  label: t('filter.archived')  },
   ];
-  const { projects, tasks, updateTask, deleteTask, updateProject } = useTaskStore();
-  const { sessions } = useTimerStore();
+  const { projects, tasks, updateTask, deleteTask } = useTaskStore();
+  // Narrow selector — `sessions` only changes when a session is recorded, never
+  // on a timer tick, so this no longer re-renders the project grid every second.
+  const sessions = useTimerStore((s) => s.sessions);
   const [graphSelectedTaskId, setGraphSelectedTaskId] = useState<string | null>(null);
   const graphSelectedTask = graphSelectedTaskId ? tasks.find((t) => t.id === graphSelectedTaskId) : null;
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
-  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [topView, setTopView] = useState<'grid' | 'graph'>('grid');
 
@@ -68,7 +71,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
       <ProjectDetail
         key={openProject.id}
         project={openProject}
-        onBack={() => setOpenProjectId(null)}
+        onBack={() => onOpenProject(null)}
         onSwitchToFocus={onSwitchToFocus}
       />
     );
@@ -203,7 +206,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
           <GraphView
             projects={projects}
             tasks={tasks}
-            onOpenProject={(id) => setOpenProjectId(id)}
+            onOpenProject={(id) => onOpenProject(id)}
             onOpenTask={(id) => setGraphSelectedTaskId(id)}
           />
           <AnimatePresence>
@@ -268,7 +271,7 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus }) => {
                   project={p}
                   tasks={tasks}
                   sessions={sessions}
-                  onOpen={() => setOpenProjectId(p.id)}
+                  onOpen={() => onOpenProject(p.id)}
                 />
               ))}
             </AnimatePresence>

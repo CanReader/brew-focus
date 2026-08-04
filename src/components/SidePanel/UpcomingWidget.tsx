@@ -23,7 +23,8 @@ const priorityAccentRgba: Record<Priority, string> = {
 export const UpcomingWidget: React.FC = () => {
   const { t } = useTranslation('tasks');
   const { tasks, setActiveTask } = useTaskStore();
-  const { activeTaskId, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const activeTaskId = useTimerStore((s) => s.activeTaskId);
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
 
   const upcoming = tasks.filter((t) => !t.completed).slice(0, 5);
 

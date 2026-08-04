@@ -16,7 +16,8 @@ export const DailyQueuePanel: React.FC = () => {
   const { t } = useTranslation('focus');
   const { settings, updateSettings } = useSettingsStore();
   const { tasks, setActiveTask } = useTaskStore();
-  const { activeTaskId, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const activeTaskId = useTimerStore((s) => s.activeTaskId);
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
   const [open, setOpen] = useState(true);
   const [adding, setAdding] = useState(false);
   const [search, setSearch] = useState('');

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { TitleBar } from './components/TitleBar';
@@ -19,7 +20,7 @@ import { useCoffeeCupCatalogStore } from './store/coffeeCupCatalogStore';
 import { useLocaleStore } from './store/localeStore';
 import { useClickSound } from './hooks/useClickSound';
 import { useTimerEngine } from './hooks/useTimer';
-import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise } from './utils/backgroundNoise';
+import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise, armAudioUnlock } from './utils/backgroundNoise';
 import { useUpdater } from './hooks/useUpdater';
 import { UpdateBanner } from './components/UpdateBanner';
 import { onOpenUrl, getCurrent as getCurrentDeepLink } from '@tauri-apps/plugin-deep-link';
@@ -73,8 +74,19 @@ function LoadingScreen({ message }: { message?: string }) {
   );
 }
 
+// Isolates the timer engine's per-second `secondsLeft` subscription into its own
+// null-rendering component. `useTimerEngine` reads `secondsLeft` to drive the
+// setInterval, so calling it directly inside MainApp re-rendered the ENTIRE app
+// tree (TitleBar layout animations, every screen) once per second. Mounting it
+// here confines that tick re-render to this empty component.
+function TimerEngine() {
+  useTimerEngine();
+  return null;
+}
+
 function MainApp() {
   const [activeTab, setActiveTab] = useState<Tab>('focus');
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'account'>('timer');
   const [appReady, setAppReady] = useState(false);
@@ -82,19 +94,29 @@ function MainApp() {
   const { settings } = useSettingsStore();
   const { loadSettings } = useSettingsStore();
   const { loadTasks } = useTaskStore();
-  const { loadState, setActiveTask, isRunning: timerIsRunning, phase: timerPhase } = useTimerStore();
+  // Narrow selectors only — never subscribe MainApp to `secondsLeft`/`totalSeconds`
+  // or it re-renders the whole app every tick. `isRunning`/`phase` change rarely
+  // and only drive the background-noise effect below.
+  const loadState = useTimerStore((s) => s.loadState);
+  const setActiveTask = useTimerStore((s) => s.setActiveTask);
+  const { isRunning: timerIsRunning, phase: timerPhase } = useTimerStore(
+    useShallow((s) => ({ isRunning: s.isRunning, phase: s.phase }))
+  );
   const { loadEvents } = useActivityStore();
   const loadCatalog = useCoffeeCupCatalogStore((s) => s.loadCatalog);
   const loadLocale = useLocaleStore((s) => s.loadFromSettings);
   const { isFullscreen, isWidget } = useWindowModeContext();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
-  // Mount the timer engine at the app root so it keeps ticking regardless of
-  // which screen is on display. Previously this lived in useTimer() inside
-  // FocusScreen / TasksScreen, which meant the interval was cleared whenever
-  // the user navigated to Reports / Settings / Projects.
-  useTimerEngine();
   const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();
+
+  // Tab switches always reset the open project so the Projects tab reliably
+  // returns to the project LIST — clicking the already-active Projects tab is a
+  // no-op for setActiveTab, so without this the detail view stays stuck.
+  const handleTabChange = (tab: Tab) => {
+    if (tab === 'projects') setOpenProjectId(null);
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     const id = settings.backgroundNoise ?? 'none';
@@ -138,41 +160,58 @@ function MainApp() {
     setSettingsOpen(true);
   };
 
-  if (!appReady) return <LoadingScreen />;
-
-  if (isFullscreen) return <TimerView variant="fullscreen" />;
-  if (isWidget) return <TimerView variant="widget" />;
+  // The timer engine must stay mounted across every branch (loading, fullscreen,
+  // widget, main) so the timer keeps ticking regardless of which view is shown.
+  let content: ReactNode;
+  if (!appReady) {
+    content = <LoadingScreen />;
+  } else if (isFullscreen) {
+    content = <TimerView variant="fullscreen" />;
+  } else if (isWidget) {
+    content = <TimerView variant="widget" />;
+  } else {
+    content = (
+      <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
+        <TitleBar activeTab={activeTab} onTabChange={handleTabChange} onSettingsClick={() => setSettingsOpen(true)} onAccountSettingsClick={openAccountSettings} />
+        <UpdateBanner update={update} downloading={downloading} progress={progress} error={updateError} onInstall={installUpdate} onDismiss={dismiss} />
+        <div className="flex-1 overflow-hidden relative">
+          <AnimatePresence initial={false}>
+            {activeTab === 'focus' && (
+              <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
+                <FocusScreen />
+              </motion.div>
+            )}
+            {activeTab === 'tasks' && (
+              <motion.div key="tasks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
+                <TasksScreen onSwitchToFocus={() => handleTabChange('focus')} />
+              </motion.div>
+            )}
+            {activeTab === 'projects' && (
+              <motion.div key="projects" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
+                <ProjectsScreen
+                  openProjectId={openProjectId}
+                  onOpenProject={setOpenProjectId}
+                  onSwitchToFocus={() => handleTabChange('focus')}
+                />
+              </motion.div>
+            )}
+            {activeTab === 'reports' && (
+              <motion.div key="reports" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
+                <ReportsScreen />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} initialSection={settingsSection} />
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
-      <TitleBar activeTab={activeTab} onTabChange={setActiveTab} onSettingsClick={() => setSettingsOpen(true)} onAccountSettingsClick={openAccountSettings} />
-      <UpdateBanner update={update} downloading={downloading} progress={progress} error={updateError} onInstall={installUpdate} onDismiss={dismiss} />
-      <div className="flex-1 overflow-hidden relative">
-        <AnimatePresence initial={false}>
-          {activeTab === 'focus' && (
-            <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
-              <FocusScreen />
-            </motion.div>
-          )}
-          {activeTab === 'tasks' && (
-            <motion.div key="tasks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
-              <TasksScreen onSwitchToFocus={() => setActiveTab('focus')} />
-            </motion.div>
-          )}
-          {activeTab === 'projects' && (
-            <motion.div key="projects" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
-              <ProjectsScreen onSwitchToFocus={() => setActiveTab('focus')} />
-            </motion.div>
-          )}
-          {activeTab === 'reports' && (
-            <motion.div key="reports" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="absolute inset-0">
-              <ReportsScreen />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} initialSection={settingsSection} />
-    </div>
+    <>
+      <TimerEngine />
+      {content}
+    </>
   );
 }
 
@@ -207,6 +246,11 @@ function AppContent() {
   const { user, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
+    // Arm the audio unlock early so the first user gesture (even on the auth
+    // screen) primes the shared AudioContext into 'running'. WebKit otherwise
+    // keeps it suspended when noise is first started from a non-gesture effect.
+    armAudioUnlock();
+
     let unlisten: (() => void) | undefined;
     (async () => {
       // Await initialize() first so onAuthStateChange is subscribed before any

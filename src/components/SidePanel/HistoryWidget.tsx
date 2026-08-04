@@ -23,7 +23,7 @@ function formatTime(ts: number): string {
 
 export const HistoryWidget: React.FC = () => {
   const { t } = useTranslation('focus');
-  const { sessions } = useTimerStore();
+  const sessions = useTimerStore((s) => s.sessions);
   const phaseLabel: Record<TimerPhase, string> = {
     work: t('phase.work'),
     shortBreak: t('phase.shortBreak'),

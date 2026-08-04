@@ -185,7 +185,8 @@ const DonutChart: React.FC<{ segments: { value: number; color: string; label: st
 
 export const ReportsScreen: React.FC = () => {
   const { t } = useTranslation('reports');
-  const { sessions, todayFocusSeconds } = useTimerStore();
+  const sessions = useTimerStore((s) => s.sessions);
+  const todayFocusSeconds = useTimerStore((s) => s.todayFocusSeconds);
   const { tasks, projects } = useTaskStore();
   const { settings } = useSettingsStore();
 

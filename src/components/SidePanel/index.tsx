@@ -8,7 +8,8 @@ import { useTimerStore } from '../../store/timerStore';
 const SessionScratchPad: React.FC = () => {
   const { t } = useTranslation('focus');
   const [notes, setNotes] = useState('');
-  const { isRunning, phase } = useTimerStore();
+  const isRunning = useTimerStore((s) => s.isRunning);
+  const phase = useTimerStore((s) => s.phase);
   const prevPhaseRef = useRef(phase);
   const prevRunningRef = useRef(isRunning);
 

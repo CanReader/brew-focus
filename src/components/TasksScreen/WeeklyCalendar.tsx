@@ -57,7 +57,7 @@ function sessionBlocks(sessions: TimerSession[]): Block[] {
 
 export const WeeklyCalendar: React.FC = () => {
   const { t } = useTranslation('tasks');
-  const { sessions } = useTimerStore();
+  const sessions = useTimerStore((s) => s.sessions);
 
   // Refresh every minute so the "now" indicator tracks real time.
   const [nowTick, setNowTick] = useState(0);

@@ -523,7 +523,10 @@ export const ProjectDetail: React.FC<Props> = ({ project, onBack, onSwitchToFocu
     addTask, updateTask, deleteTask, toggleTask, setActiveTask,
     addProjectLink, removeProjectLink, reorderTasks,
   } = useTaskStore();
-  const { sessions, reset, start, setActiveTask: setTimerActiveTask } = useTimerStore();
+  const sessions = useTimerStore((s) => s.sessions);
+  const reset = useTimerStore((s) => s.reset);
+  const start = useTimerStore((s) => s.start);
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
   const { settings } = useSettingsStore();
 
   const [view, setView] = useState<'list' | 'board' | 'calendar' | 'plan'>('list');

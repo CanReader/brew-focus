@@ -42,6 +42,34 @@ async function getCtx(): Promise<AudioContext> {
   return _ctx;
 }
 
+// ── One-time audio unlock ─────────────────────────────────────────────────────
+// WebKit (Tauri on Linux) keeps a freshly-created AudioContext in the 'suspended'
+// state until resume() is called from inside a real user-gesture call stack. The
+// effect that starts background noise runs asynchronously *after* the play-button
+// click handler returns (reacting to the timer flipping to running), so a context
+// created there stays suspended and emits silence. Prime + resume the shared
+// context on the first user gesture so it is already 'running' by the time the
+// timer effect calls setBackgroundNoise().
+let _unlockArmed = false;
+
+export function armAudioUnlock(): void {
+  if (_unlockArmed || typeof window === 'undefined') return;
+  _unlockArmed = true;
+
+  const unlock = () => {
+    if (!_ctx) _ctx = new AudioContext();
+    if (_ctx.state === 'suspended') _ctx.resume().catch(() => { /**/ });
+  };
+
+  // Persistent (not once) so a context that later re-suspends — e.g. when the
+  // window is hidden to tray — is re-resumed on the next gesture. The handler is
+  // cheap (a state check) so leaving it attached is harmless.
+  const opts: AddEventListenerOptions = { capture: true, passive: true };
+  for (const evt of ['pointerdown', 'keydown', 'touchstart'] as const) {
+    window.addEventListener(evt, unlock, opts);
+  }
+}
+
 // ── Buffer generators ─────────────────────────────────────────────────────────
 
 function whiteBuffer(ctx: AudioContext, secs = 10): AudioBuffer {

@@ -7,7 +7,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 
 export const FocusTimeWidget: React.FC = () => {
   const { t } = useTranslation('focus');
-  const { todayFocusSeconds } = useTimerStore();
+  const todayFocusSeconds = useTimerStore((s) => s.todayFocusSeconds);
   const { settings } = useSettingsStore();
 
   // Guard against goalSeconds = 0 (corrupted stored setting) — would yield Infinity / NaN.

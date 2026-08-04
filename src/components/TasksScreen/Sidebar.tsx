@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
   const { t } = useTranslation('tasks');
   const { tasks, projects, addProject, deleteProject } = useTaskStore();
   const { settings, updateSettings } = useSettingsStore();
-  const { todayFocusSeconds } = useTimerStore();
+  const todayFocusSeconds = useTimerStore((s) => s.todayFocusSeconds);
   const [addingProject, setAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[5]);

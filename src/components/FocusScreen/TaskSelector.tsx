@@ -11,7 +11,7 @@ export const TaskSelector: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
 
   const { tasks, activeTaskId, setActiveTask } = useTaskStore();
-  const { setActiveTask: setTimerActiveTask } = useTimerStore();
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
 
   const incompleteTasks = tasks.filter((t) => !t.completed);
   const activeTask = tasks.find((t) => t.id === activeTaskId);

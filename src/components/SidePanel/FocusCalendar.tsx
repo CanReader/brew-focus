@@ -46,7 +46,7 @@ const HOURS = Array.from({ length: 25 }, (_, i) => i); // 0..24
 
 export const FocusCalendar: React.FC = () => {
   const { t } = useTranslation('focus');
-  const { sessions } = useTimerStore();
+  const sessions = useTimerStore((s) => s.sessions);
 
   const today = new Date();
   const todayKey = dateKey(today);

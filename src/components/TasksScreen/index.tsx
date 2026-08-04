@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -12,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useTaskStore } from '../../store/taskStore';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { useTimer } from '../../hooks/useTimer';
+import { useEffectiveDurations, formatTimerTime } from '../../hooks/useTimer';
 import { StatsBar } from './StatsBar';
 import { TaskItem } from './TaskItem';
 import { Sidebar, SidebarView } from './Sidebar';
@@ -383,9 +384,68 @@ const ProjectDetailCard: React.FC<{
   );
 };
 
+// Self-contained mini timer bar. Owns the per-second `secondsLeft` subscription
+// so the (large) TasksScreen body does NOT re-render every tick — only this bar
+// updates each second.
+const MiniTimerBar: React.FC = () => {
+  const { t: tFocus } = useTranslation('focus');
+  const { isRunning, phase, secondsLeft } = useTimerStore(
+    useShallow((s) => ({ isRunning: s.isRunning, phase: s.phase, secondsLeft: s.secondsLeft }))
+  );
+  const start = useTimerStore((s) => s.start);
+  const pause = useTimerStore((s) => s.pause);
+  const skip = useTimerStore((s) => s.skip);
+  const {
+    effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval,
+  } = useEffectiveDurations();
+
+  const phaseLabel =
+    phase === 'work' ? tFocus('phase.work') :
+    phase === 'shortBreak' ? tFocus('phase.shortBreak') :
+    tFocus('phase.longBreak');
+  const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
+
+  return (
+    <div
+      className="absolute bottom-0 left-44 right-0 flex items-center justify-center gap-4 px-6 py-2.5"
+      style={{
+        background: 'linear-gradient(180deg, transparent 0%, var(--bg) 100%)',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <div className="flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: phaseColor }} />
+        <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{phaseLabel}</span>
+      </div>
+      <span className="text-[18px] font-light tabular-nums" style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}>
+        {formatTimerTime(secondsLeft)}
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={isRunning ? pause : start}
+          className="w-7 h-7 flex items-center justify-center rounded-full"
+          style={{ background: phaseColor }}
+        >
+          {isRunning
+            ? <Pause size={12} fill="white" color="white" />
+            : <Play size={12} fill="white" color="white" style={{ marginLeft: 1 }} />
+          }
+        </button>
+        <button
+          onClick={() => skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval)}
+          className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+          style={{ background: 'var(--card)', color: 'var(--t3)' }}
+        >
+          <SkipForward size={11} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitchToFocus }) => {
   const { t } = useTranslation('tasks');
-  const { t: tFocus } = useTranslation('focus');
   const [inputValue, setInputValue] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [sidebarView, setSidebarView] = useState<SidebarView>('all');
@@ -412,7 +472,11 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     reorderTasks, setActiveTask, activeTaskId, updateProject,
   } = useTaskStore();
 
-  const { isRunning, phase, secondsLeft, start, pause, skip, reset, setActiveTask: setTimerActiveTask } = useTimerStore();
+  // The live countdown lives in <MiniTimerBar/>; TasksScreen itself only needs
+  // the (stable) actions for play/reset, so it no longer re-renders every tick.
+  const start = useTimerStore((s) => s.start);
+  const reset = useTimerStore((s) => s.reset);
+  const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
   const { settings, updateSettings } = useSettingsStore();
   const [showSaveView, setShowSaveView] = useState(false);
   const [saveViewName, setSaveViewName] = useState('');
@@ -438,7 +502,6 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
     setSearchQuery(sv.searchQuery);
     setSelectedTaskId(null);
   };
-  const { formatTime, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useTimer();
 
   const viewTasks = sortTasks(searchTasks(filterTasks(tasks, sidebarView), searchQuery), sortBy);
   const completedTasks = sidebarView !== 'completed' ? tasks.filter((t) => t.completed) : [];
@@ -581,11 +644,6 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
   };
 
   const title = getViewTitle(sidebarView, projects, t);
-  const phaseLabel =
-    phase === 'work' ? tFocus('phase.work') :
-    phase === 'shortBreak' ? tFocus('phase.shortBreak') :
-    tFocus('phase.longBreak');
-  const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
 
   const displayPomodoros = hoverPomodoros ?? newTaskPomodoros;
 
@@ -1185,41 +1243,7 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
         </AnimatePresence>
 
         {/* Mini timer bar at bottom */}
-        <div
-          className="absolute bottom-0 left-44 right-0 flex items-center justify-center gap-4 px-6 py-2.5"
-          style={{
-            background: 'linear-gradient(180deg, transparent 0%, var(--bg) 100%)',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: phaseColor }} />
-            <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{phaseLabel}</span>
-          </div>
-          <span className="text-[18px] font-light tabular-nums" style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}>
-            {formatTime(secondsLeft)}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={isRunning ? pause : start}
-              className="w-7 h-7 flex items-center justify-center rounded-full"
-              style={{ background: phaseColor }}
-            >
-              {isRunning
-                ? <Pause size={12} fill="white" color="white" />
-                : <Play size={12} fill="white" color="white" style={{ marginLeft: 1 }} />
-              }
-            </button>
-            <button
-              onClick={() => skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval)}
-              className="w-6 h-6 flex items-center justify-center rounded-full transition-colors"
-              style={{ background: 'var(--card)', color: 'var(--t3)' }}
-            >
-              <SkipForward size={11} />
-            </button>
-          </div>
-        </div>
+        <MiniTimerBar />
       </div>
 
       {/* Task detail panel */}

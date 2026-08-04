@@ -18,7 +18,7 @@ function formatStatTime(seconds: number): { main: string; sub: string } {
 
 export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
   const { t } = useTranslation('tasks');
-  const { todayFocusSeconds } = useTimerStore();
+  const todayFocusSeconds = useTimerStore((s) => s.todayFocusSeconds);
   const { settings } = useSettingsStore();
   const { projects } = useTaskStore();
 

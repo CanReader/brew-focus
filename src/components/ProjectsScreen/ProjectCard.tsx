@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, ListTodo, Target, Archive } from 'lucide-react';
 import { Project, Task, TimerSession } from '../../types';
@@ -19,7 +19,7 @@ interface Props {
   onOpen: () => void;
 }
 
-export const ProjectCard: React.FC<Props> = ({ project, tasks, sessions, onOpen }) => {
+const ProjectCardImpl: React.FC<Props> = ({ project, tasks, sessions, onOpen }) => {
   const { done, total, pct } = projectCompletion(tasks, project.id);
   const weekFocus = projectFocusSeconds(sessions, tasks, project.id, startOfWeekMs());
   const dToDeadline = daysToDeadline(project.targetDate);
@@ -28,8 +28,9 @@ export const ProjectCard: React.FC<Props> = ({ project, tasks, sessions, onOpen 
   const milestoneTotal = project.milestones.length;
 
   // 7-day completion histogram. Bars relative to this card's own max (so
-  // low-velocity projects don't always render dead).
-  const velocity = (() => {
+  // low-velocity projects don't always render dead). Memoized so the reduce
+  // over every task only re-runs when this project's tasks actually change.
+  const velocity = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const buckets: number[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -43,7 +44,7 @@ export const ProjectCard: React.FC<Props> = ({ project, tasks, sessions, onOpen 
       buckets.push(count);
     }
     return { buckets, max: Math.max(0, ...buckets) };
-  })();
+  }, [tasks, project.id]);
 
   const pill = STATUS_PILL[project.status];
 
@@ -221,3 +222,7 @@ export const ProjectCard: React.FC<Props> = ({ project, tasks, sessions, onOpen 
     </motion.button>
   );
 };
+
+// Memoized: the parent grid re-renders on search/filter changes, but a card only
+// needs to re-render when its own project, the task list, or sessions change.
+export const ProjectCard = React.memo(ProjectCardImpl);
