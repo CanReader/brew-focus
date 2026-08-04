@@ -8,17 +8,26 @@ This file tracks the **desktop** app only. The mobile app has its own [`mobile/C
 
 ## [Unreleased]
 
+> Desktop side of the "Fresh Roast" redesign cycle — parity with mobile's visual overhaul.
+
 ### Added
--
+- **Fresh Roast parity** — new **Espresso** (default) and **Latte** themes, **Caramel** accent (default for users without an explicit choice), liquid brew-deepening cup with rising meniscus, softened steam, and a full-screen session celebration with integrated mood rating.
+- Celebration and mood capture now appear in **fullscreen and widget modes** — previously a session completed there showed nothing and the mood rating was silently lost.
+- Fonts ship locally (Fraunces + Plus Jakarta Sans as WOFF2) — first paint no longer depends on a CDN and works offline.
 
 ### Changed
--
+- UI typeface Outfit → **Plus Jakarta Sans** (brand parity with mobile); wordmark is upright Fraunces.
+- Two-tier color system: accents and semantic colors darken on light themes to stay legible (≥3.5:1; amber/green were ~1.8:1); ink on filled controls derives from measured contrast per fill (the play/pause glyph was 1.9:1 on a green accent).
+- Brand accents unified with mobile (red `#ff4d4d` → `#e85d50`).
+- Timer digits render in fixed-width cells — the countdown no longer shifts as digits change.
 
 ### Fixed
--
+- ~80 hardcoded red literals swept to theme tokens — non-red accents no longer leave red ghosts anywhere; destructive UI keeps its own semantic red instead of following the accent.
+- Daily-queue auto-advance now runs in fullscreen and widget modes.
+- Light themes: glass panels, surface tints, and the focus-screen dot grid are no longer white-on-white.
 
 ### Removed
--
+- `SessionAnimation` (superseded by the celebration overlay) and the Google Fonts CDN dependency.
 
 ---
 
