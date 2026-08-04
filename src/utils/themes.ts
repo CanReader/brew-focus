@@ -74,6 +74,14 @@ export const THEMES: AppTheme[] = [
   },
   // ── Warm ─────────────────────────────────────────────────────────────────
   {
+    id: 'espresso',
+    name: 'Espresso',
+    category: 'warm',
+    bg: '#120b07', bg2: '#1a110b', card: '#241812', cardH: '#2e1f16',
+    brd: 'rgba(255,205,150,0.08)', brd2: 'rgba(255,205,150,0.15)',
+    t: '#f6e9da', t2: '#c4a183', t3: '#8a6d50',
+  },
+  {
     id: 'coffee',
     name: 'Coffee',
     category: 'warm',
@@ -204,6 +212,14 @@ export const THEMES: AppTheme[] = [
   },
   // ── Light ────────────────────────────────────────────────────────────────
   {
+    id: 'latte',
+    name: 'Latte',
+    category: 'light',
+    bg: '#faf4ec', bg2: '#f3e9dc', card: '#ffffff', cardH: '#eee0cf',
+    brd: 'rgba(120,80,40,0.12)', brd2: 'rgba(120,80,40,0.20)',
+    t: '#2b1c10', t2: '#7a5c3e', t3: '#9b7c5c',
+  },
+  {
     id: 'blossom',
     name: 'Blossom',
     category: 'light',
@@ -261,9 +277,12 @@ export const THEMES: AppTheme[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID = 'obsidian';
+export const DEFAULT_THEME_ID = 'espresso';
 
-export const FREE_THEME_IDS: string[] = ['obsidian', 'charcoal', 'slate'];
+// espresso is the fresh-install default, so it must be free — a Pro-gated
+// default would lock new users out of their own starting theme the moment
+// PRO_GATING_ENABLED flips on. latte is intentionally absent (Pro by omission).
+export const FREE_THEME_IDS: string[] = ['espresso', 'obsidian', 'charcoal', 'slate'];
 
 export function getTheme(id: string): AppTheme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];

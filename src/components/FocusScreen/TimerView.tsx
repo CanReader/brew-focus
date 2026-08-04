@@ -8,6 +8,7 @@ import { useTaskStore } from '../../store/taskStore';
 import { useEffectiveDurations, formatTimerTime } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
+import { TimerDigits } from './TimerDigits';
 import { TimerPhase } from '../../types';
 import { getBackground } from '../../utils/backgrounds';
 
@@ -36,7 +37,7 @@ const LiveCup: React.FC<{
 // attributes) stays out of the per-tick render.
 const LiveTimeText: React.FC = () => {
   const secondsLeft = useTimerStore((s) => s.secondsLeft);
-  return <>{formatTimerTime(secondsLeft)}</>;
+  return <TimerDigits value={formatTimerTime(secondsLeft)} />;
 };
 
 interface TimerViewProps {
@@ -135,8 +136,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
         {/* Time */}
         <div
-          className="text-[42px] font-light tabular-nums mt-2"
-          style={{ color: 'var(--t)', letterSpacing: '-1px' }}
+          className="text-[42px] mt-2"
+          style={{ color: 'var(--t)', fontFamily: "'Fraunces', serif", fontWeight: 400 }}
           data-no-drag
         >
           <LiveTimeText />
@@ -312,8 +313,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
       {/* Time */}
       <div
-        className="text-[96px] font-light tabular-nums mt-8"
-        style={{ color: 'var(--t)', letterSpacing: '-4px', lineHeight: 1 }}
+        className="text-[96px] mt-8"
+        style={{ color: 'var(--t)', fontFamily: "'Fraunces', serif", fontWeight: 400, lineHeight: 1 }}
       >
         <LiveTimeText />
       </div>

@@ -124,5 +124,16 @@
   "scratchpad": {
     "title": "Notes de session",
     "placeholder": "Note quelque chose…"
+  },
+  "celebration": {
+    "title": "Bien infusé",
+    "subtitle": "{minutes, plural, one {# minute de concentration} other {# minutes de concentration}}",
+    "today": "{minutes, plural, one {# minute aujourd'hui} other {# minutes aujourd'hui}}",
+    "moodPrompt": "Ça s'est passé comment ?",
+    "moodAria": "Noter {n} sur 5",
+    "continue": "Continuer l'infusion",
+    "dismissHint": "Cliquez ou appuyez sur Échap pour fermer",
+    "breakOver": "Pause terminée",
+    "breakOverSub": "C'est reparti"
   }
 }

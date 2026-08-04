@@ -220,7 +220,7 @@ export interface TimerSession {
 }
 
 // Settings types
-export type AccentColor = 'red' | 'blue' | 'amber' | 'green' | 'purple' | 'pink';
+export type AccentColor = 'caramel' | 'red' | 'blue' | 'amber' | 'green' | 'purple' | 'pink';
 
 export interface AppSettings {
   workDuration: number; // minutes
@@ -273,13 +273,34 @@ export interface TaskState {
   activeTaskId: string | null;
 }
 
+/** Brand accents. Used on dark palettes and always in the accent picker. */
 export const ACCENT_COLORS: Record<AccentColor, string> = {
+  caramel: '#ca8438',
   red: '#ff4d4d',
   blue: '#5b8dee',
   amber: '#f5a623',
   green: '#22d3a5',
   purple: '#a78bfa',
   pink: '#f472b6',
+};
+
+/**
+ * Light-palette tier. The brand accents are tuned for dark backgrounds and drop
+ * to ~2–3:1 on light ones, which fails WCAG everywhere the accent is used as
+ * text or an icon. Each entry keeps its brand hue and saturation and lowers
+ * only lightness until it clears 3.5:1 against `latte` (#faf4ec) — the darkest,
+ * and therefore worst-case, light background of the 8 light themes. Every entry
+ * measures >= 3.51 on all of them. Static table, not a runtime darkening pass,
+ * so desktop and mobile cannot drift; keep byte-identical with mobile's copy.
+ */
+export const ACCENT_COLORS_LIGHT: Record<AccentColor, string> = {
+  caramel: '#b47430',
+  red: '#ff2020',
+  blue: '#467eec',
+  amber: '#b57408',
+  green: '#189373',
+  purple: '#8d68f9',
+  pink: '#ef2e93',
 };
 
 export const PROJECT_COLORS = [

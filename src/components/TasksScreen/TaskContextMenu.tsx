@@ -132,7 +132,7 @@ export const TaskContextMenu: React.FC<TaskContextMenuProps> = ({
             <Minus size={11} />
           </button>
           <span
-            className="flex-1 text-center text-[18px] font-light tabular-nums"
+            className="flex-1 text-center text-[18px] font-normal tabular-nums"
             style={{ color: 'var(--t)' }}
           >
             {task.pomodoroEstimate}

@@ -19,7 +19,7 @@ interface SettingsModalProps {
 
 type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'language' | 'account';
 
-const ACCENT_KEYS: AccentColor[] = ['red', 'blue', 'amber', 'green', 'purple', 'pink'];
+const ACCENT_KEYS: AccentColor[] = ['caramel', 'red', 'blue', 'amber', 'green', 'purple', 'pink'];
 
 // Pro gating stays dormant until pricing ships. Single switch for BOTH the
 // per-category badge and the per-tile crown — when only the crown was gated,

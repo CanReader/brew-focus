@@ -19,7 +19,7 @@ export const ProBadge: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'sm' }) => {
         border: '1px solid color-mix(in srgb, var(--accent) 35%, transparent)',
         color: 'var(--accent)',
         fontSize: isMd ? 10 : 9,
-        fontWeight: 800,
+        fontWeight: 700,
         letterSpacing: '0.08em',
         lineHeight: 1,
       }}

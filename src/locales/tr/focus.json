@@ -124,5 +124,16 @@
   "scratchpad": {
     "title": "Oturum Notları",
     "placeholder": "Bir şeyler yaz…"
+  },
+  "celebration": {
+    "title": "Güzel demlendi",
+    "subtitle": "{minutes, plural, one {# odaklanma dakikası} other {# odaklanma dakikası}}",
+    "today": "{minutes, plural, one {bugün # dakika} other {bugün # dakika}}",
+    "moodPrompt": "Nasıl hissettirdi?",
+    "moodAria": "5 üzerinden {n} puan",
+    "continue": "Demlemeye devam",
+    "dismissHint": "Kapatmak için tıkla veya Esc'e bas",
+    "breakOver": "Mola bitti",
+    "breakOverSub": "Odaklanma zamanı"
   }
 }

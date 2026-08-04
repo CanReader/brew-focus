@@ -11,6 +11,8 @@ import { TimerView } from './components/FocusScreen/TimerView';
 import { SettingsModal } from './components/SettingsModal';
 import { AuthScreen } from './components/AuthScreen';
 import { WindowModeProvider, useWindowModeContext } from './contexts/WindowModeContext';
+import { Celebration } from './components/Celebration';
+import { useSessionCelebration } from './hooks/useSessionCelebration';
 import { useAuthStore } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useTaskStore } from './store/taskStore';
@@ -106,6 +108,7 @@ function MainApp() {
   const loadCatalog = useCoffeeCupCatalogStore((s) => s.loadCatalog);
   const loadLocale = useLocaleStore((s) => s.loadFromSettings);
   const { isFullscreen, isWidget } = useWindowModeContext();
+  const { celebration, dismissCelebration } = useSessionCelebration();
 
   useClickSound(settings.clickSounds, settings.soundVolume ?? 70);
   const { update, downloading, progress, error: updateError, installUpdate, dismiss } = useUpdater();
@@ -211,6 +214,15 @@ function MainApp() {
     <>
       <TimerEngine />
       {content}
+      {/* Mounted outside the fullscreen/widget/main branch on purpose: when this
+          lived inside FocusScreen, finishing a session in fullscreen or widget
+          mode showed no celebration and silently dropped the mood rating. */}
+      <Celebration
+        kind={celebration.kind}
+        sessionId={celebration.sessionId}
+        focusedSeconds={celebration.focusedSeconds}
+        onDismiss={dismissCelebration}
+      />
     </>
   );
 }

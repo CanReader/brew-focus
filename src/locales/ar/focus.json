@@ -124,5 +124,16 @@
     "ariaItem": "{label}",
     "ariaPremium": "{label} (مميّز)",
     "close": "إغلاق"
+  },
+  "celebration": {
+    "title": "تخمير موفق",
+    "subtitle": "{minutes, plural, zero {# دقيقة تركيز} one {دقيقة تركيز واحدة} two {دقيقتا تركيز} few {# دقائق تركيز} many {# دقيقة تركيز} other {# دقيقة تركيز}}",
+    "today": "{minutes, plural, zero {# دقيقة اليوم} one {دقيقة واحدة اليوم} two {دقيقتان اليوم} few {# دقائق اليوم} many {# دقيقة اليوم} other {# دقيقة اليوم}}",
+    "moodPrompt": "كيف كان شعورك؟",
+    "moodAria": "قيّم {n} من 5",
+    "continue": "واصل التخمير",
+    "dismissHint": "انقر أو اضغط Esc للإغلاق",
+    "breakOver": "انتهت الاستراحة",
+    "breakOverSub": "حان وقت التركيز"
   }
 }

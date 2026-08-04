@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { AppSettings, AccentColor, ACCENT_COLORS } from '../types';
+import { AppSettings, AccentColor, ACCENT_COLORS, ACCENT_COLORS_LIGHT } from '../types';
 import { supabase, getCurrentUserId } from '../utils/supabase';
-import { applyTheme, DEFAULT_THEME_ID, hexToRgbTriplet } from '../utils/themes';
+import { applyTheme, getTheme, DEFAULT_THEME_ID, hexToRgbTriplet } from '../utils/themes';
 
 const defaultSettings: AppSettings = {
   workDuration: 30,
@@ -13,7 +13,7 @@ const defaultSettings: AppSettings = {
   soundNotifications: true,
   clickSounds: true,
   soundVolume: 70,
-  accentColor: 'red',
+  accentColor: 'caramel',
   longBreakInterval: 4,
   theme: DEFAULT_THEME_ID,
   backgroundId: 'default',
@@ -46,8 +46,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     const userId = await getCurrentUserId();
     if (!userId) {
       set({ isLoaded: true });
-      applyAccentColor(defaultSettings.accentColor);
-      applyTheme(DEFAULT_THEME_ID);
+      applyAppearance(DEFAULT_THEME_ID, defaultSettings.accentColor);
       return;
     }
     try {
@@ -68,21 +67,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       }
       const merged = { ...defaultSettings, ...loaded };
       set({ settings: merged, isLoaded: true });
-      applyAccentColor(merged.accentColor);
-      applyTheme(merged.theme ?? DEFAULT_THEME_ID);
+      applyAppearance(merged.theme ?? DEFAULT_THEME_ID, merged.accentColor);
     } catch (e) {
       console.warn('Failed to load settings:', e);
       set({ isLoaded: true });
-      applyAccentColor(defaultSettings.accentColor);
-      applyTheme(DEFAULT_THEME_ID);
+      applyAppearance(DEFAULT_THEME_ID, defaultSettings.accentColor);
     }
   },
 
   updateSettings: async (partial) => {
     const newSettings = { ...get().settings, ...partial };
     set({ settings: newSettings });
-    if (partial.accentColor) applyAccentColor(partial.accentColor);
-    if (partial.theme) applyTheme(partial.theme);
+    // Either change re-resolves both, since the theme decides the accent tier.
+    if (partial.accentColor || partial.theme) {
+      applyAppearance(newSettings.theme ?? DEFAULT_THEME_ID, newSettings.accentColor);
+    }
 
     const userId = await getCurrentUserId();
     if (!userId) return;
@@ -100,8 +99,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   resetSettings: async () => {
     set({ settings: defaultSettings });
-    applyAccentColor(defaultSettings.accentColor);
-    applyTheme(DEFAULT_THEME_ID);
+    applyAppearance(DEFAULT_THEME_ID, defaultSettings.accentColor);
 
     const userId = await getCurrentUserId();
     if (!userId) return;
@@ -123,8 +121,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   },
 }));
 
-function applyAccentColor(color: AccentColor) {
-  const hex = ACCENT_COLORS[color];
+/**
+ * Applies theme + accent together. They cannot be applied independently: the
+ * accent tier is chosen by the theme's category, so switching to a light theme
+ * must also re-resolve the accent (and vice-versa).
+ */
+function applyAppearance(themeId: string, accent: AccentColor) {
+  applyTheme(themeId);
+  applyAccentColor(accent, getTheme(themeId).category === 'light');
+}
+
+function applyAccentColor(color: AccentColor, isLightTheme: boolean) {
+  const hex = isLightTheme ? ACCENT_COLORS_LIGHT[color] : ACCENT_COLORS[color];
   const rgb = hexToRgbTriplet(hex);
   document.documentElement.style.setProperty('--accent', hex);
   // Consumers compose their own alpha as rgba(var(--accent-rgb), α). Anything

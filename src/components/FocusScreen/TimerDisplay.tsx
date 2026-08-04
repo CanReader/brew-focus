@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { TimerPhase } from '../../types';
+import { TimerDigits } from './TimerDigits';
 
 interface TimerDisplayProps {
   timeString: string;
@@ -85,9 +86,10 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
           transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           style={{
             fontSize: '96px',
-            fontWeight: 200,
-            letterSpacing: '-4px',
-            fontVariantNumeric: 'tabular-nums',
+            // Fraunces ships 400/600/700 only and font-synthesis is `none`, so
+            // any other weight would silently snap to the nearest file.
+            fontFamily: "'Fraunces', serif",
+            fontWeight: 400,
             lineHeight: 1,
             // Theme-aware gradient: goes from primary text color to secondary,
             // which means subtle highlight on dark themes AND subtle fade on
@@ -103,7 +105,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.12))',
           }}
         >
-          {timeString}
+          <TimerDigits value={timeString} />
         </motion.div>
       </AnimatePresence>
 

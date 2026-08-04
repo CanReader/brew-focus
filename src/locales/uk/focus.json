@@ -124,5 +124,16 @@
     "ariaItem": "{label}",
     "ariaPremium": "{label} (преміум)",
     "close": "Закрити"
+  },
+  "celebration": {
+    "title": "Гарно заварено",
+    "subtitle": "{minutes, plural, one {# хвилина фокусу} few {# хвилини фокусу} many {# хвилин фокусу} other {# хвилини фокусу}}",
+    "today": "{minutes, plural, one {# хвилина сьогодні} few {# хвилини сьогодні} many {# хвилин сьогодні} other {# хвилини сьогодні}}",
+    "moodPrompt": "Як відчуття?",
+    "moodAria": "Оцінити {n} з 5",
+    "continue": "Заварювати далі",
+    "dismissHint": "Клацніть або натисніть Esc, щоб закрити",
+    "breakOver": "Перерва закінчилась",
+    "breakOverSub": "Час зосередитись"
   }
 }

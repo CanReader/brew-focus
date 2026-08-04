@@ -418,7 +418,7 @@ const MiniTimerBar: React.FC = () => {
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: phaseColor }} />
         <span className="text-[11px]" style={{ color: 'var(--t3)' }}>{phaseLabel}</span>
       </div>
-      <span className="text-[18px] font-light tabular-nums" style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}>
+      <span className="text-[18px] font-normal tabular-nums" style={{ color: 'var(--t)', letterSpacing: '-0.5px' }}>
         {formatTimerTime(secondsLeft)}
       </span>
       <div className="flex items-center gap-2">

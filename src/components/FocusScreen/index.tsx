@@ -19,7 +19,6 @@ import { SidePanel } from '../SidePanel';
 import { playTimerPause } from '../../utils/sounds';
 import { playSoundOption, playCustomSoundFile } from '../../utils/soundOptions';
 import { getBackground } from '../../utils/backgrounds';
-import { SessionAnimation, SessionAnimationType } from '../SessionAnimation';
 import { FocusCustomizePanel } from '../FocusCustomizePanel';
 
 interface FocusScreenProps {}
@@ -61,25 +60,21 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
   const [panelOpen, setPanelOpen] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [cupPickerOpen, setCupPickerOpen] = useState(false);
-  const [sessionAnim, setSessionAnim] = useState<SessionAnimationType>(null);
-  const [moodSessionId, setMoodSessionId] = useState<string | null>(null);
   // Narrow selectors — none of these change on a timer tick. `secondsLeft` is
   // intentionally NOT subscribed here; the live countdown lives in the
   // LiveCoffeeCup / LiveTimerDisplay leaf components so the rest of the screen
   // stays still between real state changes.
-  const { isRunning, phase, sessionCount, sessions } = useTimerStore(
+  const { isRunning, phase, sessionCount } = useTimerStore(
     useShallow((s) => ({
       isRunning: s.isRunning,
       phase: s.phase,
       sessionCount: s.sessionCount,
-      sessions: s.sessions,
     }))
   );
   const start = useTimerStore((s) => s.start);
   const pause = useTimerStore((s) => s.pause);
   const skip = useTimerStore((s) => s.skip);
   const reset = useTimerStore((s) => s.reset);
-  const rateMood = useTimerStore((s) => s.rateMood);
   const { settings } = useSettingsStore();
   const { tasks, activeTaskId, setActiveTask } = useTaskStore();
   const setTimerActiveTask = useTimerStore((s) => s.setActiveTask);
@@ -103,9 +98,8 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
     prevPhaseRef.current = phase;
 
     if (completedPhase === 'work') {
-      setSessionAnim('session-complete');
-      const latest = sessions.find(s => s.phase === 'work');
-      if (latest) setMoodSessionId(latest.id);
+      // Celebration + mood now live at App level (useSessionCelebration) so they
+      // also fire in fullscreen/widget. This effect keeps only the auto-flow.
 
       // Auto-flow: pick the next incomplete task from the daily queue, if any.
       // We don't auto-start the timer — user still presses Play (per design).
@@ -119,8 +113,6 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
           setTimerActiveTask(next.id);
         }
       }
-    } else if (completedPhase === 'shortBreak' || completedPhase === 'longBreak') {
-      setSessionAnim('break-complete');
     }
 
     const expectedTotal =
@@ -394,57 +386,6 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
       {/* Coffee cup picker */}
       <CoffeeCupPicker open={cupPickerOpen} onClose={() => setCupPickerOpen(false)} />
 
-      {/* Session end animations */}
-      <SessionAnimation
-        type={sessionAnim}
-        onDone={() => setSessionAnim(null)}
-      />
-
-      {/* Mood prompt */}
-      <AnimatePresence>
-        {moodSessionId && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 px-5 py-3 rounded-2xl z-50"
-            style={{
-              background: 'var(--card)',
-              border: '1px solid var(--brd2)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            }}
-          >
-            <span className="text-[11px] font-medium" style={{ color: 'var(--t3)' }}>{t('moodPrompt')}</span>
-            <div className="flex items-center gap-1.5">
-              {(['😴','😐','🙂','😊','🔥'] as const).map((emoji, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    rateMood(moodSessionId, i + 1);
-                    setMoodSessionId(null);
-                  }}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl text-lg transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.transform = 'scale(1.15)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  {emoji}
-                </button>
-              ))}
-              <button
-                onClick={() => setMoodSessionId(null)}
-                className="ml-1 text-[10px] px-2 py-1 rounded-lg"
-                style={{ color: 'var(--t3)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--t2)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t3)'; }}
-              >
-                {t('skip', { ns: 'common' })}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

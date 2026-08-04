@@ -95,7 +95,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, main, sub, color, gradient }
     />
     <div className="relative z-10 flex items-baseline gap-0.5">
       <span
-        className="font-light tabular-nums leading-none"
+        className="font-normal tabular-nums leading-none"
         style={{
           fontSize: '26px',
           color,
@@ -106,7 +106,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, main, sub, color, gradient }
         {main}
       </span>
       {sub && (
-        <span className="text-[13px] font-light" style={{ color }}>
+        <span className="text-[13px] font-normal" style={{ color }}>
           {sub}
         </span>
       )}

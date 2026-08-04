@@ -407,7 +407,7 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
                     <text
                       x={n.x} y={n.y + 4}
                       fill="var(--t2)"
-                      fontFamily="'Outfit', sans-serif"
+                      fontFamily="'Plus Jakarta Sans', sans-serif"
                       fontWeight={500}
                       fontSize={Math.max(10, n.r * 0.4)}
                       textAnchor="middle"
@@ -418,7 +418,7 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
                     <text
                       x={n.x} y={n.y + n.r + 16}
                       fill="var(--t)"
-                      fontFamily="'Outfit', sans-serif"
+                      fontFamily="'Plus Jakarta Sans', sans-serif"
                       fontSize={11}
                       fontWeight={500}
                       textAnchor="middle"
@@ -433,7 +433,7 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
                       <text
                         x={n.x} y={n.y + n.r + 12}
                         fill="var(--t)"
-                        fontFamily="'Outfit', sans-serif"
+                        fontFamily="'Plus Jakarta Sans', sans-serif"
                         fontSize={10.5}
                         textAnchor="middle"
                         style={{ pointerEvents: 'none' }}

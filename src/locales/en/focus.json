@@ -124,5 +124,16 @@
   "scratchpad": {
     "title": "Session Notes",
     "placeholder": "Jot things down…"
+  },
+  "celebration": {
+    "title": "Well brewed",
+    "subtitle": "{minutes, plural, one {# focused minute} other {# focused minutes}}",
+    "today": "{minutes, plural, one {# minute today} other {# minutes today}}",
+    "moodPrompt": "How did that feel?",
+    "moodAria": "Rate {n} of 5",
+    "continue": "Keep brewing",
+    "dismissHint": "Click anywhere or press Esc to dismiss",
+    "breakOver": "Break's over",
+    "breakOverSub": "Time to focus up"
   }
 }

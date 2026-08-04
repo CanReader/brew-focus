@@ -124,5 +124,16 @@
   "scratchpad": {
     "title": "本次记事",
     "placeholder": "随手记一下…"
+  },
+  "celebration": {
+    "title": "冲煮完成",
+    "subtitle": "专注 {minutes} 分钟",
+    "today": "今天已专注 {minutes} 分钟",
+    "moodPrompt": "感觉如何？",
+    "moodAria": "评分 {n}/5",
+    "continue": "继续冲煮",
+    "dismissHint": "点击任意处或按 Esc 关闭",
+    "breakOver": "休息结束",
+    "breakOverSub": "该专注了"
   }
 }

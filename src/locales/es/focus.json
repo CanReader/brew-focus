@@ -124,5 +124,16 @@
   "scratchpad": {
     "title": "Notas de la sesión",
     "placeholder": "Anota algo…"
+  },
+  "celebration": {
+    "title": "Bien preparado",
+    "subtitle": "{minutes, plural, one {# minuto de concentración} other {# minutos de concentración}}",
+    "today": "{minutes, plural, one {# minuto hoy} other {# minutos hoy}}",
+    "moodPrompt": "¿Cómo se sintió?",
+    "moodAria": "Puntuar {n} de 5",
+    "continue": "Seguir preparando",
+    "dismissHint": "Haz clic o pulsa Esc para cerrar",
+    "breakOver": "Se acabó el descanso",
+    "breakOverSub": "Hora de concentrarse"
   }
 }

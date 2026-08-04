@@ -58,7 +58,7 @@ export const FocusTimeWidget: React.FC = () => {
           className="tabular-nums leading-none"
           style={{
             fontSize: '30px',
-            fontWeight: 200,
+            fontWeight: 400,
             background: isGoalReached
               ? 'linear-gradient(135deg, var(--grn), #64ffda)'
               : 'linear-gradient(135deg, var(--t) 0%, var(--t2) 100%)',
