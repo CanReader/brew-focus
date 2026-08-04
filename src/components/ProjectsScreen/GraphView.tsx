@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { inkOn } from '../../utils/ink';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize2, Minimize2, ZoomIn, ZoomOut, ArrowLeft, ArrowUpRight, ListTodo } from 'lucide-react';
 import { Project, Task, taskTypeColor } from '../../types';
@@ -557,7 +558,7 @@ export const GraphView: React.FC<Props> = ({ projects, tasks, onOpenProject, onO
                   className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold transition-all"
                   style={{
                     background: `linear-gradient(135deg, ${proj.color}, ${proj.color}cc)`,
-                    color: '#fff',
+                    color: inkOn(proj.color),
                     boxShadow: `0 4px 12px ${proj.color}55`,
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}

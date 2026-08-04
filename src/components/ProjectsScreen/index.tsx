@@ -133,8 +133,8 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus, openProjectId
               onClick={() => setNewOpen(true)}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
               style={{
-                background: 'linear-gradient(135deg, var(--accent), #ff2929)',
-                color: '#fff',
+                background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.72))',
+                color: 'var(--accent-ink)',
                 boxShadow: '0 4px 16px var(--accent-g)',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 22px var(--accent-g)'; }}
@@ -247,8 +247,8 @@ export const ProjectsScreen: React.FC<Props> = ({ onSwitchToFocus, openProjectId
                 onClick={() => setNewOpen(true)}
                 className="mt-2 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, var(--accent), #ff2929)',
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.72))',
+                  color: 'var(--accent-ink)',
                   boxShadow: '0 4px 16px var(--accent-g)',
                 }}
               >

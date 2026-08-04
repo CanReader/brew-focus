@@ -6,6 +6,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { useSettingsStore } from '../store/settingsStore';
 import { useLocaleStore } from '../store/localeStore';
 import { AccentColor, ACCENT_COLORS } from '../types';
+import { inkOn } from '../utils/ink';
 import { THEMES, AppTheme, FREE_THEME_IDS } from '../utils/themes';
 import { AccountSettings } from './AccountSettings';
 import { ProBadge } from './ProBadge';
@@ -330,7 +331,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                                   className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                                   style={{ background: color, boxShadow: isSelected ? `0 0 8px ${color}80` : 'none' }}
                                 >
-                                  {isSelected && <Check size={9} color="white" strokeWidth={3} />}
+                                  {isSelected && <Check size={9} color={inkOn(color)} strokeWidth={3} />}
                                 </div>
                                 {opt.name}
                               </button>
@@ -401,7 +402,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                                           className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
                                           style={{ background: 'var(--accent)' }}
                                         >
-                                          <Check size={8} color="white" strokeWidth={3} />
+                                          <Check size={8} color="var(--accent-ink)" strokeWidth={3} />
                                         </div>
                                       )}
                                     </div>

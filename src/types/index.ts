@@ -273,10 +273,15 @@ export interface TaskState {
   activeTaskId: string | null;
 }
 
-/** Brand accents. Used on dark palettes and always in the accent picker. */
+/**
+ * Brand accents. Used on dark palettes and always in the accent picker.
+ * Byte-identical with mobile's table — the two had silently diverged on `red`
+ * (desktop #ff4d4d vs mobile #e85d50), which broke the light tier's premise
+ * since those entries are derived from these. Keep both tables in lockstep.
+ */
 export const ACCENT_COLORS: Record<AccentColor, string> = {
   caramel: '#ca8438',
-  red: '#ff4d4d',
+  red: '#e85d50',
   blue: '#5b8dee',
   amber: '#f5a623',
   green: '#22d3a5',
@@ -295,7 +300,7 @@ export const ACCENT_COLORS: Record<AccentColor, string> = {
  */
 export const ACCENT_COLORS_LIGHT: Record<AccentColor, string> = {
   caramel: '#b47430',
-  red: '#ff2020',
+  red: '#e64c3e',
   blue: '#467eec',
   amber: '#b57408',
   green: '#189373',

@@ -18,6 +18,14 @@ const phaseColors: Record<TimerPhase, string> = {
   longBreak: 'var(--blu)',
 };
 
+// Ink for glyphs sitting ON phaseColors — must track the fill, not the accent,
+// or the play icon computes contrast against the wrong colour during breaks.
+const phaseInks: Record<TimerPhase, string> = {
+  work: 'var(--accent-ink)',
+  shortBreak: 'var(--grn-ink)',
+  longBreak: 'var(--blu-ink)',
+};
+
 // Leaf subscribers — these own the per-second `secondsLeft` subscription so the
 // surrounding shell (backdrop, controls, session dots, drag regions) does not
 // re-render every tick. Same pattern as FocusScreen/index.tsx.
@@ -73,6 +81,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const phaseColor = phaseColors[phase];
+  const phaseInk = phaseInks[phase];
 
   const handleSkip = () => {
     skip(effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval);
@@ -109,7 +118,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
             style={{ color: 'var(--t3)' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--accent)';
-              e.currentTarget.style.color = 'white';
+              e.currentTarget.style.color = 'var(--accent-ink)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
@@ -215,9 +224,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
             }}
           >
             {isRunning ? (
-              <Pause size={20} fill="white" color="white" />
+              <Pause size={20} fill={phaseInk} color={phaseInk} />
             ) : (
-              <Play size={20} fill="white" color="white" style={{ marginLeft: 2 }} />
+              <Play size={20} fill={phaseInk} color={phaseInk} style={{ marginLeft: 2 }} />
             )}
           </motion.button>
 
@@ -375,9 +384,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
           }}
         >
           {isRunning ? (
-            <Pause size={32} fill="white" color="white" />
+            <Pause size={32} fill={phaseInk} color={phaseInk} />
           ) : (
-            <Play size={32} fill="white" color="white" style={{ marginLeft: 3 }} />
+            <Play size={32} fill={phaseInk} color={phaseInk} style={{ marginLeft: 3 }} />
           )}
         </motion.button>
 

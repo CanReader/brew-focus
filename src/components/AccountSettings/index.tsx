@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import type { User } from '@supabase/supabase-js';
 import { useAuthStore } from '../../store/authStore';
+import { inkOn } from '../../utils/ink';
 import { supabase } from '../../utils/supabase';
 
 function getInitials(user: User): string {
@@ -75,7 +76,7 @@ const smallBtnStyle: React.CSSProperties = {
 const accentBtnStyle: React.CSSProperties = {
   ...smallBtnStyle,
   background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.75))',
-  color: '#fff',
+  color: 'var(--accent-ink)',
 };
 
 const ghostBtnStyle: React.CSSProperties = {
@@ -192,7 +193,7 @@ function AvatarSection({ user }: { user: User }) {
                 width: 64, height: 64, borderRadius: '50%',
                 background: `linear-gradient(135deg, ${color}, ${color}aa)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 24, fontWeight: 700, color: '#fff',
+                fontSize: 24, fontWeight: 700, color: inkOn(color),
                 boxShadow: `0 0 0 1.5px ${color}44`,
               }}
             >
@@ -622,7 +623,7 @@ function DangerSection() {
                       ...smallBtnStyle,
                       background: confirmText === deleteToken ? '#ef4444' : 'rgba(var(--danger-rgb),0.12)',
                       border: '1px solid rgba(var(--danger-rgb),0.3)',
-                      color: '#fff',
+                      color: 'var(--danger-ink)',
                       opacity: confirmText !== deleteToken || loading ? 0.5 : 1,
                       display: 'inline-flex',
                       alignItems: 'center',

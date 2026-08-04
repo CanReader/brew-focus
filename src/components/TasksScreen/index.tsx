@@ -404,6 +404,7 @@ const MiniTimerBar: React.FC = () => {
     phase === 'shortBreak' ? tFocus('phase.shortBreak') :
     tFocus('phase.longBreak');
   const phaseColor = phase === 'work' ? 'var(--accent)' : phase === 'shortBreak' ? 'var(--grn)' : 'var(--blu)';
+  const phaseInk = phase === 'work' ? 'var(--accent-ink)' : phase === 'shortBreak' ? 'var(--grn-ink)' : 'var(--blu-ink)';
 
   return (
     <div
@@ -428,8 +429,8 @@ const MiniTimerBar: React.FC = () => {
           style={{ background: phaseColor }}
         >
           {isRunning
-            ? <Pause size={12} fill="white" color="white" />
-            : <Play size={12} fill="white" color="white" style={{ marginLeft: 1 }} />
+            ? <Pause size={12} fill={phaseInk} color={phaseInk} />
+            : <Play size={12} fill={phaseInk} color={phaseInk} style={{ marginLeft: 1 }} />
           }
         </button>
         <button
@@ -960,13 +961,13 @@ export const TasksScreen: React.FC<{ onSwitchToFocus: () => void }> = ({ onSwitc
               aria-label={t('addTaskAria')}
               className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105"
               style={{
-                background: 'linear-gradient(135deg, var(--accent) 0%, #ff2929 100%)',
+                background: 'linear-gradient(135deg, var(--accent) 0%, rgba(var(--accent-rgb),0.72) 100%)',
                 boxShadow: '0 2px 8px var(--accent-g)',
                 border: 'none',
               }}
               onClick={handleAddTask}
             >
-              <Plus size={14} color="white" />
+              <Plus size={14} color="var(--accent-ink)" />
             </button>
 
             {/* Input */}

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AppSettings, AccentColor, ACCENT_COLORS, ACCENT_COLORS_LIGHT } from '../types';
 import { supabase, getCurrentUserId } from '../utils/supabase';
 import { applyTheme, getTheme, DEFAULT_THEME_ID, hexToRgbTriplet } from '../utils/themes';
+import { inkOn } from '../utils/ink';
 
 const defaultSettings: AppSettings = {
   workDuration: 30,
@@ -140,4 +141,7 @@ function applyAccentColor(color: AccentColor, isLightTheme: boolean) {
   document.documentElement.style.setProperty('--accent-rgb', rgb);
   document.documentElement.style.setProperty('--accent-d', `rgba(${rgb},0.15)`);
   document.documentElement.style.setProperty('--accent-g', `rgba(${rgb},0.25)`);
+  // Ink for anything painted ON the accent. Derived from the effective accent,
+  // so it follows the light/dark tier swap automatically.
+  document.documentElement.style.setProperty('--accent-ink', inkOn(hex));
 }

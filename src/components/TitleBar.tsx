@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { inkOn } from '../utils/ink';
 import { Settings, Minus, Square, X, RefreshCw, LogOut, ChevronDown, Zap } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -68,7 +69,7 @@ function Avatar({ user, size = 24 }: { user: User; size?: number }) {
         height: size,
         background: `linear-gradient(135deg, ${color}, ${color}aa)`,
         fontSize: size * 0.38,
-        color: '#fff',
+        color: inkOn(color),
         boxShadow: `0 0 0 1.5px ${color}44`,
       }}
     >
@@ -453,7 +454,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
           title={tCommon('close')}
           className="w-6 h-6 flex items-center justify-center rounded-md transition-all"
           style={{ color: 'var(--t3)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.boxShadow = '0 0 12px var(--accent-g)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent-ink)'; e.currentTarget.style.boxShadow = '0 0 12px var(--accent-g)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; e.currentTarget.style.boxShadow = 'none'; }}
         >
           <X size={11} />

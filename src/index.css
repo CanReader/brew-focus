@@ -83,6 +83,15 @@
      accent must not turn "Delete account" green. Never reassigned. */
   --danger: #ff4d4d;
   --danger-rgb: 255,77,77;
+  /* Ink for text/icons sitting ON a filled surface. Chosen by comparing both
+     candidates' contrast against the actual fill — never by a lightness
+     threshold, which picks the worse candidate near the crossover. --accent-ink
+     is recomputed by applyAccentColor() because the accent changes (and swaps
+     tier); the rest are fixed because their fills are. */
+  --accent-ink: #1a120b;
+  --grn-ink: #1a120b;
+  --blu-ink: #1a120b;
+  --danger-ink: #1a120b;
   /* Surface-tint triplet for glass/hover fills: white on dark themes, black on
      light ones. Flipped by applyTheme(); without it these fills are
      white-on-white and vanish on the light palettes. */

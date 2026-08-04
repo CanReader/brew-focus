@@ -378,7 +378,7 @@ export const AuthScreen: React.FC = () => {
                 className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-semibold mt-1 transition-all duration-150"
                 style={{
                   background: isLoading ? 'rgba(var(--accent-rgb),0.4)' : 'linear-gradient(135deg, var(--accent) 0%, rgba(var(--accent-rgb),0.75) 100%)',
-                  color: '#fff',
+                  color: 'var(--accent-ink)',
                   boxShadow: submitDisabled ? 'none' : '0 4px 16px rgba(var(--accent-rgb),0.3)',
                   opacity: submitDisabled ? 0.6 : 1,
                   cursor: submitDisabled ? 'not-allowed' : 'pointer',

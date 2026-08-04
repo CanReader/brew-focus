@@ -224,7 +224,7 @@ export const WeeklyCalendar: React.FC = () => {
                         title={`${label} · ${Math.round(b.session.duration / 60)}m`}
                       >
                         {b.height > 16 && (
-                          <span className="block text-[8px] px-1 pt-0.5 truncate leading-tight" style={{ color: 'white' }}>
+                          <span className="block text-[8px] px-1 pt-0.5 truncate leading-tight" style={{ color: 'var(--accent-ink)' }}>
                             {label}
                           </span>
                         )}

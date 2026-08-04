@@ -69,7 +69,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
         onClick={isRunning ? onPause : onPlay}
         className="w-[72px] h-[72px] flex items-center justify-center rounded-2xl relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, var(--accent) 0%, #ff2929 100%)',
+          background: 'linear-gradient(135deg, var(--accent) 0%, rgba(var(--accent-rgb),0.72) 100%)',
           boxShadow: '0 6px 28px var(--accent-g), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
         }}
       >
@@ -89,9 +89,9 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
           className="relative z-10"
         >
           {isRunning ? (
-            <Pause size={28} fill="white" color="white" />
+            <Pause size={28} fill="var(--accent-ink)" color="var(--accent-ink)" />
           ) : (
-            <Play size={28} fill="white" color="white" style={{ marginLeft: 3 }} />
+            <Play size={28} fill="var(--accent-ink)" color="var(--accent-ink)" style={{ marginLeft: 3 }} />
           )}
         </motion.div>
       </motion.button>

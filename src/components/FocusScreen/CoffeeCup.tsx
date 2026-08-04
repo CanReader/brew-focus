@@ -137,11 +137,12 @@ export const CoffeeCup: React.FC<CoffeeCupProps> = ({
           <filter id={steamBlurId} x="-60%" y="-30%" width="220%" height="180%">
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
-          {/* wash at the surface deepening to glow at the floor, so the column
-              reads as depth rather than a flat pane of colour */}
+          {/* Glow at the surface fading to wash at the floor: warmth sits where
+              the action is (the rising line), and keeping the floor subtle stops
+              the translucent column muddying the darkest part of the art below. */}
           <linearGradient id={liquidGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`rgba(${liquidRgb},${isRunning ? 0.14 : 0.09})`} />
-            <stop offset="100%" stopColor={`rgba(${liquidRgb},${isRunning ? 0.28 : 0.17})`} />
+            <stop offset="0%" stopColor={`rgba(${liquidRgb},${isRunning ? 0.28 : 0.17})`} />
+            <stop offset="100%" stopColor={`rgba(${liquidRgb},${isRunning ? 0.14 : 0.09})`} />
           </linearGradient>
         </defs>
 

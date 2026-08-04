@@ -989,7 +989,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
               <button
                 onClick={handleAddSubtask}
                 className="w-5 h-5 flex items-center justify-center rounded-lg shrink-0"
-                style={{ background: 'var(--accent)', color: 'white', boxShadow: '0 0 8px var(--accent-g)' }}
+                style={{ background: 'var(--accent)', color: 'var(--accent-ink)', boxShadow: '0 0 8px var(--accent-g)' }}
               >
                 <Plus size={10} />
               </button>
@@ -1093,7 +1093,7 @@ const SortableSubtaskRow: React.FC<SortableSubtaskRowProps> = ({
           background: subtask.completed ? 'var(--grn)' : 'transparent',
         }}
       >
-        {subtask.completed && <Check size={8} color="white" strokeWidth={3} />}
+        {subtask.completed && <Check size={8} color="var(--grn-ink)" strokeWidth={3} />}
       </button>
       {isEditing ? (
         <input

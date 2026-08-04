@@ -435,7 +435,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                           className="text-[11px] px-2.5 py-1 rounded-lg transition-all"
                           style={{
                             background: 'var(--accent)',
-                            color: 'white',
+                            color: 'var(--accent-ink)',
                             boxShadow: '0 2px 8px var(--accent-g)',
                           }}
                         >
