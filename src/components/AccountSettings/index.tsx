@@ -621,7 +621,7 @@ function DangerSection() {
                     disabled={confirmText !== deleteToken || loading}
                     style={{
                       ...smallBtnStyle,
-                      background: confirmText === deleteToken ? '#ef4444' : 'rgba(var(--danger-rgb),0.12)',
+                      background: confirmText === deleteToken ? 'var(--danger)' : 'rgba(var(--danger-rgb),0.12)',
                       border: '1px solid rgba(var(--danger-rgb),0.3)',
                       color: 'var(--danger-ink)',
                       opacity: confirmText !== deleteToken || loading ? 0.5 : 1,

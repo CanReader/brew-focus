@@ -80,17 +80,18 @@
   --accent-d: rgba(255,77,77,0.12);
   --accent-g: rgba(255,77,77,0.25);
   /* Destructive/error red. Deliberately NOT derived from --accent: a green
-     accent must not turn "Delete account" green. Never reassigned. */
-  --danger: #ff4d4d;
-  --danger-rgb: 255,77,77;
+     accent must not turn "Delete account" green. Canonical with mobile. */
+  --danger: #ef4444;
+  --danger-rgb: 239,68,68;
   /* Ink for text/icons sitting ON a filled surface. Chosen by comparing both
      candidates' contrast against the actual fill — never by a lightness
-     threshold, which picks the worse candidate near the crossover. --accent-ink
-     is recomputed by applyAccentColor() because the accent changes (and swaps
-     tier); the rest are fixed because their fills are. */
+     threshold, which picks the worse candidate near the crossover. Every one of
+     these is recomputed at runtime (accent by applyAccentColor, the semantics by
+     applyTheme) because their fills all swap between light and dark tiers. */
   --accent-ink: #1a120b;
   --grn-ink: #1a120b;
   --blu-ink: #1a120b;
+  --amb-ink: #1a120b;
   --danger-ink: #1a120b;
   /* Surface-tint triplet for glass/hover fills: white on dark themes, black on
      light ones. Flipped by applyTheme(); without it these fills are
@@ -100,8 +101,9 @@
   --blu: #5b8dee;
   --amb: #f5a623;
   --amb-d: rgba(245,166,35,0.15);
-  /* Static triplets mirroring --grn/--blu/--amb, for the same inline-alpha
-     composition as --accent-rgb. These never change at runtime. */
+  /* Triplets mirroring --grn/--blu/--amb for the same inline-alpha composition
+     as --accent-rgb. Values here are the dark-tier fallback for first paint;
+     applyTheme() overwrites all of them with the effective tier. */
   --grn-rgb: 34,211,165;
   --blu-rgb: 91,141,238;
   --amb-rgb: 245,166,35;

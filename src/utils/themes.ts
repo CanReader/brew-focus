@@ -1,3 +1,6 @@
+import { SEMANTIC_COLORS, SEMANTIC_COLORS_LIGHT } from '../types';
+import { inkOn } from './ink';
+
 export interface AppTheme {
   id: string;
   name: string;
@@ -321,6 +324,16 @@ export function applyTheme(id: string): void {
   // instead of disappearing. Only for *surface* fills — decorative white
   // highlights (shine sweeps, text on accent) must stay white regardless.
   root.setProperty('--srf-rgb', isLight ? '0,0,0' : '255,255,255');
+  // Semantic colours are tier-dependent for the same reason accents are, so the
+  // fill, its triplet, and its ink are all resolved together here. Ink is
+  // recomputed per tier rather than fixed: it is chosen by comparing candidates
+  // against the ACTUAL fill, and the fill just became variable.
+  const semantic = isLight ? SEMANTIC_COLORS_LIGHT : SEMANTIC_COLORS;
+  for (const [key, hex] of Object.entries(semantic)) {
+    root.setProperty(`--${key}`, hex);
+    root.setProperty(`--${key}-rgb`, hexToRgbTriplet(hex));
+    root.setProperty(`--${key}-ink`, inkOn(hex));
+  }
   // Drive the color-scheme so native widgets (date pickers, scrollbars) match
   // the active theme. Without this, native controls render dark on light
   // themes (and vice-versa) and look broken.

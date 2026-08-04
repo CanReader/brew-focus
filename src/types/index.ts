@@ -290,6 +290,28 @@ export const ACCENT_COLORS: Record<AccentColor, string> = {
 };
 
 /**
+ * Semantic (non-accent) colours: break phases, warnings, destructive actions.
+ * Same two-tier treatment as the accents and for the same reason — on light
+ * backgrounds the dark-tier values measure 1.76–2.99, and these are live as
+ * break-phase tints and danger text, so every break on a light theme sat in
+ * the band that justified the accent tier. Keep in lockstep with mobile.
+ */
+export const SEMANTIC_COLORS = {
+  grn: '#22d3a5',
+  blu: '#5b8dee',
+  amb: '#f5a623',
+  danger: '#ef4444',
+} as const;
+
+/** Light tier: hue and saturation preserved, lightness lowered to >= 3.5 vs latte. */
+export const SEMANTIC_COLORS_LIGHT: Record<keyof typeof SEMANTIC_COLORS, string> = {
+  grn: '#189373',
+  blu: '#467eec',
+  amb: '#b57408',
+  danger: '#ef4040',
+};
+
+/**
  * Light-palette tier. The brand accents are tuned for dark backgrounds and drop
  * to ~2–3:1 on light ones, which fails WCAG everywhere the accent is used as
  * text or an icon. Each entry keeps its brand hue and saturation and lowers
