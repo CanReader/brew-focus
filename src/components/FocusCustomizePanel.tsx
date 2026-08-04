@@ -141,7 +141,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   className="px-5 py-2.5 text-[12px] shrink-0"
-                  style={{ background: 'rgba(255,77,77,0.08)', borderBottom: '1px solid rgba(255,77,77,0.2)', color: '#ff6b6b' }}
+                  style={{ background: 'rgba(var(--danger-rgb),0.08)', borderBottom: '1px solid rgba(var(--danger-rgb),0.2)', color: '#ff6b6b' }}
                   role="alert"
                 >
                   {uploadError}
@@ -406,7 +406,7 @@ export const FocusCustomizePanel: React.FC<Props> = ({ open, onClose }) => {
                                   className="w-full h-full"
                                   style={{
                                     background: [
-                                      'radial-gradient(circle at 50% 36%, rgba(255,77,77,0.30) 0%, rgba(255,77,77,0.10) 30%, transparent 60%)',
+                                      'radial-gradient(circle at 50% 36%, rgba(var(--accent-rgb),0.30) 0%, rgba(var(--accent-rgb),0.10) 30%, transparent 60%)',
                                       'radial-gradient(circle at 90% 90%, rgba(91,141,238,0.22) 0%, transparent 50%)',
                                       'radial-gradient(circle at 8% 12%, rgba(167,139,250,0.16) 0%, transparent 45%)',
                                       '#080810',

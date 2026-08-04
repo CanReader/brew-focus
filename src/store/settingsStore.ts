@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AppSettings, AccentColor, ACCENT_COLORS } from '../types';
 import { supabase, getCurrentUserId } from '../utils/supabase';
-import { applyTheme, DEFAULT_THEME_ID } from '../utils/themes';
+import { applyTheme, DEFAULT_THEME_ID, hexToRgbTriplet } from '../utils/themes';
 
 const defaultSettings: AppSettings = {
   workDuration: 30,
@@ -125,14 +125,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
 function applyAccentColor(color: AccentColor) {
   const hex = ACCENT_COLORS[color];
+  const rgb = hexToRgbTriplet(hex);
   document.documentElement.style.setProperty('--accent', hex);
-  document.documentElement.style.setProperty('--accent-d', hexToRgba(hex, 0.15));
-  document.documentElement.style.setProperty('--accent-g', hexToRgba(hex, 0.25));
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
+  // Consumers compose their own alpha as rgba(var(--accent-rgb), α). Anything
+  // that hardcodes the accent's rgb instead will not follow an accent change.
+  document.documentElement.style.setProperty('--accent-rgb', rgb);
+  document.documentElement.style.setProperty('--accent-d', `rgba(${rgb},0.15)`);
+  document.documentElement.style.setProperty('--accent-g', `rgba(${rgb},0.25)`);
 }

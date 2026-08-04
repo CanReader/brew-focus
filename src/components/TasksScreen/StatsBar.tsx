@@ -43,7 +43,7 @@ export const StatsBar: React.FC<StatsBarProps> = ({ tasks }) => {
         main={estimatedTime.main}
         sub={estimatedTime.sub}
         color="var(--accent)"
-        gradient="rgba(255,77,77,0.06)"
+        gradient="rgba(var(--accent-rgb),0.06)"
       />
       <StatCard
         label={t('stats.remaining')}

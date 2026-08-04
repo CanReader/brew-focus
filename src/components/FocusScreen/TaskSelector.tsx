@@ -44,7 +44,7 @@ export const TaskSelector: React.FC = () => {
         background: activeTask ? 'var(--accent-d)' : 'rgba(255,255,255,0.04)',
         border: `1px solid ${activeTask ? 'var(--accent-g)' : 'rgba(255,255,255,0.08)'}`,
         color: activeTask ? 'var(--t)' : 'var(--t3)',
-        boxShadow: activeTask ? '0 0 16px rgba(255,77,77,0.08)' : 'none',
+        boxShadow: activeTask ? '0 0 16px rgba(var(--accent-rgb),0.08)' : 'none',
       }}
     >
       {/* Trigger — covers the whole row except the X */}

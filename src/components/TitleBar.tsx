@@ -218,7 +218,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 text-left"
           style={{ color: 'var(--t3)' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,77,77,0.08)';
+            e.currentTarget.style.background = 'rgba(var(--danger-rgb),0.08)';
             e.currentTarget.style.color = '#ff6b6b';
           }}
           onMouseLeave={(e) => {
@@ -228,7 +228,7 @@ function UserPopover({ user, onClose, onAccountSettings }: { user: User; onClose
         >
           <div
             className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(255,77,77,0.1)', color: '#ff6b6b' }}
+            style={{ background: 'rgba(var(--danger-rgb),0.1)', color: '#ff6b6b' }}
           >
             <LogOut size={11} />
           </div>

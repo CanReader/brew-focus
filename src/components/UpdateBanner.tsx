@@ -29,9 +29,9 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
             className="flex items-center gap-3 px-4 py-2 text-[12px] relative overflow-hidden"
             style={{
               background: error
-                ? 'rgba(255,77,77,0.08)'
+                ? 'rgba(var(--danger-rgb),0.08)'
                 : 'linear-gradient(90deg, rgba(91,141,238,0.1), rgba(167,139,250,0.08))',
-              borderBottom: `1px solid ${error ? 'rgba(255,77,77,0.2)' : 'rgba(91,141,238,0.2)'}`,
+              borderBottom: `1px solid ${error ? 'rgba(var(--danger-rgb),0.2)' : 'rgba(91,141,238,0.2)'}`,
             }}
           >
             {downloading && (
@@ -48,7 +48,7 @@ export const UpdateBanner: React.FC<UpdateBannerProps> = ({
             <div
               className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
               style={{
-                background: error ? 'rgba(255,77,77,0.15)' : 'rgba(91,141,238,0.15)',
+                background: error ? 'rgba(var(--danger-rgb),0.15)' : 'rgba(91,141,238,0.15)',
                 color: error ? '#ff6b6b' : 'var(--blu)',
               }}
             >

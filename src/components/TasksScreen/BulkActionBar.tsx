@@ -316,8 +316,8 @@ export const BulkActionBar: React.FC<Props> = ({ selectedIds, tasks, projects, o
           else { setConfirmDelete(true); confirmTimer.current = setTimeout(() => setConfirmDelete(false), 3000); }
         }}
         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium transition-colors"
-        style={{ color: 'var(--accent)', background: confirmDelete ? 'rgba(255,77,77,0.12)' : 'transparent' }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,77,77,0.08)')}
+        style={{ color: 'var(--danger)', background: confirmDelete ? 'rgba(var(--danger-rgb),0.12)' : 'transparent' }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--danger-rgb),0.08)')}
         onMouseLeave={(e) => { if (!confirmDelete) e.currentTarget.style.background = 'transparent'; }}
       >
         <Trash2 size={12} />

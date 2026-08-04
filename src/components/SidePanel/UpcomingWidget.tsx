@@ -14,7 +14,7 @@ const priorityAccent: Record<Priority, string> = {
 };
 
 const priorityAccentRgba: Record<Priority, string> = {
-  p1: '255,77,77',
+  p1: 'var(--accent-rgb)',
   p2: '245,166,35',
   p3: '91,141,238',
   p4: '120,120,130',
@@ -103,7 +103,7 @@ export const UpcomingWidget: React.FC = () => {
                   borderBottomColor: isActive ? 'var(--accent-g)' : 'transparent',
                   borderLeftColor: isActive ? 'var(--accent)' : accent,
                   boxShadow: isActive
-                    ? `0 0 18px rgba(255,77,77,0.14)`
+                    ? `0 0 18px rgba(var(--accent-rgb),0.14)`
                     : 'none',
                 }}
                 onMouseEnter={(e) => {

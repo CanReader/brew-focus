@@ -269,6 +269,18 @@ export function getTheme(id: string): AppTheme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
 }
 
+/**
+ * "#rrggbb" → "r,g,b" so callers can compose any alpha as
+ * rgba(var(--some-rgb), α). Falls back to a neutral grey rather than emitting
+ * NaN if a theme ever carries a non-hex value.
+ */
+export function hexToRgbTriplet(hex: string): string {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return '128,128,128';
+  const n = parseInt(match[1], 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
 export function applyTheme(id: string): void {
   const theme = getTheme(id);
   const root = document.documentElement.style;
@@ -281,8 +293,17 @@ export function applyTheme(id: string): void {
   root.setProperty('--t', theme.t);
   root.setProperty('--t2', theme.t2);
   root.setProperty('--t3', theme.t3);
+  // Triplet form of --t3 so tints derived from the tertiary text color (e.g.
+  // .priority-bg-p4) follow the theme instead of freezing at one palette's value.
+  root.setProperty('--t3-rgb', hexToRgbTriplet(theme.t3));
+  const isLight = theme.category === 'light';
+  // Glass/hover fills are white-alpha, which is invisible on light backgrounds.
+  // Flip the tint to black there so the same alpha reads as a subtle shade
+  // instead of disappearing. Only for *surface* fills — decorative white
+  // highlights (shine sweeps, text on accent) must stay white regardless.
+  root.setProperty('--srf-rgb', isLight ? '0,0,0' : '255,255,255');
   // Drive the color-scheme so native widgets (date pickers, scrollbars) match
   // the active theme. Without this, native controls render dark on light
   // themes (and vice-versa) and look broken.
-  root.setProperty('color-scheme', theme.category === 'light' ? 'light' : 'dark');
+  root.setProperty('color-scheme', isLight ? 'light' : 'dark');
 }

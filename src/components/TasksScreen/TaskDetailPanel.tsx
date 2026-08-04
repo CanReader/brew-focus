@@ -290,7 +290,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
       <div
         className="px-4 pt-4 pb-3 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(255,77,77,0.06) 0%, rgba(255,77,77,0.02) 100%)',
+          background: 'linear-gradient(135deg, rgba(var(--accent-rgb),0.06) 0%, rgba(var(--accent-rgb),0.02) 100%)',
           borderBottom: '1px solid var(--brd)',
         }}
       >
@@ -1032,7 +1032,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({
             onClick={() => { onDelete(); onClose(); }}
             className="w-7 h-7 flex items-center justify-center rounded-xl transition-all"
             style={{ color: 'var(--t3)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,77,0.12)'; e.currentTarget.style.color = 'var(--accent)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb),0.12)'; e.currentTarget.style.color = 'var(--accent)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t3)'; }}
             title={t('detail.deleteTask')}
           >

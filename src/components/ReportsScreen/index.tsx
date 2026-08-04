@@ -36,7 +36,7 @@ function parseDayKey(key: string): Date {
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const ACCENT   = 'var(--accent)';
-const ACCENT_R = '255,77,77';
+const ACCENT_R = 'var(--accent-rgb)';
 const BLU_R    = '91,141,238';
 const GRN_R    = '34,211,165';
 const AMB_R    = '245,166,35';

@@ -172,9 +172,9 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
   };
 
   const phaseGlowRgba =
-    phase === 'work' ? 'rgba(255,77,77,' :
-    phase === 'shortBreak' ? 'rgba(34,211,165,' :
-    'rgba(91,141,238,';
+    phase === 'work' ? 'rgba(var(--accent-rgb),' :
+    phase === 'shortBreak' ? 'rgba(var(--grn-rgb),' :
+    'rgba(var(--blu-rgb),';
 
   return (
     <div
@@ -213,7 +213,7 @@ export const FocusScreen: React.FC<FocusScreenProps> = () => {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)',
+            backgroundImage: 'radial-gradient(circle, rgba(var(--srf-rgb),0.035) 1px, transparent 1px)',
             backgroundSize: '28px 28px',
             maskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, black 30%, transparent 100%)',
             WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, black 30%, transparent 100%)',

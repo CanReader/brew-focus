@@ -148,8 +148,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                   layoutId="sidebar-active"
                   className="absolute inset-0 rounded-xl"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255,77,77,0.08) 0%, rgba(255,77,77,0.04) 100%)',
-                    border: '1px solid rgba(255,77,77,0.12)',
+                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb),0.08) 0%, rgba(var(--accent-rgb),0.04) 100%)',
+                    border: '1px solid rgba(var(--accent-rgb),0.12)',
                   }}
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
                 />
@@ -173,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onLo
                   <span
                     className="text-[10px] min-w-[18px] text-center px-1 py-0.5 rounded-md tabular-nums"
                     style={{
-                      background: isActiveItem ? 'rgba(255,77,77,0.12)' : 'rgba(255,255,255,0.05)',
+                      background: isActiveItem ? 'rgba(var(--accent-rgb),0.12)' : 'rgba(255,255,255,0.05)',
                       color: isActiveItem ? 'var(--accent)' : 'var(--t3)',
                     }}
                   >

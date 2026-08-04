@@ -175,7 +175,7 @@ const CupTile: React.FC<TileProps> = ({ variant, selected, onPick }) => {
         background: selected ? 'var(--card-h)' : 'rgba(255,255,255,0.02)',
         border: `1px solid ${selected ? 'var(--accent)' : 'var(--brd)'}`,
         boxShadow: selected
-          ? '0 0 0 3px rgba(255,77,77,0.12), 0 8px 24px rgba(255,77,77,0.16)'
+          ? '0 0 0 3px rgba(var(--accent-rgb),0.12), 0 8px 24px rgba(var(--accent-rgb),0.16)'
           : 'none',
         transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
       }}

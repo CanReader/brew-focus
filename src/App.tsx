@@ -38,7 +38,7 @@ function LoadingScreen({ message }: { message?: string }) {
     >
       <div
         className="absolute w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'rgba(255,77,77,0.06)', filter: 'blur(80px)', top: '20%', left: '50%', transform: 'translateX(-50%)' }}
+        style={{ background: 'rgba(var(--accent-rgb),0.06)', filter: 'blur(80px)', top: '20%', left: '50%', transform: 'translateX(-50%)' }}
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 8 }}
@@ -46,7 +46,7 @@ function LoadingScreen({ message }: { message?: string }) {
         transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         className="flex flex-col items-center gap-5 relative z-10"
       >
-        <div style={{ filter: 'drop-shadow(0 0 20px rgba(255,77,77,0.3))' }}>
+        <div style={{ filter: 'drop-shadow(0 0 20px rgba(var(--accent-rgb),0.3))' }}>
           <img src="/logo.svg" alt="Brew Focus" className="w-14 h-14 rounded-2xl" />
         </div>
         <div className="text-center">

@@ -39,11 +39,11 @@ const priorityLeftBorder: Record<Priority, string> = {
   p1: 'var(--accent)',
   p2: 'var(--amb)',
   p3: 'var(--blu)',
-  p4: 'rgba(255,255,255,0.06)',
+  p4: 'rgba(var(--srf-rgb),0.06)',
 };
 
 const priorityActiveBg: Record<Priority, string> = {
-  p1: 'rgba(255,77,77,0.04)',
+  p1: 'rgba(var(--accent-rgb),0.04)',
   p2: 'rgba(245,166,35,0.04)',
   p3: 'rgba(91,141,238,0.04)',
   p4: 'transparent',
@@ -102,7 +102,7 @@ const PomodoroRing: React.FC<{ completed: number; estimate: number }> = ({ compl
   return (
     <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
       <svg width="24" height="24" viewBox="0 0 24 24" className="absolute inset-0 -rotate-90">
-        <circle cx="12" cy="12" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
+        <circle cx="12" cy="12" r={r} fill="none" stroke="rgba(var(--srf-rgb),0.06)" strokeWidth="2.5" />
         <circle
           cx="12" cy="12" r={r} fill="none"
           stroke={pct >= 1 ? 'var(--grn)' : 'var(--accent)'}
@@ -123,10 +123,10 @@ const PomodoroRing: React.FC<{ completed: number; estimate: number }> = ({ compl
 function getDueDateStyle(task: Task): { bg: string; border: string; color: string } | null {
   if (!task.dueDate || task.completed) return null;
   const overdue = isDueDateOverdue(task.dueDate);
-  if (overdue) return { bg: 'rgba(255,77,77,0.12)', border: 'rgba(255,77,77,0.25)', color: '#ff6b5a' };
+  if (overdue) return { bg: 'rgba(var(--danger-rgb),0.12)', border: 'rgba(var(--danger-rgb),0.25)', color: '#ff6b5a' };
   if (task.dueDate === 'today') return { bg: 'rgba(245,166,35,0.10)', border: 'rgba(245,166,35,0.22)', color: '#f5a623' };
   if (task.dueDate === 'tomorrow') return { bg: 'rgba(245,166,35,0.06)', border: 'rgba(245,166,35,0.14)', color: 'rgba(245,166,35,0.7)' };
-  return { bg: 'rgba(255,255,255,0.04)', border: 'var(--brd)', color: 'var(--t3)' };
+  return { bg: 'rgba(var(--srf-rgb),0.04)', border: 'var(--brd)', color: 'var(--t3)' };
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -183,7 +183,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     : task.completed
     ? 'var(--brd)'
     : overdue
-    ? 'rgba(255,77,77,0.6)'
+    ? 'rgba(var(--danger-rgb),0.6)'
     : priorityLeftBorder[task.priority];
 
   const bgColor = isMultiSelected
@@ -191,9 +191,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     : isSelected
     ? 'var(--accent-d)'
     : overdue
-    ? 'rgba(255,77,77,0.05)'
+    ? 'rgba(var(--danger-rgb),0.05)'
     : isActive
-    ? 'rgba(255,77,77,0.04)'
+    ? 'rgba(var(--accent-rgb),0.04)'
     : priorityActiveBg[task.priority];
 
   const hasRepeat = task.repeatType && task.repeatType !== 'none';
@@ -205,7 +205,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   // to the overdue (red) style and surface it in the always-visible section.
   const reminderOnlyOverdue = reminderOverdue && !dueDateStyle;
   const dateChipStyle = dueDateStyle ?? (reminderOnlyOverdue
-    ? { bg: 'rgba(255,77,77,0.12)', border: 'rgba(255,77,77,0.25)', color: '#ff6b5a' }
+    ? { bg: 'rgba(var(--danger-rgb),0.12)', border: 'rgba(var(--danger-rgb),0.25)', color: '#ff6b5a' }
     : null);
 
   const alwaysVisibleMeta = overdue || reminderOnlyOverdue || (task.dueDate === 'today' && !task.completed) ||
@@ -245,14 +245,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         borderRightWidth: 1,
         borderBottomWidth: 1,
         borderLeftWidth: 2,
-        borderTopColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(255,77,77,0.15)' : 'transparent',
-        borderRightColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(255,77,77,0.15)' : 'transparent',
-        borderBottomColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(255,77,77,0.15)' : 'transparent',
+        borderTopColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
+        borderRightColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
+        borderBottomColor: isSelected ? 'var(--accent-g)' : isActive ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
         borderLeftColor: borderLeftColor,
         boxShadow: isDragging
           ? '0 8px 24px rgba(0,0,0,0.4)'
           : isActive && !isSelected
-          ? '0 0 20px rgba(255,77,77,0.06)'
+          ? '0 0 20px rgba(var(--accent-rgb),0.06)'
           : 'none',
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
@@ -296,7 +296,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             const card = e.currentTarget.parentElement as HTMLDivElement;
             card.style.background = bgColor;
             card.style.transform = '';
-            card.style.boxShadow = isActive ? '0 0 20px rgba(255,77,77,0.06)' : 'none';
+            card.style.boxShadow = isActive ? '0 0 20px rgba(var(--accent-rgb),0.06)' : 'none';
           }
         }}
       >
@@ -319,7 +319,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             borderColor: task.completed
               ? 'var(--grn)'
               : overdue
-              ? 'rgba(255,77,77,0.5)'
+              ? 'rgba(var(--danger-rgb),0.5)'
               : 'var(--t3)',
             background: task.completed ? 'var(--grn)' : 'transparent',
             boxShadow: task.completed ? '0 0 8px rgba(34,211,165,0.3)' : 'none',

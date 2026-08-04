@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTimerStore } from '../../store/timerStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTaskStore } from '../../store/taskStore';
-import { useTimer } from '../../hooks/useTimer';
+import { useEffectiveDurations, formatTimerTime } from '../../hooks/useTimer';
 import { useWindowModeContext } from '../../contexts/WindowModeContext';
 import { CoffeeCup } from './CoffeeCup';
 import { TimerPhase } from '../../types';
@@ -15,6 +15,28 @@ const phaseColors: Record<TimerPhase, string> = {
   work: 'var(--accent)',
   shortBreak: 'var(--grn)',
   longBreak: 'var(--blu)',
+};
+
+// Leaf subscribers — these own the per-second `secondsLeft` subscription so the
+// surrounding shell (backdrop, controls, session dots, drag regions) does not
+// re-render every tick. Same pattern as FocusScreen/index.tsx.
+const LiveCup: React.FC<{
+  isRunning: boolean;
+  phase: TimerPhase;
+  size: number;
+  variantId: string;
+}> = ({ isRunning, phase, size, variantId }) => {
+  const secondsLeft = useTimerStore((s) => s.secondsLeft);
+  const totalSeconds = useTimerStore((s) => s.totalSeconds);
+  const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+  return <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={size} variantId={variantId} />;
+};
+
+// Renders only the text node so the styled wrapper (and its data-tauri-drag
+// attributes) stays out of the per-tick render.
+const LiveTimeText: React.FC = () => {
+  const secondsLeft = useTimerStore((s) => s.secondsLeft);
+  return <>{formatTimerTime(secondsLeft)}</>;
 };
 
 interface TimerViewProps {
@@ -28,7 +50,14 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
     shortBreak: t('phase.shortBreak'),
     longBreak: t('phase.longBreak'),
   };
-  const { isRunning, phase, sessionCount, start, pause, skip, secondsLeft } = useTimerStore();
+  // Narrow selectors — none of these change on a tick, so the shell renders only
+  // on real state changes. `secondsLeft` is intentionally NOT subscribed here.
+  const isRunning = useTimerStore((s) => s.isRunning);
+  const phase = useTimerStore((s) => s.phase);
+  const sessionCount = useTimerStore((s) => s.sessionCount);
+  const start = useTimerStore((s) => s.start);
+  const pause = useTimerStore((s) => s.pause);
+  const skip = useTimerStore((s) => s.skip);
   const { settings } = useSettingsStore();
 
   const bgSrc = settings.backgroundId === 'custom'
@@ -38,10 +67,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
     ? { backgroundImage: `url("${bgSrc}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
     : { background: 'var(--bg)' };
   const { tasks, activeTaskId } = useTaskStore();
-  const { formatTime, progress, effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useTimer();
+  const { effectiveWorkDuration, effectiveShortBreakDuration, effectiveLongBreakDuration, effectiveLongBreakInterval } = useEffectiveDurations();
   const { exitToNormal, toggleWidget } = useWindowModeContext();
 
-  const timeString = formatTime(secondsLeft);
   const activeTask = tasks.find((t) => t.id === activeTaskId);
   const phaseColor = phaseColors[phase];
 
@@ -102,7 +130,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
 
         {/* Coffee cup */}
         <div data-no-drag>
-          <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={100} variantId={settings.coffeeCupVariant ?? 'classic'} />
+          <LiveCup isRunning={isRunning} phase={phase} size={100} variantId={settings.coffeeCupVariant ?? 'classic'} />
         </div>
 
         {/* Time */}
@@ -111,7 +139,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
           style={{ color: 'var(--t)', letterSpacing: '-1px' }}
           data-no-drag
         >
-          {timeString}
+          <LiveTimeText />
         </div>
 
         {/* Session dots */}
@@ -279,7 +307,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
         animate={isRunning ? { scale: [1, 1.02, 1] } : { scale: 1 }}
         transition={isRunning ? { duration: 4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.3 }}
       >
-        <CoffeeCup progress={progress} isRunning={isRunning} phase={phase} size={240} variantId={settings.coffeeCupVariant ?? 'classic'} />
+        <LiveCup isRunning={isRunning} phase={phase} size={240} variantId={settings.coffeeCupVariant ?? 'classic'} />
       </motion.div>
 
       {/* Time */}
@@ -287,7 +315,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ variant }) => {
         className="text-[96px] font-light tabular-nums mt-8"
         style={{ color: 'var(--t)', letterSpacing: '-4px', lineHeight: 1 }}
       >
-        {timeString}
+        <LiveTimeText />
       </div>
 
       {/* Session dots */}

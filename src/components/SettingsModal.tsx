@@ -21,6 +21,11 @@ type SectionKey = 'timer' | 'behavior' | 'goals' | 'sounds' | 'appearance' | 'la
 
 const ACCENT_KEYS: AccentColor[] = ['red', 'blue', 'amber', 'green', 'purple', 'pink'];
 
+// Pro gating stays dormant until pricing ships. Single switch for BOTH the
+// per-category badge and the per-tile crown — when only the crown was gated,
+// the category header still advertised "PRO" over themes that are free.
+const PRO_GATING_ENABLED = false;
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, initialSection }) => {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
@@ -336,7 +341,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
 
                       {THEME_CATEGORIES.map((cat) => {
                         const themes = THEMES.filter((t) => t.category === cat.key);
-                        const hasPro = themes.some((t) => !FREE_THEME_IDS.includes(t.id));
+                        const hasPro = PRO_GATING_ENABLED && themes.some((t) => !FREE_THEME_IDS.includes(t.id));
                         return (
                           <div key={cat.key}>
                             <div className="flex items-center gap-2 mb-2.5">
@@ -348,8 +353,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, ini
                             <div className="grid grid-cols-3 gap-2">
                               {themes.map((theme) => {
                                 const isSelected = settings.theme === theme.id;
-                                // Pro gating is disabled until pricing ships — treat every theme as free.
-                                const isPro = false && !FREE_THEME_IDS.includes(theme.id);
+                                const isPro = PRO_GATING_ENABLED && !FREE_THEME_IDS.includes(theme.id);
                                 return (
                                   <button
                                     key={theme.id}

@@ -34,9 +34,9 @@ export const CoffeeCup: React.FC<CoffeeCupProps> = ({
     'var(--blu)';
 
   const phaseTrackColor =
-    phase === 'work' ? 'rgba(255,77,77,0.08)' :
-    phase === 'shortBreak' ? 'rgba(34,211,165,0.08)' :
-    'rgba(91,141,238,0.08)';
+    phase === 'work' ? 'rgba(var(--accent-rgb),0.08)' :
+    phase === 'shortBreak' ? 'rgba(var(--grn-rgb),0.08)' :
+    'rgba(var(--blu-rgb),0.08)';
 
   const glowId = `progress-glow-${phase}`;
 

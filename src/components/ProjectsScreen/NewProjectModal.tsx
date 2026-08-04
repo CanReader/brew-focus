@@ -297,8 +297,8 @@ export const NewProjectModal: React.FC<Props> = ({ open, onClose }) => {
                   <div
                     className="mb-3 rounded-xl px-3 py-2 text-[11.5px]"
                     style={{
-                      background: 'rgba(255,77,77,0.08)',
-                      border: '1px solid rgba(255,77,77,0.25)',
+                      background: 'rgba(var(--danger-rgb),0.08)',
+                      border: '1px solid rgba(var(--danger-rgb),0.25)',
                       color: '#ff8888',
                     }}
                   >

@@ -16,13 +16,31 @@
   --t: #f0f0ff;
   --t2: #9090b0;
   --t3: #55556a;
+  --t3-rgb: 85,85,106;
   --accent: #ff4d4d;
+  /* Bare "r,g,b" triplet so any alpha composes inline as
+     rgba(var(--accent-rgb), 0.12) without minting a token per alpha.
+     applyAccentColor() keeps it in sync with --accent. */
+  --accent-rgb: 255,77,77;
   --accent-d: rgba(255,77,77,0.12);
   --accent-g: rgba(255,77,77,0.25);
+  /* Destructive/error red. Deliberately NOT derived from --accent: a green
+     accent must not turn "Delete account" green. Never reassigned. */
+  --danger: #ff4d4d;
+  --danger-rgb: 255,77,77;
+  /* Surface-tint triplet for glass/hover fills: white on dark themes, black on
+     light ones. Flipped by applyTheme(); without it these fills are
+     white-on-white and vanish on the light palettes. */
+  --srf-rgb: 255,255,255;
   --grn: #22d3a5;
   --blu: #5b8dee;
   --amb: #f5a623;
   --amb-d: rgba(245,166,35,0.15);
+  /* Static triplets mirroring --grn/--blu/--amb, for the same inline-alpha
+     composition as --accent-rgb. These never change at runtime. */
+  --grn-rgb: 34,211,165;
+  --blu-rgb: 91,141,238;
+  --amb-rgb: 245,166,35;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -83,17 +101,17 @@ body,
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--srf-rgb),0.04);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(var(--srf-rgb),0.08);
 }
 
 .glass-strong {
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--srf-rgb),0.06);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(var(--srf-rgb),0.10);
 }
 
 /* Noise texture overlay */
@@ -156,10 +174,10 @@ body,
 /* Coffee cup glow */
 @keyframes cup-glow {
   0%, 100% {
-    filter: drop-shadow(0 0 12px var(--accent-g)) drop-shadow(0 0 32px rgba(255,77,77,0.12));
+    filter: drop-shadow(0 0 12px var(--accent-g)) drop-shadow(0 0 32px rgba(var(--accent-rgb),0.12));
   }
   50% {
-    filter: drop-shadow(0 0 20px var(--accent-g)) drop-shadow(0 0 48px rgba(255,77,77,0.18));
+    filter: drop-shadow(0 0 20px var(--accent-g)) drop-shadow(0 0 48px rgba(var(--accent-rgb),0.18));
   }
 }
 
@@ -248,10 +266,12 @@ button,
 .priority-p3 { color: var(--blu); }
 .priority-p4 { color: var(--t3); }
 
-.priority-bg-p1 { background: rgba(255,77,77,0.10); }
+/* Each -bg tracks the matching -p color above: p1 → --accent and p4 → --t3,
+   both runtime-varying; p2/p3 → the static --amb/--blu globals. */
+.priority-bg-p1 { background: rgba(var(--accent-rgb),0.10); }
 .priority-bg-p2 { background: rgba(245,166,35,0.10); }
 .priority-bg-p3 { background: rgba(91,141,238,0.10); }
-.priority-bg-p4 { background: rgba(85,85,106,0.10); }
+.priority-bg-p4 { background: rgba(var(--t3-rgb),0.10); }
 
 /* Priority border stripes */
 .priority-border-p1 { border-left: 2px solid var(--accent); }
@@ -313,7 +333,7 @@ input::placeholder {
 
 .toggle input:checked + .toggle-slider {
   background: var(--accent);
-  border-color: rgba(255,77,77,0.3);
+  border-color: rgba(var(--accent-rgb),0.3);
 }
 
 .toggle input:checked + .toggle-slider::before {
@@ -360,12 +380,12 @@ img {
 
 /* Glow button */
 .btn-glow {
-  box-shadow: 0 4px 20px var(--accent-g), 0 0 40px rgba(255,77,77,0.08);
+  box-shadow: 0 4px 20px var(--accent-g), 0 0 40px rgba(var(--accent-rgb),0.08);
   transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 .btn-glow:hover {
-  box-shadow: 0 6px 32px var(--accent-g), 0 0 60px rgba(255,77,77,0.12);
+  box-shadow: 0 6px 32px var(--accent-g), 0 0 60px rgba(var(--accent-rgb),0.12);
 }
 
 /* Card with gradient top border */

@@ -21,8 +21,8 @@ const CALLOUT_META: Record<string, { color: string; bg: string; icon: React.Comp
   tip:     { color: '#22d3a5', bg: 'rgba(34,211,165,0.10)', icon: Info,         label: 'Tip' },
   warning: { color: '#f5a623', bg: 'rgba(245,166,35,0.10)', icon: AlertTriangle,label: 'Warning' },
   success: { color: '#22d3a5', bg: 'rgba(34,211,165,0.10)', icon: CheckCircle2, label: 'Success' },
-  danger:  { color: '#ff4d4d', bg: 'rgba(255,77,77,0.10)',  icon: AlertOctagon, label: 'Danger' },
-  error:   { color: '#ff4d4d', bg: 'rgba(255,77,77,0.10)',  icon: AlertOctagon, label: 'Error' },
+  danger:  { color: '#ff4d4d', bg: 'rgba(var(--danger-rgb),0.10)',  icon: AlertOctagon, label: 'Danger' },
+  error:   { color: '#ff4d4d', bg: 'rgba(var(--danger-rgb),0.10)',  icon: AlertOctagon, label: 'Error' },
   quote:   { color: '#a78bfa', bg: 'rgba(167,139,250,0.10)',icon: Info,         label: 'Quote' },
 };
 

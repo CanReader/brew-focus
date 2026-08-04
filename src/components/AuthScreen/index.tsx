@@ -141,7 +141,7 @@ export const AuthScreen: React.FC = () => {
         className="absolute pointer-events-none"
         style={{
           width: 700, height: 700, borderRadius: '50%',
-          background: 'rgba(255,77,77,0.055)',
+          background: 'rgba(var(--accent-rgb),0.055)',
           filter: 'blur(120px)',
           top: '-15%', left: '50%', transform: 'translateX(-50%)',
         }}
@@ -188,7 +188,7 @@ export const AuthScreen: React.FC = () => {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.35, ease: 'backOut' }}
             className="relative"
-            style={{ filter: 'drop-shadow(0 0 22px rgba(255,77,77,0.32))' }}
+            style={{ filter: 'drop-shadow(0 0 22px rgba(var(--accent-rgb),0.32))' }}
           >
             <img src="/logo.svg" alt="Brew Focus" className="w-14 h-14 rounded-2xl" draggable={false} />
           </motion.div>
@@ -273,7 +273,7 @@ export const AuthScreen: React.FC = () => {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl"
-                    style={{ background: 'rgba(255,77,77,0.08)', border: '1px solid rgba(255,77,77,0.2)' }}
+                    style={{ background: 'rgba(var(--danger-rgb),0.08)', border: '1px solid rgba(var(--danger-rgb),0.2)' }}
                   >
                     <span className="text-[18px] leading-none" style={{ marginTop: -1 }}>⚠️</span>
                     <span className="text-[12px] leading-snug" style={{ color: '#ff6b6b' }}>{error}</span>
@@ -377,14 +377,14 @@ export const AuthScreen: React.FC = () => {
                 disabled={submitDisabled}
                 className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-semibold mt-1 transition-all duration-150"
                 style={{
-                  background: isLoading ? 'rgba(255,77,77,0.4)' : 'linear-gradient(135deg, var(--accent) 0%, rgba(255,77,77,0.75) 100%)',
+                  background: isLoading ? 'rgba(var(--accent-rgb),0.4)' : 'linear-gradient(135deg, var(--accent) 0%, rgba(var(--accent-rgb),0.75) 100%)',
                   color: '#fff',
-                  boxShadow: submitDisabled ? 'none' : '0 4px 16px rgba(255,77,77,0.3)',
+                  boxShadow: submitDisabled ? 'none' : '0 4px 16px rgba(var(--accent-rgb),0.3)',
                   opacity: submitDisabled ? 0.6 : 1,
                   cursor: submitDisabled ? 'not-allowed' : 'pointer',
                 }}
-                onMouseEnter={(e) => { if (!submitDisabled) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255,77,77,0.4)'; } }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = submitDisabled ? 'none' : '0 4px 16px rgba(255,77,77,0.3)'; }}
+                onMouseEnter={(e) => { if (!submitDisabled) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--accent-rgb),0.4)'; } }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = submitDisabled ? 'none' : '0 4px 16px rgba(var(--accent-rgb),0.3)'; }}
               >
                 {isLoading ? (
                   <motion.div

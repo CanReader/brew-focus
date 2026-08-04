@@ -985,8 +985,8 @@ function PrioritySelection() {
                       <button
                         onClick={handleDelete}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left transition-colors"
-                        style={{ color: 'var(--accent)' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,77,77,0.08)')}
+                        style={{ color: 'var(--danger)' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--danger-rgb),0.08)')}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
                         <Trash2 size={11} />
@@ -1889,8 +1889,8 @@ function PrioritySelection() {
                   <button
                     onClick={bulkDelete}
                     className="flex items-center gap-1 px-2 py-1 rounded-md text-[11.5px] transition-colors"
-                    style={{ color: 'var(--accent)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,77,77,0.08)')}
+                    style={{ color: 'var(--danger)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(var(--danger-rgb),0.08)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <Trash2 size={11} />

@@ -74,7 +74,7 @@ const smallBtnStyle: React.CSSProperties = {
 
 const accentBtnStyle: React.CSSProperties = {
   ...smallBtnStyle,
-  background: 'linear-gradient(135deg, var(--accent), rgba(255,77,77,0.75))',
+  background: 'linear-gradient(135deg, var(--accent), rgba(var(--accent-rgb),0.75))',
   color: '#fff',
 };
 
@@ -538,8 +538,8 @@ function DangerSection() {
     <div
       style={{
         ...sectionStyle,
-        border: '1px solid rgba(255,77,77,0.3)',
-        background: 'rgba(255,77,77,0.04)',
+        border: '1px solid rgba(var(--danger-rgb),0.3)',
+        background: 'rgba(var(--danger-rgb),0.04)',
       }}
     >
       <div style={{ ...sectionTitleStyle, color: '#ff6b6b' }}>
@@ -552,7 +552,7 @@ function DangerSection() {
             width: 32,
             height: 32,
             borderRadius: 10,
-            background: 'rgba(255,77,77,0.12)',
+            background: 'rgba(var(--danger-rgb),0.12)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -577,8 +577,8 @@ function DangerSection() {
                   onClick={() => setConfirming(true)}
                   style={{
                     ...smallBtnStyle,
-                    background: 'rgba(255,77,77,0.12)',
-                    border: '1px solid rgba(255,77,77,0.3)',
+                    background: 'rgba(var(--danger-rgb),0.12)',
+                    border: '1px solid rgba(var(--danger-rgb),0.3)',
                     color: '#ff6b6b',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -608,10 +608,10 @@ function DangerSection() {
                   style={{
                     ...inputBaseStyle,
                     maxWidth: 200,
-                    borderColor: confirmText === deleteToken ? 'rgba(255,77,77,0.5)' : 'var(--brd)',
+                    borderColor: confirmText === deleteToken ? 'rgba(var(--danger-rgb),0.5)' : 'var(--brd)',
                   }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(255,77,77,0.5)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = confirmText === deleteToken ? 'rgba(255,77,77,0.5)' : 'var(--brd)')}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--danger-rgb),0.5)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = confirmText === deleteToken ? 'rgba(var(--danger-rgb),0.5)' : 'var(--brd)')}
                   autoFocus
                 />
                 <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -620,8 +620,8 @@ function DangerSection() {
                     disabled={confirmText !== deleteToken || loading}
                     style={{
                       ...smallBtnStyle,
-                      background: confirmText === deleteToken ? '#ef4444' : 'rgba(255,77,77,0.12)',
-                      border: '1px solid rgba(255,77,77,0.3)',
+                      background: confirmText === deleteToken ? '#ef4444' : 'rgba(var(--danger-rgb),0.12)',
+                      border: '1px solid rgba(var(--danger-rgb),0.3)',
                       color: '#fff',
                       opacity: confirmText !== deleteToken || loading ? 0.5 : 1,
                       display: 'inline-flex',

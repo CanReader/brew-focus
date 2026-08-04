@@ -19,13 +19,13 @@ const phaseColors: Record<TimerPhase, string> = {
 };
 
 const phaseBgColors: Record<TimerPhase, string> = {
-  work: 'rgba(255,77,77,0.12)',
+  work: 'rgba(var(--accent-rgb),0.12)',
   shortBreak: 'rgba(34,211,165,0.12)',
   longBreak: 'rgba(91,141,238,0.12)',
 };
 
 const phaseBorderColors: Record<TimerPhase, string> = {
-  work: 'rgba(255,77,77,0.25)',
+  work: 'rgba(var(--accent-rgb),0.25)',
   shortBreak: 'rgba(34,211,165,0.25)',
   longBreak: 'rgba(91,141,238,0.25)',
 };
