@@ -123,7 +123,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # the stored updater key has line breaks in it, base64 decoding chokes on those
+      # strip stray line breaks in case the key was pasted wrapped
       - name: Clean up updater key
         shell: bash
         env:

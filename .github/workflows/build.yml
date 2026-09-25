@@ -77,7 +77,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          # the stored key has line breaks in it, base64 decoding chokes on those
+          # strip stray line breaks in case the key was pasted wrapped
           export TAURI_SIGNING_PRIVATE_KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
           npx tauri build ${{ matrix.args }}
 
