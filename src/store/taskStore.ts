@@ -344,25 +344,49 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   deleteTask: async (id) => {
     const prevActive = get().activeTaskId;
     const activeTaskId = prevActive === id ? null : prevActive;
+    const removedIndex = get().tasks.findIndex((t) => t.id === id);
+    const removed = removedIndex >= 0 ? get().tasks[removedIndex] : undefined;
+    // Put the task back where it was if the server delete fails. Re-inserting into
+    // the current list instead of restoring a snapshot so edits to other tasks
+    // made in the meantime aren't thrown away.
+    const rollback = () => {
+      if (!removed || get().tasks.some((t) => t.id === id)) return;
+      const tasks = [...get().tasks];
+      tasks.splice(Math.min(removedIndex, tasks.length), 0, removed);
+      set({ tasks });
+    };
     set({ tasks: get().tasks.filter((t) => t.id !== id), activeTaskId });
     // Keep the timer store's active-task reference in sync — otherwise the
     // timer keeps pointing at a deleted task id and records the next completed
     // session against it. taskStore.activeTaskId and timerStore.activeTaskId
     // are normally synced by callers; deletion is the one path that isn't.
     if (prevActive === id) useTimerStore.getState().setActiveTask(null);
-    useActivityStore.getState().clearForTask(id);
     const userId = await getCurrentUserId();
-    if (!userId) return;
+    if (!userId) {
+      useActivityStore.getState().clearForTask(id);
+      return;
+    }
     try {
-      await supabase.from('tasks').delete().eq('id', id).eq('user_id', userId);
-      if (activeTaskId !== prevActive) {
+      const { error } = await supabase.from('tasks').delete().eq('id', id).eq('user_id', userId);
+      if (error) throw error;
+    } catch (e) {
+      console.warn('Failed to delete task, rolling back:', e);
+      rollback();
+      return;
+    }
+    // clearForTask is a hard server DELETE on activity_events, so only run it
+    // once the task delete actually went through. Otherwise a failed delete
+    // brings the task back on next load with its whole history gone.
+    useActivityStore.getState().clearForTask(id);
+    if (activeTaskId !== prevActive) {
+      try {
         await supabase.from('settings').upsert(
           { user_id: userId, key: 'activeTaskId', value: JSON.stringify(null) },
           { onConflict: 'user_id,key' }
         );
+      } catch (e) {
+        console.warn('Failed to clear activeTaskId:', e);
       }
-    } catch (e) {
-      console.warn('Failed to delete task:', e);
     }
   },
 
