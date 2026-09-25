@@ -53,6 +53,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Unit tests
+        run: npm test
+
       - name: Build frontend
         run: npm run build
 
@@ -113,3 +116,7 @@ jobs:
       - name: Cargo check
         working-directory: ./src-tauri
         run: cargo check
+
+      - name: Cargo test
+        working-directory: ./src-tauri
+        run: cargo test
