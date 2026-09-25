@@ -8,6 +8,7 @@ import {
 import { useTimerStore } from '../../store/timerStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import type { TimerSession, Task } from '../../types';
 import { ProBadge } from '../ProBadge';
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -31,6 +32,15 @@ function dayKey(ts: number): string {
 function parseDayKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d);
+}
+
+// Which project a work session counts toward. recordSession stores projectId on
+// the session itself, so use that and the time stays with the project even after
+// the task is deleted. Older sessions don't have it, those fall back to the task.
+function sessionProjectId(s: TimerSession, tasks: Task[]): string | undefined {
+  if (s.projectId) return s.projectId;
+  if (!s.taskId) return undefined;
+  return tasks.find((t) => t.id === s.taskId)?.projectId;
 }
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -303,7 +313,7 @@ export const ReportsScreen: React.FC = () => {
 
   // Project donut
   const projectDonut = useMemo(() => projects.map(p => ({
-    value: Math.round(sessions.filter(s => { if(s.phase!=='work'||!s.taskId) return false; return tasks.find(t=>t.id===s.taskId)?.projectId===p.id; }).reduce((a,s)=>a+s.duration,0)/60),
+    value: Math.round(sessions.filter(s => s.phase==='work' && sessionProjectId(s, tasks)===p.id).reduce((a,s)=>a+s.duration,0)/60),
     color: p.color, label: p.name,
   })).filter(s => s.value>0), [sessions, projects, tasks]);
 
@@ -671,8 +681,8 @@ export const ReportsScreen: React.FC = () => {
                 <div className="flex-1 space-y-2 min-w-0">
                   {projects.map(p => {
                     const {start,end} = getDateRange(projectTimeRange);
-                    const mins = Math.round(sessions.filter(s=>{ if(s.phase!=='work'||!s.taskId)return false; return tasks.find(t=>t.id===s.taskId)?.projectId===p.id&&s.startedAt>=start.getTime()&&s.startedAt<=end.getTime(); }).reduce((a,s)=>a+s.duration,0)/60);
-                    const maxM = Math.max(...projects.map(pp=>Math.round(sessions.filter(s=>{if(s.phase!=='work'||!s.taskId)return false;return tasks.find(t=>t.id===s.taskId)?.projectId===pp.id&&s.startedAt>=start.getTime()&&s.startedAt<=end.getTime();}).reduce((a,s)=>a+s.duration,0)/60)),1);
+                    const mins = Math.round(sessions.filter(s=>s.phase==='work'&&sessionProjectId(s, tasks)===p.id&&s.startedAt>=start.getTime()&&s.startedAt<=end.getTime()).reduce((a,s)=>a+s.duration,0)/60);
+                    const maxM = Math.max(...projects.map(pp=>Math.round(sessions.filter(s=>s.phase==='work'&&sessionProjectId(s, tasks)===pp.id&&s.startedAt>=start.getTime()&&s.startedAt<=end.getTime()).reduce((a,s)=>a+s.duration,0)/60)),1);
                     return (
                       <div key={p.id}>
                         <div className="flex items-center gap-2 mb-1">
