@@ -206,7 +206,6 @@
     "rename": "Перейменувати",
     "delete": "Видалити"
   },
-  "confirmDeleteTasks": "Видалити {count} задач? Дію не можна скасувати.",
   "upcomingTasks": "Майбутні завдання",
   "noUpcomingTasks": "Немає майбутніх завдань",
   "quickCapture": {

@@ -206,7 +206,6 @@
     "rename": "Renommer",
     "delete": "Supprimer"
   },
-  "confirmDeleteTasks": "Supprimer {count} tâches ? Action irréversible.",
   "upcomingTasks": "Tâches à venir",
   "noUpcomingTasks": "Aucune tâche à venir",
   "quickCapture": {

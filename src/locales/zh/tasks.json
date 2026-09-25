@@ -206,7 +206,6 @@
     "rename": "重命名",
     "delete": "删除"
   },
-  "confirmDeleteTasks": "删除 {count} 个任务?此操作不可撤销。",
   "upcomingTasks": "即将到来的任务",
   "noUpcomingTasks": "暂无即将到来的任务",
   "quickCapture": {

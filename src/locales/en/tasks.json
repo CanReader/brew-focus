@@ -209,8 +209,6 @@
     "rename": "Rename",
     "delete": "Delete"
   },
-  "confirmDeleteTasks": "Delete {count} task? This cannot be undone.",
-  "confirmDeleteTasksPlural": "Delete {count} tasks? This cannot be undone.",
   "quickCapture": {
     "create": "Create",
     "newSuffix": "{name} (new)",
