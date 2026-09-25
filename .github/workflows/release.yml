@@ -1,5 +1,7 @@
 name: Release
 
+# v1.2.3 -> draft release. v1.2.3-beta.1 / -rc.1 -> draft pre-release, which the
+# updater ignores (it only reads releases/latest), so it's safe for testers.
 on:
   push:
     tags:
@@ -17,10 +19,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Without these the build has no backend and just shows the config error screen.
+      - name: Check required secrets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          FAIL=0
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY TAURI_SIGNING_PRIVATE_KEY; do
+            [ -n "${!name}" ] || { echo "::error::secret $name is not set"; FAIL=1; }
+          done
+          exit $FAIL
+
       - name: Verify version alignment
         id: version
         run: |
           TAG="${GITHUB_REF_NAME#v}"
+          TAG="${TAG%%-*}" # v1.2.3-beta.1 builds 1.2.3
           PKG="$(node -p "require('./package.json').version")"
           CONF="$(node -p "require('./src-tauri/tauri.conf.json').version")"
           CARGO="$(grep -m1 '^version' src-tauri/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')"
@@ -107,17 +123,73 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      # strip stray line breaks in case the key was pasted wrapped
+      - name: Clean up updater key
+        shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          echo "::add-mask::$KEY"
+          echo "TAURI_SIGNING_PRIVATE_KEY=$KEY" >> "$GITHUB_ENV"
+
+      # Code signing is optional: if the secrets aren't there the build still goes
+      # out, just unsigned (SmartScreen / Gatekeeper warnings).
+      - name: Set up macOS signing
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::warning::APPLE_CERTIFICATE not set, macOS build will be unsigned"
+            exit 0
+          fi
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            echo "$name=${!name}" >> "$GITHUB_ENV"
+          done
+
+      - name: Set up Windows signing
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if (-not $env:WINDOWS_CERTIFICATE) {
+            Write-Output "::warning::WINDOWS_CERTIFICATE not set, Windows build will be unsigned"
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'cert.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $pw = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pw
+          Remove-Item $pfx
+          $conf = @{ bundle = @{ windows = @{
+            certificateThumbprint = $cert.Thumbprint
+            digestAlgorithm = 'sha256'
+            timestampUrl = 'http://timestamp.digicert.com'
+          } } } | ConvertTo-Json -Depth 5
+          $confPath = Join-Path $env:RUNNER_TEMP 'sign.windows.json'
+          Set-Content -Path $confPath -Value $conf
+          "SIGN_ARGS=--config $confPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Brew Focus ${{ github.ref_name }}'
           releaseBody: ${{ needs.preflight.outputs.body }}
           releaseDraft: true
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
           updaterJsonKeepUniversal: true
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ env.SIGN_ARGS }}
