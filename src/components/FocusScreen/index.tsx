@@ -21,8 +21,6 @@ import { playSoundOption, playCustomSoundFile } from '../../utils/soundOptions';
 import { getBackground } from '../../utils/backgrounds';
 import { FocusCustomizePanel } from '../FocusCustomizePanel';
 
-interface FocusScreenProps {}
-
 // Leaf subscribers — these own the per-second `secondsLeft` subscription so the
 // FocusScreen body (side panel, gradient meshes, task selector, daily queue)
 // does NOT re-render every tick. Only the cup fill and the digits update each
@@ -55,7 +53,7 @@ const LiveTimerDisplay: React.FC<{
   );
 };
 
-export const FocusScreen: React.FC<FocusScreenProps> = () => {
+export const FocusScreen: React.FC = () => {
   const { t } = useTranslation('focus');
   const [panelOpen, setPanelOpen] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
