@@ -70,12 +70,16 @@ jobs:
       # Signing key is needed because createUpdaterArtifacts is on. Supabase env
       # so the build actually talks to the backend when you test it.
       - name: Build
+        shell: bash
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npx tauri build ${{ matrix.args }}
+        run: |
+          # the stored key has line breaks in it, base64 decoding chokes on those
+          export TAURI_SIGNING_PRIVATE_KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          npx tauri build ${{ matrix.args }}
 
       - name: Upload installers
         uses: actions/upload-artifact@v4

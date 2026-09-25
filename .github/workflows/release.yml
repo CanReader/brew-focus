@@ -123,6 +123,16 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      # the stored updater key has line breaks in it, base64 decoding chokes on those
+      - name: Clean up updater key
+        shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          echo "::add-mask::$KEY"
+          echo "TAURI_SIGNING_PRIVATE_KEY=$KEY" >> "$GITHUB_ENV"
+
       # Code signing is optional: if the secrets aren't there the build still goes
       # out, just unsigned (SmartScreen / Gatekeeper warnings).
       - name: Set up macOS signing
@@ -172,7 +182,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
