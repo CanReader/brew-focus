@@ -142,11 +142,25 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const userId = await getCurrentUserId();
     if (!userId) { set({ isLoaded: true }); return; }
     try {
-      const [{ data: taskRows }, { data: projectRows }, { data: metaRow }] = await Promise.all([
+      const [tasksRes, projectsRes, metaRes] = await Promise.all([
         supabase.from('tasks').select('*').eq('user_id', userId).order('sortOrder', { ascending: true }),
         supabase.from('projects').select('*').eq('user_id', userId).order('createdAt', { ascending: true }),
         supabase.from('settings').select('value').eq('user_id', userId).eq('key', 'activeTaskId').maybeSingle(),
       ]);
+
+      // supabase-js resolves with { data: null, error } instead of throwing. If
+      // we carried on, a failed projects query looks like "no projects" and the
+      // orphan sweep below would detach every task from its project in the DB.
+      // Bail and keep whatever is already in memory.
+      const loadError = tasksRes.error ?? projectsRes.error ?? metaRes.error;
+      if (loadError) {
+        console.warn('Failed to load tasks:', loadError);
+        set({ isLoaded: true });
+        return;
+      }
+      const taskRows = tasksRes.data;
+      const projectRows = projectsRes.data;
+      const metaRow = metaRes.data;
 
       const rawTasks = (taskRows ?? []).map(rowToTask);
       const projects = (projectRows ?? []).map(rowToProject);
