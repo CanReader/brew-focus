@@ -9,14 +9,9 @@ on:
       - 'LICENSE'
       - '.gitignore'
       - '.editorconfig'
+  # no paths-ignore here: with required checks on, a docs-only PR would wait forever
   pull_request:
     branches: [main, staging]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
-      - '.editorconfig'
 
 # Cancel superseded runs on the same ref (saves CI minutes on rapid pushes).
 concurrency:
