@@ -105,17 +105,17 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     const userId = await getCurrentUserId();
     if (!userId) return;
     try {
-      // Scope the wipe to AppSettings keys only — the `settings` table also
-      // holds non-settings rows (activeTaskId, language) that a "reset
-      // settings" action must not touch.
-      const settingsKeys = Object.keys(defaultSettings);
-      await supabase.from('settings').delete().eq('user_id', userId).in('key', settingsKeys);
+      // One upsert of the defaults instead of delete + insert. With two round
+      // trips a failed insert left the user with no settings rows at all.
+      // Only AppSettings keys are written, so the other rows in this table
+      // (activeTaskId, language) are left alone.
       const rows = Object.entries(defaultSettings).map(([key, value]) => ({
         user_id: userId,
         key,
         value: JSON.stringify(value),
       }));
-      await supabase.from('settings').insert(rows);
+      const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'user_id,key' });
+      if (error) console.warn('Failed to reset settings:', error);
     } catch (e) {
       console.warn('Failed to reset settings:', e);
     }
