@@ -1,0 +1,8 @@
+[advisories]
+ignore = [
+  # quick-xml, pulled in by tauri (plist) and tauri-plugin-notification (winrt
+  # toasts). Both only parse XML we produce ourselves, and the fix needs those
+  # crates to move to quick-xml 0.41. Drop these once they do.
+  "RUSTSEC-2026-0194",
+  "RUSTSEC-2026-0195",
+]
