@@ -330,7 +330,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ activeTab, onTabChange, onSe
   const handleMinimize = async () => { const win = getCurrentWindow(); await win.minimize(); };
   const handleMaximize = async () => {
     const win = getCurrentWindow();
-    (await win.isMaximized()) ? await win.unmaximize() : await win.maximize();
+    if (await win.isMaximized()) await win.unmaximize();
+    else await win.maximize();
   };
   // Hide instead of close so the timer keeps ticking in the background.
   // Tray menu's "Quit" is the only path that truly exits the app.

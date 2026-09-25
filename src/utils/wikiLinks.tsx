@@ -7,7 +7,7 @@ import { Project, Task } from '../types';
  * downstream `a` component intercepts the scheme and renders a Brew Focus
  * wiki-link instead of an external link.
  */
-const WIKI_RE = /\[\[([^\]\|]+)(?:\|([^\]]+))?\]\]/g;
+const WIKI_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
 export function preprocessWikiLinks(raw: string): string {
   return raw.replace(WIKI_RE, (_match, target: string, alias?: string) => {

@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import pngToIco from 'png-to-ico';
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
