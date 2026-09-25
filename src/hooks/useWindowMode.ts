@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getCurrentWindow, LogicalSize, LogicalPosition, currentMonitor } from '@tauri-apps/api/window';
+import { getCurrentWindow, LogicalSize, PhysicalPosition, currentMonitor } from '@tauri-apps/api/window';
 
 export type WindowMode = 'normal' | 'fullscreen' | 'widget';
 
 interface WindowState {
   width: number;
   height: number;
+  // physical px, so it restores right across monitors with different scaling
   x: number;
   y: number;
 }
@@ -35,8 +36,8 @@ export function useWindowMode() {
       savedStateRef.current = {
         width: size.width / scaleFactor,
         height: size.height / scaleFactor,
-        x: position.x / scaleFactor,
-        y: position.y / scaleFactor,
+        x: position.x,
+        y: position.y,
       };
     } catch (err) {
       console.error('Failed to save window state:', err);
@@ -54,15 +55,14 @@ export function useWindowMode() {
       await win.setAlwaysOnTop(false);
 
       if (savedStateRef.current) {
-        const { width, height } = savedStateRef.current;
+        const { width, height, x, y } = savedStateRef.current;
         await win.setSize(new LogicalSize(width, height));
+        await win.setPosition(new PhysicalPosition(x, y));
       } else {
-        // Fallback to default size
+        // Nothing saved, fall back to default size and center it
         await win.setSize(new LogicalSize(DEFAULT_SIZE.width, DEFAULT_SIZE.height));
+        await win.center();
       }
-
-      // Always position at top-left (0, 0)
-      await win.setPosition(new LogicalPosition(0, 0));
 
       // Clear saved state after restoring
       savedStateRef.current = null;
@@ -137,14 +137,15 @@ export function useWindowMode() {
       await win.setResizable(false);
       await win.setAlwaysOnTop(true);
 
-      // Position in bottom-right corner of screen
+      // Bottom-right corner of the monitor the window is on. monitor.position is
+      // the monitor's origin in the virtual desktop, without it the widget always
+      // jumps to the primary display.
       const monitor = await currentMonitor();
       if (monitor) {
-        const screenWidth = monitor.size.width / monitor.scaleFactor;
-        const screenHeight = monitor.size.height / monitor.scaleFactor;
-        await win.setPosition(new LogicalPosition(
-          screenWidth - WIDGET_SIZE.width - 20,
-          screenHeight - WIDGET_SIZE.height - 60
+        const { position, size, scaleFactor } = monitor;
+        await win.setPosition(new PhysicalPosition(
+          position.x + size.width - Math.round((WIDGET_SIZE.width + 20) * scaleFactor),
+          position.y + size.height - Math.round((WIDGET_SIZE.height + 60) * scaleFactor)
         ));
       }
 
