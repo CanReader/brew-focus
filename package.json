@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "check:locales": "node scripts/check-locales.mjs",
     "tauri": "npx tauri",
     "tauri:dev": "GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 npx tauri dev",
     "tauri:build": "NO_STRIP=1 APPIMAGE_EXTRACT_AND_RUN=1 npx tauri build"

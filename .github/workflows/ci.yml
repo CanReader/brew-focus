@@ -47,6 +47,9 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      - name: Check locale keys
+        run: npm run check:locales
+
       - name: Build frontend
         run: npm run build
 
