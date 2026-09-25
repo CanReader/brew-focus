@@ -3,13 +3,22 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error(
+// App.tsx checks this and shows a config error screen instead of the app.
+export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+// Don't throw here. Every store imports this module, so a throw at module scope
+// happens before React even mounts and a release build just shows a white
+// window. Use placeholders so createClient can't throw and let the UI say what's wrong.
+const resolvedUrl = SUPABASE_URL || 'https://placeholder.supabase.co';
+const resolvedKey = SUPABASE_ANON_KEY || 'placeholder-anon-key';
+
+if (!supabaseConfigured) {
+  console.error(
     'Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in desktop/.env.'
   );
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(resolvedUrl, resolvedKey);
 
 /**
  * Verifies a password without clobbering the current session.
@@ -17,7 +26,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  * not replace the active user's session in localStorage.
  */
 export async function verifyPasswordWithoutSessionSwap(email: string, password: string): Promise<boolean> {
-  const ephemeral = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+  const ephemeral = createClient(resolvedUrl, resolvedKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const { error } = await ephemeral.auth.signInWithPassword({ email, password });

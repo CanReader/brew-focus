@@ -27,7 +27,7 @@ import { setBackgroundNoise, setNoiseVolume, stopBackgroundNoise, armAudioUnlock
 import { useUpdater } from './hooks/useUpdater';
 import { UpdateBanner } from './components/UpdateBanner';
 import { onOpenUrl, getCurrent as getCurrentDeepLink } from '@tauri-apps/plugin-deep-link';
-import { supabase } from './utils/supabase';
+import { supabase, supabaseConfigured } from './utils/supabase';
 
 type Tab = 'focus' | 'tasks' | 'projects' | 'reports';
 
@@ -295,7 +295,32 @@ function AppContent() {
   return <MainApp />;
 }
 
+// Shown instead of the app when the build has no Supabase credentials.
+// Not translated on purpose, only a broken build or dev setup ever hits this.
+function ConfigErrorScreen() {
+  return (
+    <div
+      data-tauri-drag-region
+      className="w-full h-full flex items-center justify-center p-8"
+      style={{ background: 'var(--bg)' }}
+    >
+      <div className="max-w-md text-center">
+        <img src="/logo.svg" alt="Brew Focus" className="w-12 h-12 rounded-2xl mx-auto mb-4" />
+        <div className="font-fraunces text-xl font-semibold mb-2" style={{ color: 'var(--t)' }}>
+          Brew Focus can't connect
+        </div>
+        <div className="text-[13px] leading-relaxed" style={{ color: 'var(--t2)' }}>
+          This build is missing its Supabase credentials, so it can't reach the backend.
+          If you're building it yourself, set <code>VITE_SUPABASE_URL</code> and{' '}
+          <code>VITE_SUPABASE_ANON_KEY</code> in <code>desktop/.env</code> and rebuild.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  if (!supabaseConfigured) return <ConfigErrorScreen />;
   return (
     <WindowModeProvider>
       <AppContent />
