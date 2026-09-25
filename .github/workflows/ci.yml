@@ -50,6 +50,9 @@ jobs:
       - name: Check locale keys
         run: npm run check:locales
 
+      - name: Check versions match
+        run: node scripts/check-version.mjs
+
       - name: Lint
         run: npm run lint
 
@@ -58,6 +61,49 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+  # Only on staging -> main PRs: a version bump needs a dated changelog entry.
+  release-gate:
+    name: Version / changelog
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version and changelog
+        run: node scripts/check-version.mjs --base origin/main
+
+  # macOS isn't worth running on every PR, but it should never reach main broken.
+  macos:
+    name: macOS build
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build app bundle (debug)
+        run: npx tauri build --debug --bundles app
 
   audit:
     name: Dependency audit
