@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -110,7 +110,7 @@ impl Inner {
         match self.phase {
             Phase::Work => {
                 let cycles_done = self.completed_cycles + 1;
-                if cycles_done % self.config.long_break_interval == 0 {
+                if cycles_done.is_multiple_of(self.config.long_break_interval) {
                     Phase::LongBreak
                 } else {
                     Phase::ShortBreak
@@ -135,7 +135,11 @@ impl Inner {
         self.seconds_left = self.total_seconds;
         self.elapsed_secs = 0;
         self.is_running = auto_start;
-        self.last_tick = if auto_start { Some(Instant::now()) } else { None };
+        self.last_tick = if auto_start {
+            Some(Instant::now())
+        } else {
+            None
+        };
     }
 
     fn tick(&mut self) -> bool {
