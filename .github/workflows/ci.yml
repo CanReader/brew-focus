@@ -50,6 +50,9 @@ jobs:
       - name: Check locale keys
         run: npm run check:locales
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build frontend
         run: npm run build
 
