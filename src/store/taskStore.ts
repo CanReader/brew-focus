@@ -202,7 +202,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (!userId) return;
     const id = nanoid();
     const createdAt = Date.now();
-    const maxOrder = get().tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
+    // New tasks go on top of the list. They're prepended in memory, so give them
+    // the lowest sortOrder too, otherwise they jump to the bottom on next load.
+    const sortOrder = get().tasks.reduce((m, t) => Math.min(m, t.sortOrder ?? 0), 0) - 1;
     // Append at the end of the 'todo' column on the board.
     const maxBoardPos = get().tasks
       .filter((t) => t.status === 'todo' && t.projectId === projectId)
@@ -215,7 +217,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       milestoneId: opts?.milestoneId,
       dependsOn: [],
       boardPosition: maxBoardPos + 1024,
-      sortOrder: maxOrder + 1,
+      sortOrder,
     };
     set({ tasks: [newTask, ...get().tasks] });
     try {
@@ -231,7 +233,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         dependsOn: [],
         boardPosition: newTask.boardPosition,
         customWorkDuration: null, customShortBreakDuration: null, customLongBreakDuration: null,
-        skipLongBreak: false, customLongBreakInterval: null, sortOrder: maxOrder + 1,
+        skipLongBreak: false, customLongBreakInterval: null, sortOrder,
       });
       useActivityStore.getState().log('task.created', {
         taskId: id, projectId: projectId ?? undefined,
@@ -783,7 +785,8 @@ async function spawnNextOccurrence(task: Task, userId: string): Promise<void> {
   const newId = nanoid();
   const newCreatedAt = Date.now();
   const newDueDate = calculateNextDueDate(task.dueDate ?? null, task.repeatType);
-  const maxOrder = tasks.reduce((m, t) => Math.max(m, t.sortOrder ?? 0), 0);
+  // Lowest sortOrder, same as addTask, since this also gets prepended below
+  const sortOrder = tasks.reduce((m, t) => Math.min(m, t.sortOrder ?? 0), 0) - 1;
   const maxBoardPos = tasks
     .filter((t) => t.status === 'todo' && t.projectId === task.projectId)
     .reduce((m, t) => Math.max(m, t.boardPosition ?? 0), 0);
@@ -792,7 +795,7 @@ async function spawnNextOccurrence(task: Task, userId: string): Promise<void> {
     ...task, id: newId, createdAt: newCreatedAt, completed: false,
     completedAt: undefined, pomodoroCompleted: 0, dueDate: newDueDate,
     subtasks: resetSubtasks, reminder: undefined,
-    status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder: maxOrder + 1,
+    status: 'todo', boardPosition: maxBoardPos + 1024, sortOrder,
   };
   await supabase.from('tasks').insert({
     id: newId, user_id: userId, title: newTask.title, completed: false,
@@ -811,7 +814,7 @@ async function spawnNextOccurrence(task: Task, userId: string): Promise<void> {
     customLongBreakDuration: newTask.customLongBreakDuration ?? null,
     skipLongBreak: newTask.skipLongBreak ?? false,
     customLongBreakInterval: newTask.customLongBreakInterval ?? null,
-    sortOrder: maxOrder + 1,
+    sortOrder,
   });
   useTaskStore.setState({ tasks: [newTask, ...useTaskStore.getState().tasks] });
 }
