@@ -85,12 +85,12 @@ function fuzzyProject(name: string, projects: Project[]): Project | undefined {
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const TOKEN_RE = /([!#@+*])([A-Za-z0-9-]+)/g;
+const TOKEN_RE = /(^|\s)([!#@+*])([A-Za-z0-9-]+)/g;
 
 /**
  * Parse a freeform task input into structured fields.
  *
- * Tokens (anywhere in the string):
+ * Tokens (must start a word, so `C++17` or `5*3` stay untouched):
  *   !today / !tomorrow / !someday / !YYYY-MM-DD  → dueDate
  *   #feature / #bug / #chore / #idea / #task     → type
  *   @projectName                                   → projectId (fuzzy)
@@ -110,7 +110,13 @@ export function parseQuickTask(
   let m: RegExpExecArray | null;
   TOKEN_RE.lastIndex = 0;
   while ((m = TOKEN_RE.exec(raw)) !== null) {
-    matches.push({ full: m[0], sigil: m[1], body: m[2], index: m.index });
+    // Inside a project the @ token does nothing, so leave it in the title
+    // instead of silently eating a name like `@sarah`.
+    if (m[2] === '@' && opts?.boundProjectId) continue;
+    // m[1] is the leading space (or start of string), keep it out of the
+    // stripped span so only sigil+body gets removed.
+    const lead = m[1];
+    matches.push({ full: m[2] + m[3], sigil: m[2], body: m[3], index: m.index + lead.length });
   }
   // Remove tokens from title (right-to-left to preserve indices).
   let title = raw;
@@ -143,10 +149,7 @@ export function parseQuickTask(
         out.unknownTokens.push({ token: full, suggestion: suggestType(body) });
       }
     } else if (sigil === '@') {
-      if (opts?.boundProjectId) {
-        // Already bound to a project — silently strip the token.
-        continue;
-      }
+      if (opts?.boundProjectId) continue;
       const proj = fuzzyProject(body, projects);
       if (proj) {
         out.projectId = proj.id;
@@ -163,7 +166,8 @@ export function parseQuickTask(
         out.unknownTokens.push({ token: full });
       }
     } else if (sigil === '*') {
-      const n = parseInt(body, 10);
+      // parseInt('2nd') is 2, so require digits only or `*2nd` eats the word
+      const n = /^\d+$/.test(body) ? parseInt(body, 10) : NaN;
       if (Number.isFinite(n) && n >= 1 && n <= 9) {
         out.pomodoroEstimate = n;
         out.chips.push({ kind: 'pomodoros', raw: full, value: n });
@@ -190,17 +194,19 @@ export function renderSegments(raw: string, parsed: ParsedTask): RenderSegment[]
   let cursor = 0;
   let m: RegExpExecArray | null;
   while ((m = TOKEN_RE.exec(raw)) !== null) {
-    if (m.index > cursor) segments.push({ kind: 'text', value: raw.slice(cursor, m.index) });
-    const chip = parsed.chips.find((c) => c.raw === m![0]);
-    const unknown = parsed.unknownTokens.find((t) => t.token === m![0]);
+    const start = m.index + m[1].length;
+    const token = m[2] + m[3];
+    if (start > cursor) segments.push({ kind: 'text', value: raw.slice(cursor, start) });
+    const chip = parsed.chips.find((c) => c.raw === token);
+    const unknown = parsed.unknownTokens.find((t) => t.token === token);
     segments.push({
       kind: 'token',
-      raw: m[0],
+      raw: token,
       resolved: !!chip,
       chip,
       suggestion: unknown?.suggestion,
     });
-    cursor = m.index + m[0].length;
+    cursor = start + token.length;
   }
   if (cursor < raw.length) segments.push({ kind: 'text', value: raw.slice(cursor) });
   return segments;
