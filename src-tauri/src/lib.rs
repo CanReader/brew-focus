@@ -52,7 +52,7 @@ pub fn run() {
                 return Err("main window not found".into());
             }
 
-            tray::setup_tray(&app.handle())?;
+            tray::setup_tray(app.handle())?;
 
             Ok(())
         })
