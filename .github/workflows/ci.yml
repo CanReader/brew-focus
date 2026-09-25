@@ -59,6 +59,26 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: npm audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      # ignores live in src-tauri/.cargo/audit.toml
+      - name: cargo audit
+        working-directory: ./src-tauri
+        run: cargo audit
+
   rust:
     name: Rust (${{ matrix.platform }})
     strategy:
