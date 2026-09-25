@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -10,7 +10,7 @@ on:
       - '.gitignore'
       - '.editorconfig'
   pull_request:
-    branches: [main]
+    branches: [main, staging]
     paths-ignore:
       - '**.md'
       - 'docs/**'
