@@ -77,8 +77,10 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          # strip stray line breaks in case the key was pasted wrapped
-          export TAURI_SIGNING_PRIVATE_KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          # The stored key was copied out of a terminal, so it has line breaks and
+          # the "%" zsh prints when output has no trailing newline. Strip both.
+          KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          export TAURI_SIGNING_PRIVATE_KEY="${KEY%\%}"
           npx tauri build ${{ matrix.args }}
 
       - name: Upload installers

@@ -123,13 +123,15 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # strip stray line breaks in case the key was pasted wrapped
+      # the stored key was copied out of a terminal, so it has line breaks and the
+      # "%" zsh prints when output has no trailing newline. Strip both.
       - name: Clean up updater key
         shell: bash
         env:
           SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           KEY="$(printf %s "$SIGNING_KEY" | tr -d '\r\n ')"
+          KEY="${KEY%\%}"
           echo "::add-mask::$KEY"
           echo "TAURI_SIGNING_PRIVATE_KEY=$KEY" >> "$GITHUB_ENV"
 
