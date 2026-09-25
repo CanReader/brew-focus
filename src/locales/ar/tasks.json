@@ -206,7 +206,6 @@
     "rename": "إعادة تسمية",
     "delete": "حذف"
   },
-  "confirmDeleteTasks": "حذف {count} مهام؟ لا يمكن التراجع.",
   "upcomingTasks": "المهام القادمة",
   "noUpcomingTasks": "لا توجد مهام قادمة",
   "quickCapture": {

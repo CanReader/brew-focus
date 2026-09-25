@@ -206,7 +206,6 @@
     "rename": "Renombrar",
     "delete": "Eliminar"
   },
-  "confirmDeleteTasks": "¿Eliminar {count} tareas? Esto no se puede deshacer.",
   "upcomingTasks": "Tareas próximas",
   "noUpcomingTasks": "No hay tareas próximas",
   "quickCapture": {

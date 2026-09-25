@@ -206,7 +206,6 @@
     "rename": "Yeniden adlandır",
     "delete": "Sil"
   },
-  "confirmDeleteTasks": "{count} görev silinsin mi? Bu işlem geri alınamaz.",
   "upcomingTasks": "Yaklaşan Görevler",
   "noUpcomingTasks": "Yaklaşan görev yok",
   "quickCapture": {
